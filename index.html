@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#171329"><title>WeFamily Adventsbingo</title>
+<style>
+:root{color-scheme:dark;--bg:#100e1b;--panel:#1c1930;--panel2:#26213e;--line:#393252;--txt:#f5f1ff;--muted:#b8b0cb;--pink:#f36bb5;--gold:#ffc66d;--green:#78d7ad}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#302044 0,#100e1b 55%);color:var(--txt);font:15px system-ui,sans-serif}header{padding:22px 16px 14px;position:sticky;top:0;background:#171329ed;backdrop-filter:blur(12px);z-index:2;border-bottom:1px solid var(--line)}h1{font-size:22px;margin:0}header p{margin:4px 0 0;color:var(--muted);font-size:13px}.wrap{max-width:980px;margin:auto;padding:16px}.tabs{display:flex;gap:8px;overflow:auto;padding-bottom:12px}.tab,button{border:1px solid var(--line);background:var(--panel2);color:var(--txt);border-radius:12px;padding:10px 13px;font-weight:650;cursor:pointer;white-space:nowrap}.tab.active,button.primary{background:linear-gradient(120deg,#8c3f83,#5140a1);border-color:#a76db2}.tab.secret{border-color:#8c5b2e;color:#ffd18a}.card{background:#1c1930ed;border:1px solid var(--line);border-radius:17px;padding:15px;margin:10px 0;box-shadow:0 8px 30px #0002}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}.row{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.between{justify-content:space-between}.muted{color:var(--muted)}label{display:block;color:var(--muted);font-size:13px;margin:8px 0 5px}input,select,textarea{width:100%;background:#100e1b;color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:11px;font:inherit}input[type=checkbox]{width:auto;accent-color:var(--pink)}.field{flex:1;min-width:130px}button.danger{border-color:#85434e;color:#ffabb5}button.small{padding:7px 10px;font-size:13px}.stat{font-size:28px;font-weight:800}.pill{font-size:12px;color:#ffe0a5;background:#49351d;padding:4px 8px;border-radius:99px}.item{padding:10px 0;border-bottom:1px solid var(--line)}.item:last-child{border:0}.hidden{display:none!important}.notice{border-left:3px solid var(--gold);padding:10px 12px;background:#352a24;border-radius:8px;color:#ffe1b5;font-size:13px}.score{font-size:20px;font-weight:800;color:var(--gold)}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}footer{padding:20px;color:var(--muted);font-size:12px;text-align:center}
+</style></head>
+<body>
+<header><div class="wrap" style="padding:0"><h1>🎄 WeFamily Adventsbingo</h1><p>Organisations- und Auswertungstest · Version 0.1 · lokal auf diesem Gerät</p></div></header>
+<main class="wrap">
+<div class="notice">Testversion: Daten werden nur in diesem Browser gespeichert. Noch kein gemeinsamer Heidi-Zugang und keine echte Anmeldung. Vor echtem Einsatz bitte Daten exportieren.</div>
+<nav class="tabs" aria-label="Bereiche">
+<button class="tab active" data-tab="home">Übersicht</button><button class="tab" data-tab="players">Teilnehmer</button><button class="tab" data-tab="rounds">Runden</button><button class="tab" data-tab="results">Ergebnisse</button><button class="tab secret" data-tab="internal">🔒 Nur Moderation</button><button class="tab" data-tab="settings">Sicherung</button>
+</nav>
+<section id="home" class="pane">
+<div class="grid">
+<div class="card"><div class="muted">Teilnehmer</div><div class="stat" id="statPlayers">0</div></div>
+<div class="card"><div class="muted">Runden angelegt</div><div class="stat" id="statRounds">25</div></div>
+<div class="card"><div class="muted">Erfasste Bingo-Ergebnisse</div><div class="stat" id="statEntries">0</div></div>
+</div>
+<div class="card"><h2>Aktueller Stand</h2><p class="muted">Teilnehmer hinzufügen, danach pro Runde die erzielten Bingos erfassen. Die interne Tageswertung ist separat und nicht für Teilnehmer gedacht.</p><div class="actions"><button class="primary" onclick="showTab('players')">+ Teilnehmer hinzufügen</button><button onclick="showTab('results')">Bingos erfassen</button></div></div>
+<div class="card"><h3>Spielregeln im Manager</h3><ul><li>Maximal zwei Karten pro Person werden vor dem Start in WePlay kontrolliert.</li><li>Normalrunde ohne Power-ups oder Blackout-Runde.</li><li>Bei Blackout zählt erst die vollständig ausgefüllte Karte als Bingo.</li><li>20 Münzen Einsatz und Ingame-Belohnungen werden nicht verwaltet.</li><li>WePlay bleibt für Spiel, Chat, Kicks und tatsächliche Platzierungen zuständig.</li></ul></div>
+</section>
+<section id="players" class="pane hidden">
+<div class="card"><h2>Teilnehmer verwalten</h2><div class="row"><div class="field"><label for="playerName">Spielername (inkl. Sonderzeichen)</label><input id="playerName" placeholder="z. B. ✨ Spielername ♡"></div><button class="primary" onclick="addPlayer()">Hinzufügen</button></div><div id="playerList"></div></div>
+</section>
+<section id="rounds" class="pane hidden">
+<div class="card"><h2>Runden konfigurieren</h2><p class="muted">25 Runden als Startgerüst. Spielmodus und Notizen können geändert werden.</p><div id="roundList"></div></div>
+</section>
+<section id="results" class="pane hidden">
+<div class="card"><h2>Bingos erfassen</h2><div class="grid"><div><label>Spieltag / Sitzung</label><input id="sessionName" placeholder="z. B. 1. Advent" value="1. Advent"></div><div><label>Runde</label><select id="resultRound"></select></div><div><label>Teilnehmer</label><select id="resultPlayer"></select></div><div><label>Anzahl Bingos in dieser Runde</label><input id="bingoCount" type="number" min="0" step="1" value="1"></div></div><div class="actions"><button class="primary" onclick="saveResult()">Ergebnis speichern</button></div><div id="resultList"></div></div>
+</section>
+<section id="internal" class="pane hidden">
+<div class="notice">VERTRAULICH – interne Tageswertung. Dies ist in Version 0.1 nur eine ausgeblendete Oberfläche, kein sicherer Zugriffsschutz. Nicht auf einem gemeinsam genutzten Gerät mit Teilnehmern öffnen.</div>
+<div class="card"><h2>🔒 Interne Tageswertung</h2><label>Spieltag auswerten</label><input id="internalSession" placeholder="z. B. 1. Advent" value="1. Advent"><div class="actions"><button class="primary" onclick="renderInternal()">Tageswertung berechnen</button></div><div id="internalList"></div></div>
+<div class="card"><h3>Anwesenheit bei Vergabe</h3><p class="muted">Die Tagesbonus-Regel bleibt intern. Gewinner erhalten den Zusatzpreis nur, wenn sie bei der Vergabe noch im Raum sind. Bei Gleichstand bekommen alle Erstplatzierten eine Kleinigkeit.</p><div id="presenceList"></div></div>
+</section>
+<section id="settings" class="pane hidden">
+<div class="card"><h2>Datensicherung</h2><p class="muted">Exportiere regelmäßig eine Sicherung. Import überschreibt den aktuellen lokalen Datenbestand.</p><div class="actions"><button class="primary" onclick="exportData()">Daten exportieren (JSON)</button><label class="tab" style="display:inline-block">Sicherung importieren<input id="importFile" type="file" accept="application/json" style="display:none" onchange="importData(event)"></label><button class="danger" onclick="resetData()">Alle lokalen Daten löschen</button></div></div>
+</section>
+</main><footer>WeFamily Adventsbingo-Manager · Prototyp 0.1</footer>
+<script>
+const $=id=>document.getElementById(id);
+const defaultRounds=Array.from({length:25},(_,i)=>({n:i+1,mode:[6,12,18,25].includes(i+1)?"Blackout":"Normal",note:""}));
+let db=JSON.parse(localStorage.getItem("wf-adventbingo-v01")||"null")||{players:[],rounds:defaultRounds,results:[],presence:{}};
+function persist(){localStorage.setItem("wf-adventbingo-v01",JSON.stringify(db));renderAll()}
+function showTab(id){document.querySelectorAll(".pane").forEach(x=>x.classList.toggle("hidden",x.id!==id));document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x.dataset.tab===id));if(id==="internal")renderInternal()}
+document.querySelectorAll(".tab[data-tab]").forEach(b=>b.addEventListener("click",()=>showTab(b.dataset.tab)));
+function addPlayer(){let name=$("playerName").value.trim();if(!name)return alert("Bitte einen Spielernamen eingeben.");if(db.players.some(p=>p.name===name))return alert("Diesen Namen gibt es bereits.");db.players.push({id:crypto.randomUUID(),name});$("playerName").value="";persist()}
+function delPlayer(id){if(confirm("Teilnehmer wirklich entfernen? Vorhandene Ergebnisse bleiben in der Sicherung erhalten, werden aber nicht mehr zugeordnet.")){db.players=db.players.filter(p=>p.id!==id);persist()}}
+function renderPlayers(){$("playerList").innerHTML=db.players.map(p=>'<div class="item row between"><strong>'+esc(p.name)+'</strong><button class="small danger" onclick="delPlayer(\''+p.id+'\')">Entfernen</button></div>').join("")||'<p class="muted">Noch keine Teilnehmer angelegt.</p>'}
+function renderRounds(){$("roundList").innerHTML=db.rounds.map(r=>'<div class="item"><div class="row between"><strong>Runde '+r.n+'</strong><span class="pill">'+(r.mode==="Blackout"?"Blackout":"Normal")+'</span></div><div class="grid"><div><label>Spielmodus</label><select onchange="setRound('+r.n+',\'mode\',this.value)"><option '+(r.mode==="Normal"?"selected":"")+' value="Normal">Normal (ohne Power-ups)</option><option '+(r.mode==="Blackout"?"selected":"")+' value="Blackout">Blackout</option></select></div><div><label>Interne Notiz / Preiszuordnung</label><input value="'+esc(r.note||"")+'" onchange="setRound('+r.n+',\'note\',this.value)" placeholder="Optional"></div></div></div>').join("")}
+function setRound(n,k,v){let r=db.rounds.find(x=>x.n===n);r[k]=v;persist()}
+function fillSelects(){let opts=db.players.map(p=>'<option value="'+p.id+'">'+esc(p.name)+'</option>').join("");$("resultPlayer").innerHTML=opts;$("resultRound").innerHTML=db.rounds.map(r=>'<option value="'+r.n+'">Runde '+r.n+' – '+r.mode+'</option>').join("")}
+function saveResult(){if(!db.players.length)return alert("Lege zuerst Teilnehmer an.");let count=Number($("bingoCount").value);if(!Number.isInteger(count)||count<0)return alert("Bitte eine ganze Zahl ab 0 eingeben.");let pid=$("resultPlayer").value;if(!pid)return alert("Bitte Teilnehmer auswählen.");db.results.push({id:crypto.randomUUID(),session:$("sessionName").value.trim()||"Spieltag",round:Number($("resultRound").value),playerId:pid,count});persist()}
+function renderResults(){$("resultList").innerHTML=db.results.slice().reverse().map(x=>{let p=db.players.find(p=>p.id===x.playerId);return '<div class="item row between"><span><strong>'+esc(p?.name||"Gelöschter Teilnehmer")+'</strong><br><small class="muted">'+esc(x.session)+' · Runde '+x.round+'</small></span><span class="score">'+x.count+' Bingo(s)</span><button class="small danger" onclick="delResult(\''+x.id+'\')">×</button></div>'}).join("")||'<p class="muted">Noch keine Ergebnisse erfasst.</p>'}
+function delResult(id){db.results=db.results.filter(x=>x.id!==id);persist()}
+function tally(session){let map={};db.players.forEach(p=>map[p.id]=0);db.results.filter(r=>r.session===session).forEach(r=>{if(map[r.playerId]!==undefined)map[r.playerId]+=r.count});return Object.entries(map).map(([id,total])=>({id,total,name:db.players.find(p=>p.id===id)?.name||"?"})).sort((a,b)=>b.total-a.total)}
+function renderInternal(){let s=$("internalSession").value.trim();let rows=tally(s);let max=rows.length?rows[0].total:0;let winners=max>0?rows.filter(x=>x.total===max):[];$("internalList").innerHTML=rows.filter(x=>x.total>0).map(x=>'<div class="item row between"><strong>'+esc(x.name)+'</strong><span class="score">'+x.total+'</span></div>').join("")||'<p class="muted">Für diesen Spieltag liegen noch keine Bingos vor.</p>';let key=s+"|"+winners.map(w=>w.id).join(",");$("presenceList").innerHTML=winners.map(w=>'<div class="item row between"><strong>'+esc(w.name)+' · '+w.total+' Bingos</strong><label style="margin:0"><input type="checkbox" '+(db.presence[key+":"+w.id]?"checked":"")+' onchange="setPresence(\''+key.replace(/'/g,"\\'")+'\',\''+w.id+'\',this.checked)"> Bei Vergabe im Raum</label></div>').join("")+(winners.length>1?'<p class="muted">Gleichstand: alle Erstplatzierten erhalten eine Kleinigkeit.</p>':"") }
+function setPresence(k,id,v){db.presence[k+":"+id]=v;localStorage.setItem("wf-adventbingo-v01",JSON.stringify(db))}
+function renderAll(){renderPlayers();renderRounds();fillSelects();renderResults();$("statPlayers").textContent=db.players.length;$("statRounds").textContent=db.rounds.length;$("statEntries").textContent=db.results.length}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function exportData(){let a=document.createElement("a"),u=URL.createObjectURL(new Blob([JSON.stringify(db,null,2)],{type:"application/json"}));a.href=u;a.download="wefamily-adventsbingo-sicherung.json";a.click();URL.revokeObjectURL(u)}
+function importData(e){let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let d=JSON.parse(r.result);if(!Array.isArray(d.players)||!Array.isArray(d.rounds)||!Array.isArray(d.results))throw Error();db=d;persist();alert("Sicherung importiert.")}catch{alert("Datei ist keine gültige Sicherung.")}};r.readAsText(f)}
+function resetData(){if(confirm("Wirklich alle lokalen Teilnehmer und Ergebnisse löschen?")){localStorage.removeItem("wf-adventbingo-v01");db={players:[],rounds:defaultRounds,results:[],presence:{}};persist()}}
+renderAll();
+</script></body></html>
