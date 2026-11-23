@@ -44,7 +44,25 @@
 <script>
 const $=id=>document.getElementById(id);
 const defaultRounds=Array.from({length:25},(_,i)=>({n:i+1,mode:[6,12,18,25].includes(i+1)?"Blackout":"Normal",note:""}));
-let db=JSON.parse(localStorage.getItem("wf-adventbingo-v01")||"null")||{players:[],rounds:defaultRounds,results:[],presence:{}};
+const emptyDB=()=>({players:[],rounds:defaultRounds.map(r=>({...r})),results:[],presence:{}});
+function loadDB(){
+  try{
+    const raw=localStorage.getItem("wf-adventbingo-v01");
+    if(!raw)return emptyDB();
+    const saved=JSON.parse(raw);
+    if(!saved||typeof saved!=="object")return emptyDB();
+    return {
+      players:Array.isArray(saved.players)?saved.players.filter(p=>p&&typeof p.name==="string"&&p.id):[],
+      rounds:Array.isArray(saved.rounds)&&saved.rounds.length?saved.rounds:defaultRounds.map(r=>({...r})),
+      results:Array.isArray(saved.results)?saved.results.filter(x=>x&&x.id):[],
+      presence:saved.presence&&typeof saved.presence==="object"?saved.presence:{}
+    };
+  }catch(error){
+    console.error("Adventsbingo-Daten konnten nicht geladen werden:",error);
+    return emptyDB();
+  }
+}
+let db=loadDB();
 function persist(){localStorage.setItem("wf-adventbingo-v01",JSON.stringify(db));renderAll()}
 function showTab(id){document.querySelectorAll(".pane").forEach(x=>x.classList.toggle("hidden",x.id!==id));document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x.dataset.tab===id));if(id==="internal")renderInternal()}
 document.querySelectorAll(".tab[data-tab]").forEach(b=>b.addEventListener("click",()=>showTab(b.dataset.tab)));
