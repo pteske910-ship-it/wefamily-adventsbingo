@@ -94,6 +94,16 @@ begin
       delete from public.bingo_results where event_id=p_event_id and source_result_id=v_source_id;
     end if;
 
+  elsif p_entity = 'meta' then
+    -- Only event metadata owned by this app is patched; unrelated legacy_data is preserved.
+    update public.events
+    set legacy_data = jsonb_set(
+          jsonb_set(coalesce(legacy_data,'{}'::jsonb),'{original,presence}',coalesce(p_payload->'presence','{}'::jsonb),true),
+          '{original,attendance}',coalesce(p_payload->'attendance','{}'::jsonb),true
+        ),
+        settings = jsonb_set(coalesce(settings,'{}'::jsonb),'{scoring}',coalesce(p_payload->'scoring','{}'::jsonb),true)
+    where id = p_event_id;
+
   elsif p_entity = 'room' then
     v_session := coalesce(nullif(p_payload->>'session',''),'Spieltag');
     v_round_no := (p_payload->>'round')::integer;
