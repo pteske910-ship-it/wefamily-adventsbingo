@@ -121,7 +121,7 @@ begin
   if tg_op = 'DELETE' then return old; end if;
   return new;
 end;
-$;
+$$;
 
 -- Expand the existing owner-protection trigger to cover status-only changes too.
 drop trigger if exists app_users_protect_owner on public.app_users;
