@@ -15,7 +15,7 @@
 .introCaption{position:absolute;z-index:3;left:50%;bottom:5%;transform:translateX(-50%);margin:0;padding:10px 18px;border-radius:999px;background:#07152dcc;border:1px solid #ffffff55;color:#fff;font-weight:800;letter-spacing:.04em;text-shadow:0 2px 8px #000;white-space:nowrap;box-shadow:0 4px 24px #0005}
 @media(min-width:901px){
  #introSplash{background-position:center center;background-size:cover}
- .introSleigh{width:min(78vw,1120px);max-height:78vh;animation:sleighFlightDesktop 7.8s cubic-bezier(.2,.62,.34,1) 0s forwards}
+ .introSleigh{width:min(78vw,1120px);max-height:78vh;animation:none;opacity:1}
  @keyframes sleighFlightDesktop{0%{transform:translate(-34vw,30vh) scale(1.02);opacity:1}22%{transform:translate(-10vw,20vh) scale(.82);opacity:1}62%{transform:translate(52vw,-24vh) scale(.32);opacity:.9}100%{transform:translate(118vw,-82vh) scale(.07);opacity:0}}
 }
 @media(max-width:900px){
@@ -186,10 +186,10 @@ function renderRoomStats(){if(!$("roomStatsView")||!$("roomRound"))return;let s=
 
 renderAll();
 function startIntroProgress(splash,duration,startAt){
- const fill=$("introLoaderFill"),start=startAt??performance.now();
+ const fill=$("introLoaderFill"),start=startAt;
  splash.classList.add("ready");
  function tick(now){
-  const p=Math.min(1,(now-start)/duration);
+  const p=Math.min(1,Math.max(0,(now-start)/duration));
   if(fill)fill.style.width=(p*100).toFixed(1)+"%";
   if(p<1)requestAnimationFrame(tick);
   else{if(fill)fill.style.width="100%";setTimeout(()=>{splash.classList.add("out");setTimeout(()=>splash.remove(),600)},180)}
@@ -199,34 +199,50 @@ function startIntroProgress(splash,duration,startAt){
 (async function runIntro(){
  const splash=$("introSplash"),sleigh=splash?.querySelector(".introSleigh");
  if(!splash||!sleigh)return;
- const duration=7800,startAt=performance.now()+120;
+ const duration=7800;
  const mobile=window.matchMedia("(max-width:900px)").matches;
  const bg=new Image();
  bg.src=mobile?"WeFamilyHintergrundMobile.png?v=8":"northpole-bg.webp";
  try{await Promise.all([sleigh.decode?sleigh.decode():Promise.resolve(),bg.decode?bg.decode():Promise.resolve()]);}catch(e){}
+ const startAt=performance.now()+120;
+ startIntroProgress(splash,duration,startAt);
  if(mobile){
   const w=window.innerWidth,h=window.innerHeight;
   const curves=[
    {p0:[.39*w,.84*h],p1:[.70*w,.82*h],p2:[.96*w,.73*h],p3:[.76*w,.64*h],s0:1,s1:.84},
    {p0:[.76*w,.64*h],p1:[.48*w,.60*h],p2:[.14*w,.53*h],p3:[.38*w,.42*h],s0:.84,s1:.60},
-   {p0:[.38*w,.42*h],p1:[.72*w,.32*h],p2:[1.02*w,.12*h],p3:[1.16*w,-.12*h],s0:.60,s1:.10}
+   {p0:[.38*w,.42*h],p1:[.62*w,.34*h],p2:[.82*w,.22*h],p3:[.86*w,.12*h],s0:.60,s1:.36}
   ];
   function bez(a,b,c,d,t){const u=1-t;return u*u*u*a+3*u*u*t*b+3*u*t*t*c+t*t*t*d}
   const p=curves[0].p0;
   sleigh.style.left=p[0]+"px";sleigh.style.top=p[1]+"px";
   sleigh.style.transform="translate(-50%,-50%) scale(1)";
   sleigh.style.opacity="1";
-  startIntroProgress(splash,duration,startAt)
-  const begin=startAt;
   function frame(now){
-   const raw=Math.min(1,(now-begin)/duration),scaled=raw*3,idx=Math.min(2,Math.floor(scaled)),t=raw>=1?1:scaled-idx,q=curves[idx];
-   const x=bez(q.p0[0],q.p1[0],q.p2[0],q.p3[0],t),y=bez(q.p0[1],q.p1[1],q.p2[1],q.p3[1],t),scale=q.s0+(q.s1-q.s0)*t;
-   sleigh.style.left=x+"px";sleigh.style.top=y+"px";sleigh.style.transform="translate(-50%,-50%) scale("+scale+")";
+   const raw=Math.min(1,Math.max(0,(now-startAt)/duration));
+   let x,y,scale,opacity=1;
+   if(raw<.9){
+    const scaled=raw/.9*3,idx=Math.min(2,Math.floor(scaled)),t=scaled>=3?1:scaled-idx,q=curves[idx];
+    x=bez(q.p0[0],q.p1[0],q.p2[0],q.p3[0],t);
+    y=bez(q.p0[1],q.p1[1],q.p2[1],q.p3[1],t);
+    scale=q.s0+(q.s1-q.s0)*t;
+   }else{
+    const t=(raw-.9)/.1;
+    x=.86*w+(.34*w)*t;y=.12*h-(.40*h)*t;scale=.36-.31*t;opacity=1-t;
+   }
+   sleigh.style.left=x+"px";sleigh.style.top=y+"px";
+   sleigh.style.transform="translate(-50%,-50%) scale("+scale+")";
+   sleigh.style.opacity=String(opacity);
    if(raw<1)requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
  }else{
-  startIntroProgress(splash,7800);
+  sleigh.animate([
+   {transform:"translate(-34vw,30vh) scale(1.02)",opacity:1,offset:0},
+   {transform:"translate(-10vw,20vh) scale(.90)",opacity:1,offset:.22},
+   {transform:"translate(34vw,-10vh) scale(.62)",opacity:1,offset:.52},
+   {transform:"translate(74vw,-48vh) scale(.42)",opacity:1,offset:.88},
+   {transform:"translate(118vw,-82vh) scale(.07)",opacity:0,offset:1}
+  ],{duration,delay:Math.max(0,startAt-performance.now()),fill:"forwards",easing:"linear"});
  }
-})();
-</script></body></html>
+})();</script></body></html>
