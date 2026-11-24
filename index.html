@@ -20,17 +20,7 @@
 }
 @media(max-width:600px){
  #introSplash{background-image:url("WeFamilyHintergrundMobile.png?v=5");background-position:center center;background-size:100% 100%}
- .introSleigh{left:0;top:auto;bottom:1vh;width:96vw;max-height:none;animation:sleighFlightMobile 5.2s cubic-bezier(.42,0,.22,1) .12s both}
- @keyframes sleighFlightMobile{
-  0%{transform:translate(0,0) scale(.96);opacity:1}
-  14%{transform:translate(12vw,-9vh) scale(.88);opacity:1}
-  28%{transform:translate(24vw,-22vh) scale(.75);opacity:1}
-  42%{transform:translate(18vw,-37vh) scale(.60);opacity:1}
-  56%{transform:translate(30vw,-51vh) scale(.44);opacity:.98}
-  70%{transform:translate(48vw,-65vh) scale(.29);opacity:.9}
-  84%{transform:translate(65vw,-77vh) scale(.16);opacity:.68}
-  100%{transform:translate(78vw,-87vh) scale(.055);opacity:0}
- }
+ .introSleigh{left:50%;top:0;bottom:auto;width:96vw;max-height:none;transform:translate(-50%,-50%);animation:none;will-change:left,top,transform,opacity}
  .introCaption{font-size:13px;bottom:4%;padding:9px 14px}
 }
 @media(prefers-reduced-motion:reduce){.introSleigh{animation-duration:1ms!important;animation-delay:0s!important}#introSplash{transition:none}}
@@ -179,5 +169,34 @@ function setRoomCount(){let raw=$("roomCount").value.trim();if(raw==="")return a
 function renderRoomStats(){if(!$("roomStatsView")||!$("roomRound"))return;let s=$("roomSession").value.trim()||"Spieltag",n=Number($("roomRound").value);if(!n)return;let r=db.roomStats[s+"|"+n],prev=db.rounds.filter(x=>x.n<n).map(x=>db.roomStats[s+"|"+x.n]).filter(Boolean).sort((a,b)=>b.round-a.round)[0];let start=r?r.start:null,current=r?r.current:null;let vals=db.rounds.map(x=>db.roomStats[s+"|"+x.n]).filter(Boolean).map(x=>x.current);let avg=vals.length?(vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1):"–";$("roomCount").value=r?String(r.start):"";$("roomStatsView").innerHTML='<div class="grid"><div class="card"><div class="muted">Startbestand zu Rundenbeginn</div><div class="stat">'+(start===null?"–":start)+'</div></div><div class="card"><div class="muted">Erfasster Rundenbestand</div><div class="stat">'+(current===null?"–":current)+'</div></div><div class="card"><div class="muted">Höchster erfasster Stand</div><div class="stat">'+(r?r.peak:"–") +'</div></div><div class="card"><div class="muted">Niedrigster erfasster Stand</div><div class="stat">'+(r?r.low:"–") +'</div></div></div><p class="muted">Durchschnitt der gespeicherten Rundenstände: '+avg+'</p>'+(r&&r.changes.length?'<h3>Änderungen</h3>'+r.changes.slice().reverse().map(x=>'<div class="item">'+(x.delta>0?'+':'')+x.delta+' · '+x.label+' → '+x.value+' Personen</div>').join(""):'<p class="muted">Für diese Runde wurde noch kein Startbestand gespeichert. Gib die Personenzahl zu Rundenbeginn ein.</p>')}
 
 renderAll();
+(function runMobileSleighFlight(){
+ const splash=$("introSplash"),sleigh=splash?.querySelector(".introSleigh");
+ if(!splash||!sleigh||!window.matchMedia("(max-width:600px)").matches)return;
+ const reduce=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+ const w=window.innerWidth,h=window.innerHeight;
+ const points=[
+  {x:.46*w,y:.80*h,s:.96},
+  {x:.78*w,y:.64*h,s:.66},
+  {x:.30*w,y:.40*h,s:.34},
+  {x:.70*w,y:.15*h,s:.055}
+ ];
+ const start=performance.now(),duration=reduce?80:5000;
+ function cubic(p0,p1,p2,p3,t){const u=1-t;return u*u*u*p0+3*u*u*t*p1+3*u*t*t*p2+t*t*t*p3}
+ function frame(now){
+  const raw=Math.min(1,(now-start)/duration),segment=Math.min(2,Math.floor(raw*3)),t=raw===1?1:raw*3-segment;
+  const p0=points[segment],p3=points[segment+1];
+  const dx=p3.x-p0.x,dy=p3.y-p0.y;
+  const bend=segment===0?-.12*w:segment===1?.20*w:-.10*w;
+  const x=cubic(p0.x,p0.x+dx*.32+bend,p0.x+dx*.72+bend,p3.x,t);
+  const y=cubic(p0.y,p0.y+dy*.30,p0.y+dy*.72,p3.y,t);
+  const scale=p0.s+(p3.s-p0.s)*t;
+  const opacity=raw<.78?1:Math.max(0,1-(raw-.78)/.22);
+  sleigh.style.left=x+"px";sleigh.style.top=y+"px";
+  sleigh.style.transform="translate(-50%,-50%) scale("+scale+")";
+  sleigh.style.opacity=String(opacity);
+  if(raw<1)requestAnimationFrame(frame);
+ }
+ requestAnimationFrame(frame);
+})();
 setTimeout(()=>{const splash=$("introSplash");if(splash){splash.classList.add("out");setTimeout(()=>splash.remove(),600)}},5200);
 </script></body></html>
