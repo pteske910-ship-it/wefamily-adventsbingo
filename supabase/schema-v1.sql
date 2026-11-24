@@ -207,6 +207,35 @@ drop policy if exists audit_log_owner_select on public.audit_log;
 create policy audit_log_owner_select on public.audit_log
 for select to authenticated using (public.app_is_owner());
 
+-- Record changes to application roles. This function writes only the role-change audit entry.
+create or replace function public.audit_app_user_role_change()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $
+begin
+  insert into public.audit_log(actor_user_id, action, target_type, target_id, details)
+  values (
+    (select auth.uid()),
+    case when tg_op = 'DELETE' then 'role_removed' else 'role_changed' end,
+    'app_user',
+    coalesce(old.user_id, new.user_id)::text,
+    case
+      when tg_op = 'DELETE' then jsonb_build_object('old_role', old.app_role)
+      else jsonb_build_object('old_role', old.app_role, 'new_role', new.app_role)
+    end
+  );
+  if tg_op = 'DELETE' then return old; end if;
+  return new;
+end;
+$;
+
+drop trigger if exists app_users_audit_role_change on public.app_users;
+create trigger app_users_audit_role_change
+after update of app_role or delete on public.app_users
+for each row execute function public.audit_app_user_role_change();
+
 -- No client-side insert/update/delete policy for audit_log.
 revoke all on public.app_users, public.events, public.event_participants,
   public.rounds, public.bingo_results, public.room_statistics, public.audit_log
@@ -215,7 +244,8 @@ from anon;
 grant select, insert, update, delete on public.events,
   public.event_participants, public.rounds, public.bingo_results,
   public.room_statistics to authenticated;
-grant select on public.app_users, public.audit_log to authenticated;
+grant select, insert, update, delete on public.app_users to authenticated;
+grant select on public.audit_log to authenticated;
 grant usage, select on sequence public.audit_log_id_seq to authenticated;
 
 commit;
