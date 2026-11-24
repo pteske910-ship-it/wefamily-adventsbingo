@@ -95,6 +95,7 @@ let cloudEditable=false;
 let cloudComparePassed=false;
 let cloudSaveQueue=Promise.resolve();
 let cloudVersion=null;
+let cloudBaseline=null;
 const IMPORTED_EVENT_ID="9f575448-a1b6-4e07-990d-d73f3696b844";
 function setAuthenticatedUI(user){const ok=!!user;$("authGate").classList.toggle("hidden",ok);["appHeader","appMain","appFooter"].forEach(id=>$(id).classList.toggle("hidden",!ok));if(ok){$("appHeader").querySelector("p").textContent="Angemeldet als "+(user.email||"WeFamily-Konto")+" · Daten aktuell noch lokal auf diesem Gerät";}}
 async function initAuth(){try{const {data,error}=await supabaseClient.auth.getSession();if(error)throw error;setAuthenticatedUI(data.session?.user||null);}catch(e){$("authMessage").textContent="Anmeldung konnte nicht geprüft werden: "+e.message;}}
@@ -127,6 +128,25 @@ const initialFamilyMembers=["Nami","🔥Viktor","itslaylla👻","MoMo¹⁶¹","M
 let familyRosterAdded=0;
 initialFamilyMembers.forEach(name=>{const exists=db.players.some(p=>String(p.name||"").trim().toLocaleLowerCase("de")===name.trim().toLocaleLowerCase("de"));if(!exists){db.players.push({id:crypto.randomUUID(),name,family:""});familyRosterAdded++}});
 if(familyRosterAdded)localStorage.setItem("wf-adventbingo-v01",JSON.stringify(db));
+function sameJSON(a,b){return JSON.stringify(a??null)===JSON.stringify(b??null)}
+function mapBy(items,key){return new Map((items||[]).map(x=>[String(key(x)),x]))}
+function buildCloudOperations(before,after){
+ const ops=[],oldPlayers=mapBy(before.players,x=>x.id),newPlayers=mapBy(after.players,x=>x.id),
+ oldRounds=mapBy(before.rounds,x=>x.n),newRounds=mapBy(after.rounds,x=>x.n),
+ oldResults=mapBy(before.results,x=>x.id),newResults=mapBy(after.results,x=>x.id),
+ oldRooms=before.roomStats||{},newRooms=after.roomStats||{};
+ for(const [k,v] of newRounds)if(!oldRounds.has(k)||!sameJSON(oldRounds.get(k),v))ops.push(["round","upsert",v]);
+ for(const [k,v] of newPlayers)if(!oldPlayers.has(k)||!sameJSON(oldPlayers.get(k),v))ops.push(["participant","upsert",v]);
+ for(const [k,v] of oldResults)if(!newResults.has(k))ops.push(["result","delete",{id:v.id}]);
+ for(const [k,v] of newResults)if(!oldResults.has(k)||!sameJSON(oldResults.get(k),v))ops.push(["result","upsert",v]);
+ for(const [k,v] of Object.entries(oldRooms))if(!(k in newRooms)){const [session,round]=k.split("|");ops.push(["room","delete",{session,round:Number(round)}]);}
+ for(const [k,v] of Object.entries(newRooms))if(!(k in oldRooms)){const [session,round]=k.split("|");ops.push(["room","upsert",{session,round:Number(v.round||round),...v}]);}
+ for(const [k,v] of oldPlayers)if(!newPlayers.has(k))ops.push(["participant","delete",{id:v.id}]);
+ for(const [k,v] of oldRounds)if(!newRounds.has(k))ops.push(["round","delete",{n:v.n}]);
+ if(!sameJSON(before.presence,after.presence)||!sameJSON(before.attendance,after.attendance)||!sameJSON(before.scoring,after.scoring))
+  ops.push(["meta","upsert",{presence:after.presence||{},attendance:after.attendance||{},scoring:after.scoring||{}}]);
+ return ops;
+}
 function persist(){
  if(cloudReadOnly&&!cloudEditable){alert("Der Cloud-Bestand ist schreibgeschützt. Erst nach erfolgreicher Prüfung kann die Cloud-Bearbeitung freigegeben werden.");return}
  const snapshot=JSON.parse(JSON.stringify(db));
@@ -136,22 +156,27 @@ function persist(){
  cloudSaveQueue=cloudSaveQueue.then(async()=>{
   const status=$("cloudLoadStatus");
   try{
-   const {data,error}=await supabaseClient.rpc("sync_legacy_bingo_event",{p_event_id:IMPORTED_EVENT_ID,p_expected_updated_at:cloudVersion,p_payload:snapshot});
-   if(error)throw error;
-   cloudVersion=data;
-   if(status)status.textContent="Cloud-Speicherung erfolgreich · "+new Date().toLocaleTimeString("de-DE");
+   if(!cloudBaseline||!cloudVersion)throw new Error("Kein bestätigter Cloud-Ausgangsstand. Bitte neu laden.");
+   const operations=buildCloudOperations(cloudBaseline,snapshot);
+   for(const [entity,operation,payload] of operations){
+    const {data,error}=await supabaseClient.rpc("apply_bingo_change",{p_event_id:IMPORTED_EVENT_ID,p_expected_updated_at:cloudVersion,p_entity:entity,p_operation:operation,p_payload:payload});
+    if(error)throw error;
+    cloudVersion=data;
+   }
+   cloudBaseline=snapshot;
+   if(status)status.textContent=operations.length+" Einzeländerung(en) sicher gespeichert · "+new Date().toLocaleTimeString("de-DE");
   }catch(e){
    cloudEditable=false;cloudReadOnly=true;
-   if(status)status.textContent="Cloud-Speicherung fehlgeschlagen. Bearbeitung wurde gesperrt: "+(e.message||String(e));
+   if(status)status.textContent="Cloud-Speicherung gestoppt: "+(e.message||String(e))+". Bitte Cloud neu laden.";
    await loadImportedCloudEvent();
-   alert("Die Änderung konnte nicht sicher in Supabase gespeichert werden. Die Cloud-Bearbeitung wurde gesperrt und der letzte Cloud-Stand neu geladen. Bitte prüfe den angezeigten Datenstand.");
+   alert("Die Änderung konnte nicht vollständig gespeichert werden. Die Cloud-Bearbeitung wurde gesperrt und der letzte bestätigte Cloud-Stand neu geladen.");
   }
  });
 }
 function showTab(id){document.querySelectorAll(".pane").forEach(x=>x.classList.toggle("hidden",x.id!==id));document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x.dataset.tab===id));if(id==="internal"){renderInternal();}else if(id==="results"){renderRoomStats();}}
 document.querySelectorAll(".tab[data-tab]").forEach(b=>b.addEventListener("click",()=>showTab(b.dataset.tab)));document.addEventListener("click",e=>{const wrap=document.querySelector(".player-autocomplete");if(wrap&&!wrap.contains(e.target))$("playerSuggestions")?.classList.add("hidden")});$("playerName").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();addPlayer()}});$("resultRound").addEventListener("change",renderRoomStats);$("sessionName").addEventListener("change",renderRoomStats);
 function addPlayer(){let raw=$("playerName").value.trim();if(!raw)return;let m=raw.match(/^(.*?)\s*\(([^()]+)\)\s*$/);let name=(m?m[1]:raw).trim(),family=m?m[2].trim():"";if(!name)return alert("Bitte einen Spielernamen eingeben.");if(db.players.some(p=>p.name.toLocaleLowerCase()===name.toLocaleLowerCase()&&(p.family||"").toLocaleLowerCase()===family.toLocaleLowerCase()))return alert("Diesen Namen mit dieser Familienangabe gibt es bereits.");db.players.push({id:crypto.randomUUID(),name,family});$("playerName").value="";persist();$("playerName").focus()}
-function delPlayer(id){if(confirm("Teilnehmer wirklich entfernen? Vorhandene Ergebnisse bleiben in der Sicherung erhalten, werden aber nicht mehr zugeordnet.")){db.players=db.players.filter(p=>p.id!==id);persist()}}
+function delPlayer(id){if(db.results.some(r=>r.playerId===id))return alert("Dieser Teilnehmer hat bereits Bingo-Ergebnisse. Zum Schutz der Historie kann er nicht entfernt werden.");if(confirm("Teilnehmer wirklich entfernen?")){db.players=db.players.filter(p=>p.id!==id);persist()}}
 function renderPlayers(){$("playerList").innerHTML=db.players.map(p=>'<div class="item row between"><strong>'+esc(p.name)+(p.family?' <span class="pill">('+esc(p.family)+')</span>':'')+'</strong><button class="small danger" onclick="delPlayer(\''+p.id+'\')">Entfernen</button></div>').join("")||'<p class="muted">Noch keine Teilnehmer angelegt.</p>'}
 function renderRounds(){$("scoringMode").value=db.scoring?.mode||"mode";$("normalPoints").value=db.scoring?.normal??2;$("powerPoints").value=db.scoring?.power??1;$("blackoutPoints").value=db.scoring?.blackout??3;$("placementPoints").value=(db.scoring?.placements||[10,8,7,6,5,4,3,2,1,1]).join(",");$("modePoints").classList.toggle("hidden",db.scoring?.mode==="place");$("placePoints").classList.toggle("hidden",db.scoring?.mode!=="place");$("roundList").innerHTML=db.rounds.map(r=>'<div class="item"><div class="row between"><strong>Runde '+r.n+'</strong><span class="pill">'+esc(r.mode||"Normal")+'</span></div><div class="grid"><div><label>Spielmodus</label><select onchange="setRound('+r.n+',\'mode\',this.value)"><option '+((r.mode||"Normal")==="Normal"?"selected":"")+' value="Normal">Normales Bingo</option><option '+(r.mode==="Power-up"?"selected":"")+' value="Power-up">Power-up</option><option '+(r.mode==="Blackout"?"selected":"")+' value="Blackout">Blackout</option></select></div><div><label>Punkte pro Bingo</label><input type="number" min="0" step="1" value="'+(Number(r.pointsPerBingo)||0)+'" onchange="setRound('+r.n+',\'pointsPerBingo\',this.value)"></div><div><label>Interne Notiz / Preiszuordnung</label><input value="'+esc(r.note||"")+'" onchange="setRound('+r.n+',\'note\',this.value)" placeholder="Optional"></div></div></div>').join("");$("roundCount").value=db.rounds.length}
 function setScoringMode(v){db.scoring.mode=v;persist()}
@@ -212,6 +237,7 @@ async function loadImportedCloudEvent(){
   };
   cloudReadOnly=true;
   cloudVersion=eventResult.data.updated_at;
+  cloudBaseline=JSON.parse(JSON.stringify(db));
   cloudEditable=false;cloudReadOnly=true;cloudComparePassed=false;
   $("enableCloudEditButton").disabled=true;
   $("cloudWriteTestButton").disabled=false;
