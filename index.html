@@ -13,12 +13,12 @@
 #introSplash:before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,#06112b18 35%,#06112b55 100%);pointer-events:none}
 .introSleigh{position:absolute;z-index:2;left:0;top:0;height:auto;object-fit:contain;filter:drop-shadow(0 10px 20px #0008);will-change:transform,opacity}
 .introCaption{position:absolute;z-index:3;left:50%;bottom:5%;transform:translateX(-50%);margin:0;padding:10px 18px;border-radius:999px;background:#07152dcc;border:1px solid #ffffff55;color:#fff;font-weight:800;letter-spacing:.04em;text-shadow:0 2px 8px #000;white-space:nowrap;box-shadow:0 4px 24px #0005}
-@media(min-width:601px){
+@media(min-width:901px){
  #introSplash{background-position:center center;background-size:cover}
  .introSleigh{width:min(78vw,1120px);max-height:78vh;animation:sleighFlightDesktop 4.95s cubic-bezier(.2,.62,.34,1) .12s forwards}
  @keyframes sleighFlightDesktop{0%{transform:translate(-34vw,30vh) scale(1.02);opacity:1}22%{transform:translate(-10vw,20vh) scale(.82);opacity:1}62%{transform:translate(52vw,-24vh) scale(.32);opacity:.9}100%{transform:translate(118vw,-82vh) scale(.07);opacity:0}}
 }
-@media(max-width:600px){
+@media(max-width:900px){
  #introSplash{background-image:url("WeFamilyHintergrundMobile.png?v=8");background-position:center center;background-size:100% 100%;opacity:1}
  .introSleigh{left:0;top:0;bottom:auto;width:74vw;max-height:none;transform:translate(-50%,-50%);animation:none;opacity:0;will-change:left,top,transform,opacity}
  .introCaption{font-size:13px;bottom:4%;padding:9px 14px}
@@ -171,7 +171,7 @@ function renderRoomStats(){if(!$("roomStatsView")||!$("roomRound"))return;let s=
 renderAll();
 (async function runMobileSleighFlight(){
  const splash=$("introSplash"),sleigh=splash?.querySelector(".introSleigh");
- if(!splash||!sleigh||!window.matchMedia("(max-width:600px)").matches)return;
+ if(!splash||!sleigh||!window.matchMedia("(max-width:900px)").matches)return;
  const w=window.innerWidth,h=window.innerHeight;
  const curves=[
   {p0:[.39*w,.84*h],p1:[.70*w,.82*h],p2:[.96*w,.73*h],p3:[.76*w,.64*h],s0:1,s1:.84},
@@ -201,5 +201,5 @@ renderAll();
  requestAnimationFrame(frame);
  setTimeout(()=>{splash.classList.add("out");setTimeout(()=>splash.remove(),600)},7500);
 })();
-if(!window.matchMedia("(max-width:600px)").matches)setTimeout(()=>{const splash=$("introSplash");if(splash){splash.classList.add("out");setTimeout(()=>splash.remove(),600)}},7200);
+if(!window.matchMedia("(max-width:900px)").matches)setTimeout(()=>{const splash=$("introSplash");if(splash){splash.classList.add("out");setTimeout(()=>splash.remove(),600)}},7200);
 </script></body></html>
