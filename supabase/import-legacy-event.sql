@@ -132,12 +132,6 @@ begin
     end loop;
   end if;
 
-  insert into public.audit_log(actor_user_id, action, target_type, target_id, details)
-  values (auth.uid(), 'legacy_event_imported', 'event', v_event_id::text,
-    jsonb_build_object('participants', jsonb_array_length(p_payload->'players'),
-      'rounds', jsonb_array_length(p_payload->'rounds'),
-      'results', jsonb_array_length(p_payload->'results')));
-
   return v_event_id;
 end;
 $$;
