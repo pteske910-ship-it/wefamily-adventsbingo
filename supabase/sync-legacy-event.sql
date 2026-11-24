@@ -100,7 +100,7 @@ begin
 
     insert into public.bingo_results(
       event_id, round_id, participant_id, session_key,
-      count, bingo_no, place, points
+      count, bingo_no, place, points, room_count
     )
     select
       p_event_id, v_round_id, p.id,
@@ -108,7 +108,8 @@ begin
       greatest(1, coalesce(nullif(v_result->>'count','')::integer,1)),
       nullif(v_result->>'bingoNo','')::integer,
       nullif(v_result->>'place','')::integer,
-      nullif(v_result->>'points','')::numeric
+      nullif(v_result->>'points','')::numeric,
+      nullif(v_result->>'roomCount','')::integer
     from public.event_participants p
     where p.event_id = p_event_id
       and p.source_participant_id = (v_result->>'playerId')::uuid;
