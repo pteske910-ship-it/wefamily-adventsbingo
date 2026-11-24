@@ -98,8 +98,15 @@ begin
     -- Only event metadata owned by this app is patched; unrelated legacy_data is preserved.
     update public.events
     set legacy_data = jsonb_set(
-          jsonb_set(coalesce(legacy_data,'{}'::jsonb),'{original,presence}',coalesce(p_payload->'presence','{}'::jsonb),true),
-          '{original,attendance}',coalesce(p_payload->'attendance','{}'::jsonb),true
+          coalesce(legacy_data,'{}'::jsonb),
+          '{original}',
+          coalesce(legacy_data->'original','{}'::jsonb) ||
+            jsonb_build_object(
+              'presence',coalesce(p_payload->'presence','{}'::jsonb),
+              'attendance',coalesce(p_payload->'attendance','{}'::jsonb),
+              'scoring',coalesce(p_payload->'scoring','{}'::jsonb)
+            ),
+          true
         ),
         settings = jsonb_set(coalesce(settings,'{}'::jsonb),'{scoring}',coalesce(p_payload->'scoring','{}'::jsonb),true)
     where id = p_event_id;
