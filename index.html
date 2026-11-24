@@ -102,7 +102,7 @@ function loadDB(){
 }
 let db=loadDB();
 // Vorsorglich übernommene WeFamily-Mitglieder: nur Teilnehmerstamm, keine Teilnahme oder Raumbelegung.
-const initialFamilyMembers=["Donic","Heidi","Yvonne","Nami","Sophie","🔥Viktor","itslaylla👻","MoMo¹⁶¹","Mommy","SOPHIA♡","CHARLY ✨🥖","PASCAL","Hubii","King","David","Christoph","Jenny","ARRO-FISCHER","ELFI_ÖMMEL","QUEEN♡p","FABIⓎ","Tanja","Ⓨ Dark","Santa Clause","Petra","Santas Wife","Rene","JONNY💀","Rover","Klein Marie","Daniel","Ⓨ Fanni","LovelyWoman","GARY","Carsten","Gus","Eis. de","JOSI","NICII ☀️","Shadow ☯","Soulgard","Unknown","Itacki"];
+const initialFamilyMembers=["Nami","🔥Viktor","itslaylla👻","MoMo¹⁶¹","Mommy","CHARLY ✨🥖","PASCAL","Hubii","King","David","Christoph","Jenny","ARRO-FISCHER","ELFI_ÖMMEL","QUEEN♡p","FABIⓎ","Tanja","Ⓨ Dark","Santa Clause","Petra","Santas Wife","Rene","JONNY💀","Rover","Klein Marie","Daniel","Ⓨ Fanni","LovelyWoman","GARY","Carsten","Gus","Eis. de","JOSI","NICII ☀️","Shadow ☯","Soulgard","Unknown","Itacki"];
 let familyRosterAdded=0;
 initialFamilyMembers.forEach(name=>{const exists=db.players.some(p=>String(p.name||"").trim().toLocaleLowerCase("de")===name.trim().toLocaleLowerCase("de"));if(!exists){db.players.push({id:crypto.randomUUID(),name,family:""});familyRosterAdded++}});
 if(familyRosterAdded)localStorage.setItem("wf-adventbingo-v01",JSON.stringify(db));
