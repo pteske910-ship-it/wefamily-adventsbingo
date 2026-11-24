@@ -19,9 +19,9 @@
  @keyframes sleighFlightDesktop{0%{transform:translate(-34vw,30vh) scale(1.02);opacity:1}22%{transform:translate(-10vw,20vh) scale(.82);opacity:1}62%{transform:translate(52vw,-24vh) scale(.32);opacity:.9}100%{transform:translate(118vw,-82vh) scale(.07);opacity:0}}
 }
 @media(max-width:600px){
- #introSplash{background-position:42% center;background-size:auto 100%}
- .introSleigh{left:0;top:0;width:100vw;max-height:52vh;animation:sleighFlightMobile 5s cubic-bezier(.2,.62,.34,1) .12s forwards}
- @keyframes sleighFlightMobile{0%{transform:translate(0,48vh) scale(.94);opacity:1}22%{transform:translate(2vw,31vh) scale(.78);opacity:1}58%{transform:translate(9vw,-3vh) scale(.38);opacity:.9}100%{transform:translate(24vw,-62vh) scale(.07);opacity:0}}
+ #introSplash{background-image:url("WeFamilyHintergrundMobile.png");background-position:center center;background-size:cover}
+ .introSleigh{left:0;top:0;width:94vw;max-height:none;animation:sleighFlightMobile 5s cubic-bezier(.2,.62,.34,1) .12s forwards}
+ @keyframes sleighFlightMobile{0%{transform:translate(2vw,51vh) scale(1);opacity:1}22%{transform:translate(5vw,34vh) scale(.78);opacity:1}58%{transform:translate(15vw,-5vh) scale(.34);opacity:.88}100%{transform:translate(25vw,-65vh) scale(.055);opacity:0}}
  .introCaption{font-size:13px;bottom:4%;padding:9px 14px}
 }
 @media(prefers-reduced-motion:reduce){.introSleigh{animation-duration:1ms!important;animation-delay:0s!important}#introSplash{transition:none}}
