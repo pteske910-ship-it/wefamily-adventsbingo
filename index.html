@@ -317,7 +317,10 @@ $("enableCloudEditButton").addEventListener("click",()=>{
  if(!cloudComparePassed||!cloudVersion){alert("Zuerst muss der vollständige Inhaltsvergleich erfolgreich sein.");return}
  if(!confirm("Cloud-Bearbeitung aktivieren? Künftige Änderungen werden zentral in Supabase gespeichert. Die Live-Version bleibt unverändert."))return;
  cloudEditable=true;cloudReadOnly=false;
- $("appHeader").querySelector("p").textContent="Angemeldet als "+(supabaseClient.auth.getUser? "Konto":"WeFamily")+" · Cloud-Bearbeitung aktiv";
+ document.querySelectorAll("#appMain button,#appMain input,#appMain select,#appMain textarea").forEach(el=>el.disabled=false);
+ document.querySelectorAll(".tab[data-tab]").forEach(el=>el.disabled=false);
+ $("appMain").querySelector(".notice").textContent="Cloud-Bearbeitung aktiv: Änderungen werden zentral in Supabase gespeichert.";
+ $("appHeader").querySelector("p").textContent="Cloud-Bearbeitung aktiv · Änderungen werden zentral gespeichert";
  $("cloudLoadStatus").textContent="Cloud-Bearbeitung aktiviert. Änderungen werden zentral gespeichert.";
  $("enableCloudEditButton").disabled=true;
 });
