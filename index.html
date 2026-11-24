@@ -39,6 +39,7 @@
 @media(max-width:900px){.introLoader{width:92vw;bottom:6.5%;padding:0 5px}.introLoaderTitle{font-size:clamp(18px,5.1vw,27px);gap:10px;margin-bottom:10px}.introLoaderTrack{height:30px;padding:3px}}
 @media print{header,.tabs,.admin-subnav,.no-print,footer{display:none!important}body{background:white;color:#171329}.card{break-inside:avoid;box-shadow:none;background:white;color:#171329;border:1px solid #bbb}.muted{color:#555}}
 .input-like{background:#100e1b;border:1px solid #39334f;border-radius:12px;padding:12px 14px;font-size:1.05rem;color:#f4eaff;min-height:48px;display:flex;align-items:center;font-weight:700}
+#authGate{position:fixed;inset:0;z-index:40;display:grid;place-items:center;padding:20px;background:radial-gradient(ellipse at top,#302044 0,#100e1b 70%)}#authGate .card{width:min(100%,420px);padding:24px}#authGate h2{margin-top:0}#authMessage{min-height:22px;color:#ffd18a;font-size:13px}#logoutButton{margin-left:10px}
 </style></head>
 <body>
 <div id="introSplash" aria-label="WeFamily fliegt über den Nordpol">
@@ -48,8 +49,9 @@
   <div class="introLoaderTrack"><div class="introLoaderFill" id="introLoaderFill"></div></div>
  </div>
 </div>
-<header><div class="wrap" style="padding:0"><h1>🎄 WeFamily Adventsbingo</h1><p>Organisations- und Auswertungstest · Version 0.8 · lokal auf diesem Gerät</p></div></header>
-<main class="wrap">
+<section id="authGate"><div class="card"><h2>🔐 WeFamily Adventsbingo</h2><p class="muted">Bitte mit deinem WeFamily-Konto anmelden.</p><form id="loginForm"><label for="loginEmail">E-Mail-Adresse</label><input id="loginEmail" type="email" autocomplete="username" required><label for="loginPassword">Passwort</label><input id="loginPassword" type="password" autocomplete="current-password" required><div class="actions"><button class="primary" id="loginButton" type="submit">Anmelden</button></div><p id="authMessage" role="status"></p></form></div></section>
+<header class="hidden" id="appHeader"><div class="wrap" style="padding:0"><h1>🎄 WeFamily Adventsbingo</h1><p>Organisations- und Auswertungstest · Version 0.8 · Daten aktuell noch lokal auf diesem Gerät</p><button id="logoutButton" class="small">Abmelden</button></div></header>
+<main class="wrap hidden" id="appMain">
 <div class="notice">Testversion: Daten werden nur in diesem Browser gespeichert. Noch kein gemeinsamer Heidi-Zugang und keine echte Anmeldung. Vor echtem Einsatz bitte Daten exportieren.</div>
 <nav class="tabs" aria-label="Bereiche">
 <button class="tab active" data-tab="home">Übersicht</button><button class="tab" data-tab="players">Teilnehmer</button><button class="tab" data-tab="results">Ergebnisse</button><button class="tab secret" data-tab="internal">🔒 Nur Moderation</button><button class="tab" data-tab="settings">Einstellungen</button>
@@ -78,9 +80,19 @@
 <div class="card"><h2>Turnier-Einstellungen</h2><p class="muted">Lege die Rundenanzahl fest und konfiguriere Modus und Punkte je Runde. So kannst du den Manager auch für spätere Bingo-Ligen wiederverwenden.</p><div class="row"><div class="field"><label for="roundCount">Anzahl der Runden</label><input id="roundCount" type="number" min="1" max="250" step="1" value="25"></div><button class="primary" onclick="applyRoundCount()">Rundenanzahl übernehmen</button></div><div class="card"><h3>Punktevergabe</h3><label>Wertungssystem</label><select id="scoringMode" onchange="setScoringMode(this.value)"><option value="mode">Feste Punkte je Bingo-Spielmodus</option><option value="place">Punkte nach Platzierung</option></select><div id="modePoints" class="grid"><div><label>Normales Bingo · Punkte pro Bingo</label><input id="normalPoints" type="number" min="0" step="1" value="2" onchange="saveModePoints()"></div><div><label>Power-up · Punkte pro Bingo</label><input id="powerPoints" type="number" min="0" step="1" value="1" onchange="saveModePoints()"></div><div><label>Blackout · Punkte pro Bingo</label><input id="blackoutPoints" type="number" min="0" step="1" value="3" onchange="saveModePoints()"></div></div><div id="placePoints" class="hidden"><label>Punkte je Platzierung (Komma-getrennt)</label><input id="placementPoints" value="10,8,7,6,5,4,3,2,1,1" onchange="savePlacementPoints()"><p class="muted">Beispiel: 1. Platz = 10, 2. = 8, 3. = 7 Punkte usw.</p></div></div><div id="roundList"></div></div>
 <div class="card"><h2>Datensicherung</h2><p class="muted">Exportiere regelmäßig eine Sicherung. Import überschreibt den aktuellen lokalen Datenbestand.</p><div class="actions"><button class="primary" onclick="exportData()">Daten exportieren (JSON)</button><label class="tab" style="display:inline-block">Sicherung importieren<input id="importFile" type="file" accept="application/json" style="display:none" onchange="importData(event)"></label><button class="danger" onclick="resetData()">Alle lokalen Daten löschen</button></div></div>
 </section>
-</main><footer>WeFamily Adventsbingo-Manager · Prototyp 0.1</footer>
+</main><footer class="hidden" id="appFooter">WeFamily Adventsbingo-Manager · Prototyp 0.1</footer>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const $=id=>document.getElementById(id);
+const SUPABASE_URL="https://xukplcslrfecpqxyhhvn.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY="sb_publishable_2Kex3-Y4TabmOE3QX4NgMw_VAxLJ2nK";
+const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+function setAuthenticatedUI(user){const ok=!!user;$("authGate").classList.toggle("hidden",ok);["appHeader","appMain","appFooter"].forEach(id=>$(id).classList.toggle("hidden",!ok));if(ok){$("appHeader").querySelector("p").textContent="Angemeldet als "+(user.email||"WeFamily-Konto")+" · Daten aktuell noch lokal auf diesem Gerät";}}
+async function initAuth(){try{const {data,error}=await supabaseClient.auth.getSession();if(error)throw error;setAuthenticatedUI(data.session?.user||null);}catch(e){$("authMessage").textContent="Anmeldung konnte nicht geprüft werden: "+e.message;}}
+$("loginForm").addEventListener("submit",async e=>{e.preventDefault();const btn=$("loginButton");btn.disabled=true;$("authMessage").textContent="Anmeldung läuft …";try{const {data,error}=await supabaseClient.auth.signInWithPassword({email:$("loginEmail").value.trim(),password:$("loginPassword").value});if(error)throw error;setAuthenticatedUI(data.user);}catch(err){$("authMessage").textContent="Anmeldung fehlgeschlagen: "+err.message;}finally{btn.disabled=false;}});
+supabaseClient.auth.onAuthStateChange((_event,session)=>setAuthenticatedUI(session?.user||null));
+$("logoutButton").addEventListener("click",async()=>{const {error}=await supabaseClient.auth.signOut();if(error)alert("Abmeldung fehlgeschlagen: "+error.message);});
+initAuth();
 const defaultRounds=Array.from({length:25},(_,i)=>({n:i+1,mode:"Normal",pointsPerBingo:1,note:""}));
 const emptyDB=()=>({players:[],rounds:defaultRounds.map(r=>({...r})),results:[],presence:{},attendance:{},roomStats:{},scoring:{mode:"mode",normal:2,power:1,blackout:3,placements:[10,8,7,6,5,4,3,2,1,1]}});
 function loadDB(){
