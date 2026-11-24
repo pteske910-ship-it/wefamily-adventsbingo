@@ -90,7 +90,7 @@ begin
       and round_number = (v_result->>'round')::integer;
 
     insert into public.bingo_results(
-      event_id, round_id, participant_id, session_key, count, bingo_no, place, points
+      event_id, round_id, participant_id, session_key, count, bingo_no, place, points, room_count
     )
     select
       v_event_id, v_round_id, p.id,
