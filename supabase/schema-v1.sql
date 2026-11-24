@@ -244,7 +244,7 @@ from anon;
 grant select, insert, update, delete on public.events,
   public.event_participants, public.rounds, public.bingo_results,
   public.room_statistics to authenticated;
-grant select, insert, update, delete on public.app_users to authenticated;
+grant select, update, delete on public.app_users to authenticated;
 grant select on public.audit_log to authenticated;
 grant usage, select on sequence public.audit_log_id_seq to authenticated;
 
