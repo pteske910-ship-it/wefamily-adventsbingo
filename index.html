@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#171329"><title>WeFamily Adventsbingo</title>
+<meta name="theme-color" content="#171329">\n<link rel="preload" as="image" href="WeFamilyHintergrundMobile.png?v=4">\n<link rel="preload" as="image" href="wefamily-sleigh.webp"><title>WeFamily Adventsbingo</title>
 <style>
 :root{color-scheme:dark;--bg:#100e1b;--panel:#1c1930;--panel2:#26213e;--line:#393252;--txt:#f5f1ff;--muted:#b8b0cb;--pink:#f36bb5;--gold:#ffc66d;--green:#78d7ad}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#302044 0,#100e1b 55%);color:var(--txt);font:15px system-ui,sans-serif}header{padding:22px 16px 14px;position:sticky;top:0;background:#171329ed;backdrop-filter:blur(12px);z-index:2;border-bottom:1px solid var(--line)}h1{font-size:22px;margin:0}header p{margin:4px 0 0;color:var(--muted);font-size:13px}.wrap{max-width:980px;margin:auto;padding:16px}.tabs{display:flex;gap:8px;overflow:auto;padding-bottom:12px}.tab,button{border:1px solid var(--line);background:var(--panel2);color:var(--txt);border-radius:12px;padding:10px 13px;font-weight:650;cursor:pointer;white-space:nowrap}.tab.active,button.primary{background:linear-gradient(120deg,#8c3f83,#5140a1);border-color:#a76db2}.tab.secret{border-color:#8c5b2e;color:#ffd18a}.card{background:#1c1930ed;border:1px solid var(--line);border-radius:17px;padding:15px;margin:10px 0;box-shadow:0 8px 30px #0002}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}.row{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.between{justify-content:space-between}.muted{color:var(--muted)}label{display:block;color:var(--muted);font-size:13px;margin:8px 0 5px}input,select,textarea{width:100%;background:#100e1b;color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:11px;font:inherit}input[type=checkbox]{width:auto;accent-color:var(--pink)}.field{flex:1;min-width:130px}button.danger{border-color:#85434e;color:#ffabb5}button.small{padding:7px 10px;font-size:13px}.stat{font-size:28px;font-weight:800}.pill{font-size:12px;color:#ffe0a5;background:#49351d;padding:4px 8px;border-radius:99px}.item{padding:10px 0;border-bottom:1px solid var(--line)}.item:last-child{border:0}.hidden{display:none!important}.notice{border-left:3px solid var(--gold);padding:10px 12px;background:#352a24;border-radius:8px;color:#ffe1b5;font-size:13px}.score{font-size:20px;font-weight:800;color:var(--gold)}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}footer{padding:20px;color:var(--muted);font-size:12px;text-align:center}
@@ -19,23 +19,17 @@
  @keyframes sleighFlightDesktop{0%{transform:translate(-34vw,30vh) scale(1.02);opacity:1}22%{transform:translate(-10vw,20vh) scale(.82);opacity:1}62%{transform:translate(52vw,-24vh) scale(.32);opacity:.9}100%{transform:translate(118vw,-82vh) scale(.07);opacity:0}}
 }
 @media(max-width:600px){
- #introSplash{background-image:url("WeFamilyHintergrundMobile.png?v=3");background-position:center center;background-size:100% 100%}
- .introSleigh{left:0;top:auto;bottom:1vh;width:96vw;max-height:none;animation:sleighFlightMobile 5.2s linear .12s forwards}
+ #introSplash{background-image:url("WeFamilyHintergrundMobile.png?v=4");background-position:center center;background-size:100% 100%}
+ .introSleigh{left:0;top:auto;bottom:1vh;width:96vw;max-height:none;animation:sleighFlightMobile 5.2s cubic-bezier(.42,0,.22,1) .12s both}
  @keyframes sleighFlightMobile{
   0%{transform:translate(0,0) scale(.96) rotate(0deg);opacity:1}
-  8%{transform:translate(1vw,-3vh) scale(.94) rotate(-1deg);opacity:1}
-  16%{transform:translate(3vw,-7vh) scale(.89) rotate(-2deg);opacity:1}
-  24%{transform:translate(6vw,-12vh) scale(.82) rotate(-1deg);opacity:1}
-  32%{transform:translate(10vw,-18vh) scale(.74) rotate(1deg);opacity:1}
-  40%{transform:translate(15vw,-25vh) scale(.65) rotate(2deg);opacity:1}
-  48%{transform:translate(21vw,-33vh) scale(.55) rotate(1deg);opacity:1}
-  56%{transform:translate(28vw,-42vh) scale(.45) rotate(-1deg);opacity:.98}
-  64%{transform:translate(36vw,-51vh) scale(.35) rotate(-2deg);opacity:.94}
-  72%{transform:translate(45vw,-61vh) scale(.26) rotate(-1deg);opacity:.86}
-  80%{transform:translate(55vw,-71vh) scale(.18) rotate(1deg);opacity:.72}
-  88%{transform:translate(66vw,-82vh) scale(.12) rotate(1deg);opacity:.52}
-  94%{transform:translate(77vw,-92vh) scale(.075) rotate(0deg);opacity:.28}
-  100%{transform:translate(90vw,-104vh) scale(.035) rotate(0deg);opacity:0}
+  16%{transform:translate(3vw,-10vh) scale(.88) rotate(-3deg);opacity:1}
+  32%{transform:translate(12vw,-24vh) scale(.70) rotate(-1deg);opacity:1}
+  48%{transform:translate(22vw,-39vh) scale(.51) rotate(2deg);opacity:1}
+  64%{transform:translate(25vw,-55vh) scale(.34) rotate(1deg);opacity:.98}
+  78%{transform:translate(21vw,-68vh) scale(.20) rotate(-2deg);opacity:.86}
+  90%{transform:translate(26vw,-78vh) scale(.095) rotate(-1deg);opacity:.48}
+  100%{transform:translate(32vw,-84vh) scale(.035) rotate(0deg);opacity:0}
  }
  .introCaption{font-size:13px;bottom:4%;padding:9px 14px}
 }
