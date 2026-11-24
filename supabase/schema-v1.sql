@@ -159,10 +159,9 @@ alter table public.audit_log enable row level security;
 drop policy if exists app_users_owner_select on public.app_users;
 create policy app_users_owner_select on public.app_users
 for select to authenticated using (public.app_is_owner());
-
-drop policy if exists app_users_owner_insert on public.app_users;
-create policy app_users_owner_insert on public.app_users
-for insert to authenticated with check (public.app_is_owner());
+drop policy if exists app_users_self_select on public.app_users;
+create policy app_users_self_select on public.app_users
+for select to authenticated using (user_id = (select auth.uid()));
 
 drop policy if exists app_users_owner_update on public.app_users;
 create policy app_users_owner_update on public.app_users
@@ -230,6 +229,31 @@ begin
   return new;
 end;
 $;
+
+create or replace function public.protect_owner_account()
+returns trigger
+language plpgsql
+set search_path = ''
+as $
+begin
+  if tg_op = 'DELETE' and old.app_role = 'owner' then
+    raise exception 'The owner account cannot be deleted';
+  end if;
+  if tg_op = 'UPDATE' and old.app_role = 'owner' and new.app_role <> 'owner' then
+    raise exception 'The owner role cannot be revoked or changed';
+  end if;
+  if tg_op = 'UPDATE' and old.app_role <> 'owner' and new.app_role = 'owner' then
+    raise exception 'A second owner cannot be created through this operation';
+  end if;
+  if tg_op = 'DELETE' then return old; end if;
+  return new;
+end;
+$;
+
+drop trigger if exists app_users_protect_owner on public.app_users;
+create trigger app_users_protect_owner
+before update of app_role or delete on public.app_users
+for each row execute function public.protect_owner_account();
 
 drop trigger if exists app_users_audit_role_change on public.app_users;
 create trigger app_users_audit_role_change
