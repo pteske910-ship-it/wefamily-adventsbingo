@@ -183,12 +183,15 @@ function statData(session){
   const bestDay=Object.entries(byDay).sort((a,b)=>b[1]-a[1])[0]||null,bestRound=Object.entries(byRound).sort((a,b)=>b[1]-a[1])[0]||null;
   return {id:p.id,name:p.name+(p.family?" ("+p.family+")":""),total:own.reduce((a,r)=>a+(Number(r.count)||0),0),bestDay,bestRound};
  }).sort((a,b)=>b.total-a.total);
+ const roomPeriodRecords=selected.flatMap(s=>db.rounds.map(rd=>db.roomStats?.[s+"|"+rd.n]).filter(Boolean));
+ const roomPeriodValues=roomPeriodRecords.map(x=>Number(x.current??x.peak??x.start)).filter(Number.isFinite);
+ const roomPeriodAverage=roomPeriodValues.length?roomPeriodValues.reduce((a,b)=>a+b,0)/roomPeriodValues.length:null;
  const total=results.reduce((a,r)=>a+(Number(r.count)||0),0),bingoPlayerIds=[...new Set(results.filter(r=>(Number(r.count)||0)>0).map(r=>r.playerId))];
  const roundRankings=Object.fromEntries(selected.map(s=>[s,db.rounds.map(rd=>{
   const rs=results.filter(r=>String(r.session||"Spieltag").trim()===s&&Number(r.round)===rd.n),map={};rs.forEach(r=>map[r.playerId]=(map[r.playerId]||0)+(Number(r.count)||0));
   return {round:rd.n,total:rs.reduce((a,r)=>a+(Number(r.count)||0),0),ranking:Object.entries(map).map(([id,n])=>({id,total:n,p:players.find(p=>p.id===id)})).sort((a,b)=>b.total-a.total)};
  })]));
- return {sessions,selected,results,players,ids,counts,ranking,rounds,distribution,daily,roundDaily,personal,total,roundRankings,bingoPlayerIds};
+ return {sessions,selected,results,players,ids,counts,ranking,rounds,distribution,daily,roundDaily,personal,total,roundRankings,bingoPlayerIds,roomPeriodValues,roomPeriodAverage};
 }
 function renderStats(){
  const select=$("statsSession"),old=select.value||"__all",sessions=statSessions();
@@ -216,7 +219,7 @@ function renderStats(){
  const summary=active+" Bingo-Spieler · "+d.total+" Bingos"+(best?" · Spitzenwert: "+(best.p?.name||"Unbekannt")+" ("+best.total+")":"")+(maxRound?" · stärkste Runde: "+maxRound[0]+" ("+maxRound[1]+")":"");
  $("statsReport").innerHTML=
  '<div class="grid"><div class="card"><div class="muted">Personen im Teilnehmerstamm</div><div class="stat">'+d.players.length+'</div></div><div class="card"><div class="muted">Bingo-Spieler mit Ergebnis</div><div class="stat">'+active+'</div></div><div class="card"><div class="muted">Bingos gesamt</div><div class="stat">'+d.total+'</div></div><div class="card"><div class="muted">Durchschnitt je Bingo-Spieler</div><div class="stat">'+(active?(d.total/active).toFixed(1):"–")+'</div></div></div>'+
- '<div class="card"><h3>📣 Statistik-Highlights</h3><p>'+esc(summary)+'</p></div>'+
+ '<div class="card"><h3>📣 Statistik-Highlights</h3><p>'+esc(summary)+'</p><p><strong>Durchschnittlicher Voice-Raumstand im gesamten Zeitraum:</strong> '+(d.roomPeriodAverage===null?"Keine Raumwerte erfasst":d.roomPeriodAverage.toFixed(1)+" Personen")+'</p></div>'+
  '<div class="card"><h3>🏆 Rangliste & Gewinnerübersicht</h3>'+rank+'</div>'+
  '<div class="card"><h3>🎯 Bingo-Verteilung der Bingo-Spieler</h3>'+donut+'</div>'+
  '<div class="card"><h3>📊 Bingos je Spieltag und Runde</h3>'+bars+'<h4>Erfasste Voice-Raumgröße je Runde</h4>'+(d.roundDaily.filter(x=>x.roomCount!==null).map(x=>'<div class="item row between"><span>'+esc(x.session)+' · Runde '+x.round+'</span><strong>'+x.roomCount+' Personen</strong></div>').join("")||'<p class="muted">Noch keine Raumgrößen erfasst.</p>')+'</div>'+
@@ -231,6 +234,7 @@ function reportHTML(){
  const d=statData($("statsSession").value||"__all"),title=statsTitle();
  const rows=d.ranking.map((x,i)=>'<tr><td>'+(i+1)+'</td><td>'+esc(x.p?.name||"Unbekannt")+'</td><td>'+x.total+'</td></tr>').join("");
  const daily=d.daily.map(x=>'<tr><td>'+esc(x.session)+'</td><td>'+x.participants+'</td><td>'+x.total+'</td><td>'+(x.roomCount===null?"–":x.roomCount.toFixed(1))+'</td></tr>').join("");
+ const roomAverage=d.roomPeriodAverage===null?"–":d.roomPeriodAverage.toFixed(1)+" Personen";
  const rounds=d.roundDaily.map(x=>'<tr><td>'+esc(x.session)+'</td><td>'+x.round+'</td><td>'+x.total+'</td></tr>').join("");
  return '<!doctype html><html lang="de"><meta charset="utf-8"><title>WeFamily Statistik</title><style>body{font:15px Arial;color:#211b35;margin:28px}h1,h2{color:#503080}table{width:100%;border-collapse:collapse;margin:12px 0}td,th{padding:8px;border-bottom:1px solid #ddd;text-align:left}.card{border:1px solid #ccc;border-radius:12px;padding:14px;margin:12px 0;break-inside:avoid}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.metric{font-size:24px;font-weight:bold}.warning{background:#fff4d8;padding:12px}</style><h1>WeFamily Adventsbingo – Statistik</h1><p>'+esc(title)+'</p><div class="grid"><div class="card">Teilnehmer<div class="metric">'+d.ids.length+'</div></div><div class="card">Bingos gesamt<div class="metric">'+d.total+'</div></div><div class="card">Durchschnitt je Teilnehmer<div class="metric">'+(d.ids.length?(d.total/d.ids.length).toFixed(1):"–")+'</div></div><div class="card">Einzel-Bingos<div class="metric">'+d.results.length+'</div></div></div><h2>Rangliste</h2><table><tr><th>Platz</th><th>Teilnehmer</th><th>Bingos</th></tr>'+rows+'</table><h2>Spieltagvergleich</h2><table><tr><th>Spieltag</th><th>Ø Personen im Voice-Raum</th><th>Bingos</th><th>Ø Personen im Voice-Raum</th></tr>'+daily+'</table><h2>Rundenvergleich</h2><table><tr><th>Spieltag</th><th>Runde</th><th>Bingos</th></tr>'+rounds+'</table><h2>Persönliche Bestleistungen</h2><table><tr><th>Teilnehmer</th><th>Gesamt</th><th>Bestes Tagesergebnis</th><th>Beste Runde</th></tr>'+d.personal.map(x=>'<tr><td>'+esc(x.name)+'</td><td>'+x.total+'</td><td>'+(x.bestDay?esc(x.bestDay[0])+" ("+x.bestDay[1]+")":"–")+'</td><td>'+(x.bestRound?esc(x.bestRound[0])+" ("+x.bestRound[1]+")":"–")+'</td></tr>').join("")+'</table></html>';
 }
