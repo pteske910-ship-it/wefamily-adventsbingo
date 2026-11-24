@@ -298,7 +298,14 @@ async function runCloudReadOnlyCompare(){
   const expS=Object.entries(payload.roomStats).map(([key,x])=>({key,start:x.start??0,current:x.current??0,peak:x.peak??0,low:x.low??0,changes:x.changes||[]})).sort((a,b)=>a.key.localeCompare(b.key));
   const checks=[["Teilnehmer",expP,gotP],["Runden",expR,gotR],["Bingo-Ergebnisse",expB,gotB],["Raumstatistiken",expS,gotS]];
   const lines=checks.map(([name,a,b])=>name+": "+(norm(a)===norm(b)?"OK":"ABWEICHUNG")+" ("+a.length+" / "+b.length+")");
-  cloudComparePassed=checks.every(([name,a,b])=>norm(a)===norm(b));$("enableCloudEditButton").disabled=!(cloudComparePassed&&cloudSyncFunctionReady);status.textContent="Nur-Lese-Prüfung abgeschlossen. "+lines.join(" · ")+(cloudComparePassed?". Datenvergleich erfolgreich.":". Datenabweichung gefunden.")+(cloudSyncFunctionReady?" Cloud-Synchronisierung ist bereit.":" Neue SQL-Synchronisierung noch nicht bestätigt; Bearbeitung bleibt gesperrt.")+" Es wurde nichts verändert.";
+  cloudComparePassed=checks.every(([name,a,b])=>norm(a)===norm(b));
+  cloudSyncFunctionReady=false;
+  if(cloudComparePassed){
+   const probe=await supabaseClient.rpc("apply_bingo_change",{p_event_id:IMPORTED_EVENT_ID,p_expected_updated_at:cloudVersion,p_entity:"__readiness_probe__",p_operation:"upsert",p_payload:{}});
+   cloudSyncFunctionReady=!!probe.error&&String(probe.error.message||"").includes("Unsupported entity");
+  }
+  $("enableCloudEditButton").disabled=!(cloudComparePassed&&cloudSyncFunctionReady);
+  status.textContent="Nur-Lese-Prüfung abgeschlossen. "+lines.join(" · ")+(cloudComparePassed?". Datenvergleich erfolgreich.":". Datenabweichung gefunden.")+(cloudSyncFunctionReady?" Neue SQL-Funktion erkannt.":" Neue SQL-Funktion nicht sicher bestätigt; Bearbeitung bleibt gesperrt.")+" Es wurde nichts verändert.";
  }catch(e){status.textContent="Nur-Lese-Prüfung fehlgeschlagen: "+(e.message||String(e))+". Es wurde nichts verändert."}
  finally{btn.disabled=false}
 }
