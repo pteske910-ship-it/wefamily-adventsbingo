@@ -305,7 +305,8 @@ async function runCloudReadOnlyCompare(){
    const probe=await supabaseClient.rpc("apply_bingo_change",{p_event_id:IMPORTED_EVENT_ID,p_expected_updated_at:cloudVersion,p_entity:"__readiness_probe__",p_operation:"upsert",p_payload:{}});
    cloudSyncFunctionReady=!!probe.error&&String(probe.error.message||"").includes("Unsupported entity");
   }
-  $("enableCloudEditButton").disabled=!(cloudComparePassed&&cloudSyncFunctionReady);
+  $("cloudWriteTestButton").disabled=!(cloudComparePassed&&cloudSyncFunctionReady&&!cloudWriteTestPassed);
+  $("enableCloudEditButton").disabled=!(cloudComparePassed&&cloudSyncFunctionReady&&cloudWriteTestPassed);
   status.textContent="Nur-Lese-Prüfung abgeschlossen. "+lines.join(" · ")+(cloudComparePassed?". Datenvergleich erfolgreich.":". Datenabweichung gefunden.")+(cloudSyncFunctionReady?" Neue SQL-Funktion erkannt.":" Neue SQL-Funktion nicht sicher bestätigt; Bearbeitung bleibt gesperrt.")+" Es wurde nichts verändert.";
  }catch(e){status.textContent="Nur-Lese-Prüfung fehlgeschlagen: "+(e.message||String(e))+". Es wurde nichts verändert."}
  finally{btn.disabled=false}
