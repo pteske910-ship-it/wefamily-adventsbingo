@@ -72,7 +72,7 @@
 <div class="admin-subnav no-print"><button class="primary" data-adminview="room" onclick="setAdminView('room')">Raumstatistik</button><button data-adminview="day" onclick="setAdminView('day')">Tageswertung</button><button data-adminview="stats" onclick="setAdminView('stats')">📊 Statistiken</button></div><div id="adminRoomView"><div class="notice">VERTRAULICH – interne Tageswertung. Dies ist in Version 0.1 nur eine ausgeblendete Oberfläche, kein sicherer Zugriffsschutz. Nicht auf einem gemeinsam genutzten Gerät mit Teilnehmern öffnen.</div>
 <div class="card" id="roomCard"><h2>🔒 Raumstatistik</h2><p class="muted">Raumbelegung unabhängig von der Zahl der Bingo-Spieler erfassen.</p><div class="grid"><div><label>Spieltag / Sitzung</label><input id="roomSession" value="1. Advent" onchange="renderRoomStats()"></div><div><label>Runde</label><select id="roomRound" onchange="renderRoomStats()"></select></div></div><div class="grid"><div><label>Aktuelle Anzahl Personen im Raum</label><input id="roomCount" type="number" min="0" step="1" placeholder="z. B. 42"></div><div class="row" style="align-items:end"><button class="primary" onclick="setRoomCount()">Raumgröße speichern</button></div></div><p class="muted">Trage für die ausgewählte Runde einfach ein, wie viele Personen aktuell im Raum sind.</p><div id="roomStatsView"></div></div><div class="card" id="dayCard"><h2>🔒 Interne Tageswertung</h2><label>Spieltag auswerten</label><input id="internalSession" placeholder="z. B. 1. Advent" value="1. Advent"><div class="actions"><button class="primary" onclick="renderInternal()">Tageswertung berechnen</button></div><label>Rundenwertung</label><select id="internalRound" onchange="renderInternal()"></select><div id="internalRoundList"></div><h3>Tagesgesamtwertung – alle Runden</h3><div id="internalList"></div></div>
 <div class="card"><h3>Anwesenheit bei Vergabe</h3><p class="muted">Die Tagesbonus-Regel bleibt intern. Gewinner erhalten den Zusatzpreis nur, wenn sie bei der Vergabe noch im Raum sind. Bei Gleichstand bekommen alle Erstplatzierten eine Kleinigkeit.</p><div id="presenceList"></div></div>
-</div><div id="adminStatsView" class="hidden"><div class="card"><h2>📊 Statistiken &amp; Auswertung</h2><p class="muted">Teilnehmerzahl, Raumbelegung und erzielte Bingos werden getrennt ausgewertet.</p><div class="grid no-print"><div><label>Auswertung</label><select id="statsSession" onchange="renderStats()"><option value="__all">Gesamter Adventszeitraum</option></select></div><div class="row" style="align-items:end"><button class="primary" onclick="exportStatsPDF()">PDF dieser Auswahl</button><button onclick="exportStatsPNG()">PNG dieser Auswahl</button></div></div><div class="card no-print"><h3>Teilnahme je Spieltag erfassen</h3><p class="muted">Hier werden auch Personen erfasst, die an einem Spieltag dabei waren, aber kein Bingo erzielt haben. Erst dadurch werden Teilnehmerzahlen und Wiederkehrer korrekt auswertbar.</p><label>Spieltag</label><select id="attendanceSession" onchange="renderAttendanceEditor()"></select><div id="attendanceEditor"></div><button class="primary" onclick="saveAttendance()">Teilnahme speichern</button></div><div id="statsReport"></div></div></div></section>
+</div><div id="adminStatsView" class="hidden"><div class="card"><h2>📊 Statistiken &amp; Auswertung</h2><p class="muted">Teilnehmerzahl, Raumbelegung und erzielte Bingos werden getrennt ausgewertet.</p><div class="grid no-print"><div><label>Auswertung</label><select id="statsSession" onchange="renderStats()"><option value="__all">Gesamter Adventszeitraum</option></select></div><div class="row" style="align-items:end"><button class="primary" onclick="exportStatsPDF()">PDF dieser Auswahl</button><button onclick="exportStatsPNG()">PNG dieser Auswahl</button></div></div><div id="statsReport"></div></div></div></section>
 <section id="settings" class="pane hidden">
 <div class="card"><h2>Turnier-Einstellungen</h2><p class="muted">Lege die Rundenanzahl fest und konfiguriere Modus und Punkte je Runde. So kannst du den Manager auch für spätere Bingo-Ligen wiederverwenden.</p><div class="row"><div class="field"><label for="roundCount">Anzahl der Runden</label><input id="roundCount" type="number" min="1" max="250" step="1" value="25"></div><button class="primary" onclick="applyRoundCount()">Rundenanzahl übernehmen</button></div><div class="card"><h3>Punktevergabe</h3><label>Wertungssystem</label><select id="scoringMode" onchange="setScoringMode(this.value)"><option value="mode">Feste Punkte je Bingo-Spielmodus</option><option value="place">Punkte nach Platzierung</option></select><div id="modePoints" class="grid"><div><label>Normales Bingo · Punkte pro Bingo</label><input id="normalPoints" type="number" min="0" step="1" value="2" onchange="saveModePoints()"></div><div><label>Power-up · Punkte pro Bingo</label><input id="powerPoints" type="number" min="0" step="1" value="1" onchange="saveModePoints()"></div><div><label>Blackout · Punkte pro Bingo</label><input id="blackoutPoints" type="number" min="0" step="1" value="3" onchange="saveModePoints()"></div></div><div id="placePoints" class="hidden"><label>Punkte je Platzierung (Komma-getrennt)</label><input id="placementPoints" value="10,8,7,6,5,4,3,2,1,1" onchange="savePlacementPoints()"><p class="muted">Beispiel: 1. Platz = 10, 2. = 8, 3. = 7 Punkte usw.</p></div></div><div id="roundList"></div></div>
 <div class="card"><h2>Datensicherung</h2><p class="muted">Exportiere regelmäßig eine Sicherung. Import überschreibt den aktuellen lokalen Datenbestand.</p><div class="actions"><button class="primary" onclick="exportData()">Daten exportieren (JSON)</button><label class="tab" style="display:inline-block">Sicherung importieren<input id="importFile" type="file" accept="application/json" style="display:none" onchange="importData(event)"></label><button class="danger" onclick="resetData()">Alle lokalen Daten löschen</button></div></div>
@@ -162,9 +162,7 @@ function statData(session){
  const sessions=statSessions(),selected=session==="__all"?sessions:[session];
  const results=db.results.filter(r=>selected.includes(String(r.session||"Spieltag").trim()));
  const players=db.players.slice();
- const attendanceKnown=selected.length>0&&selected.every(s=>Array.isArray(db.attendance?.[s]));
- const attendedIds=new Set(selected.flatMap(s=>Array.isArray(db.attendance?.[s])?db.attendance[s]:[]));
- const ids=[...new Set([...attendedIds,...results.map(r=>r.playerId)])];
+ const ids=players.map(p=>p.id);
  const counts={};ids.forEach(id=>counts[id]=0);
  results.forEach(r=>{if(Object.prototype.hasOwnProperty.call(counts,r.playerId))counts[r.playerId]+=Math.max(0,Number(r.count)||0)});
  const ranking=Object.entries(counts).map(([id,total])=>({id,total,p:players.find(p=>p.id===id)})).sort((a,b)=>b.total-a.total||(a.p?.name||"").localeCompare(b.p?.name||""));
@@ -173,8 +171,8 @@ function statData(session){
  ids.forEach(id=>{const n=counts[id]||0;distribution[n===0?"0":n===1?"1":n===2?"2":n<=4?"3–4":"5+"]++});
  const daily=sessions.filter(s=>selected.includes(s)).map(s=>{
   const rs=results.filter(r=>String(r.session||"Spieltag").trim()===s);
-  const dayIds=[...new Set([...(Array.isArray(db.attendance?.[s])?db.attendance[s]:[]),...rs.map(r=>r.playerId)])];
-  return {session:s,total:rs.reduce((a,r)=>a+(Number(r.count)||0),0),participants:dayIds.length,tracked:Array.isArray(db.attendance?.[s]),results:rs};
+  const bingoPlayers=new Set(rs.map(r=>r.playerId));
+  return {session:s,total:rs.reduce((a,r)=>a+(Number(r.count)||0),0),participants:bingoPlayers.size,results:rs};
  });
  const roundDaily=selected.flatMap(s=>db.rounds.map(rd=>({session:s,round:rd.n,total:results.filter(r=>String(r.session||"Spieltag").trim()===s&&Number(r.round)===rd.n).reduce((a,r)=>a+(Number(r.count)||0),0)})));
  const personal=players.map(p=>{
@@ -191,61 +189,43 @@ function statData(session){
   const map={};rs.forEach(r=>map[r.playerId]=(map[r.playerId]||0)+(Number(r.count)||0));
   return {round:rd.n,total:rs.reduce((a,r)=>a+(Number(r.count)||0),0),ranking:Object.entries(map).map(([id,n])=>({id,total:n,p:players.find(p=>p.id===id)})).sort((a,b)=>b.total-a.total)};
  })]));
- return {sessions,selected,results,players,ids,counts,ranking,rounds,distribution,daily,roundDaily,personal,total,roundRankings,attendanceKnown};
-}
-function renderAttendanceEditor(){
- const s=$("attendanceSession")?.value;if(!s)return;
- const selected=new Set(Array.isArray(db.attendance?.[s])?db.attendance[s]:[]);
- $("attendanceEditor").innerHTML=db.players.map(p=>'<label class="item row between" style="display:flex;align-items:center"><span>'+esc(p.name)+(p.family?' ('+esc(p.family)+')':'')+'</span><input type="checkbox" data-attendance-id="'+esc(p.id)+'" '+(selected.has(p.id)?"checked":"")+'></label>').join("")||'<p class="muted">Lege zuerst Teilnehmer an.</p>';
-}
-function saveAttendance(){
- const s=$("attendanceSession")?.value;if(!s)return;
- db.attendance=db.attendance||{};
- db.attendance[s]=[...document.querySelectorAll("[data-attendance-id]:checked")].map(x=>x.dataset.attendanceId);
- persist();renderStats();renderAttendanceEditor();
+ return {sessions,selected,results,players,ids,counts,ranking,rounds,distribution,daily,roundDaily,personal,total,roundRankings};
 }
 function renderStats(){
  const select=$("statsSession"),old=select.value||"__all",sessions=statSessions();
  select.innerHTML='<option value="__all">Gesamter Adventszeitraum</option>'+sessions.map(s=>'<option value="'+esc(s)+'">'+esc(s)+'</option>').join("");
  select.value=[...sessions,"__all"].includes(old)?old:"__all";
- const att=$("attendanceSession"),oldAtt=att.value;
- att.innerHTML=sessions.map(s=>'<option value="'+esc(s)+'">'+esc(s)+'</option>').join("");
- if(sessions.includes(oldAtt))att.value=oldAtt;
- renderAttendanceEditor();
  const d=statData(select.value),days=d.daily;
  const returningByDay=days.map((day,i)=>{
   if(i===0)return {...day,returning:null,newcomers:null};
-  const prior=days[i-1],a=new Set(Array.isArray(db.attendance?.[prior.session])?db.attendance[prior.session]:d.results.filter(r=>String(r.session||"").trim()===prior.session).map(r=>r.playerId));
-  const b=new Set(Array.isArray(db.attendance?.[day.session])?db.attendance[day.session]:d.results.filter(r=>String(r.session||"").trim()===day.session).map(r=>r.playerId));
-  return {...day,returning:[...b].filter(id=>a.has(id)).length,newcomers:[...b].filter(id=>!a.has(id)).length,comparisonTracked:Array.isArray(db.attendance?.[prior.session])&&Array.isArray(db.attendance?.[day.session])};
+  const prior=new Set(days[i-1].results.map(r=>r.playerId)),current=new Set(day.results.map(r=>r.playerId));
+  return {...day,returning:[...current].filter(id=>prior.has(id)).length,newcomers:[...current].filter(id=>!prior.has(id)).length};
  });
- const best=d.ranking[0],maxRound=Object.entries(d.rounds).sort((a,b)=>b[1]-a[1])[0];
- const barRows=d.roundDaily.map(x=>({label:x.session+" · R"+x.round,value:x.total})).filter(x=>x.value>0);
+ const best=d.ranking.find(x=>x.total>0),maxRound=Object.entries(d.rounds).sort((a,b)=>b[1]-a[1])[0];
+ const barRows=d.roundDaily.filter(x=>x.total>0).map(x=>({label:x.session+" · R"+x.round,value:x.total}));
  const maxBar=Math.max(1,...barRows.map(x=>x.value));
  const bars=barRows.map(x=>'<div class="chartbar"><span class="barlabel">'+esc(x.label)+'</span><div class="track"><div class="fill" style="width:'+(x.value/maxBar*100)+'%"></div></div><b>'+x.value+'</b></div>').join("")||'<p class="muted">Noch keine Runden-Bingos erfasst.</p>';
- const rank=d.ranking.map((x,i)=>'<div class="item row between"><span>'+(i+1)+'. '+esc(x.p?.name||"Unbekannt")+(x.p?.family?' ('+esc(x.p.family)+')':'')+'</span><strong>'+x.total+' Bingos</strong></div>').join("")||'<p class="muted">Noch keine Bingo-Ergebnisse.</p>';
+ const rank=d.ranking.filter(x=>x.total>0).map((x,i)=>'<div class="item row between"><span>'+(i+1)+'. '+esc(x.p?.name||"Unbekannt")+(x.p?.family?' ('+esc(x.p.family)+')':'')+'</span><strong>'+x.total+' Bingos</strong></div>').join("")||'<p class="muted">Noch keine Bingo-Ergebnisse.</p>';
  const distribution=Object.entries(d.distribution),sumDist=distribution.reduce((a,x)=>a+x[1],0),colors=["#6e54ad","#8c65c8","#ad78d4","#d18cc4","#e8b56d"];
  let acc=0;const stops=distribution.map((x,i)=>{const from=acc;acc+=sumDist?x[1]/sumDist*100:0;return colors[i]+" "+from+"% "+acc+"%"}).join(",");
- const donut='<div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap"><div style="width:150px;height:150px;border-radius:50%;background:conic-gradient('+(sumDist?stops:"#393246 0% 100%")+');position:relative;flex:none"><div style="position:absolute;inset:32px;border-radius:50%;background:var(--card);display:grid;place-items:center;text-align:center;font-weight:800">'+sumDist+'<small style="font-weight:400">Teilnehmer</small></div></div><div>'+distribution.map((x,i)=>'<div class="item"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'+colors[i]+'"></span> '+x[0]+' Bingos: <strong>'+x[1]+'</strong></div>').join("")+'</div></div>';
- const dayRows=returningByDay.map(x=>'<div class="item"><div class="row between"><strong>'+esc(x.session)+'</strong><strong>'+x.total+' Bingos · '+x.participants+' Teilnehmer'+(x.tracked?"":"*")+'</strong></div>'+(x.returning===null?"":'<p class="muted">Bereits vom vorherigen Spieltag: '+x.returning+' · Neu dabei: '+x.newcomers+(x.comparisonTracked?"":" (nur anhand erfasster Bingo-Ergebnisse geschätzt)")+'</p>')+'</div>').join("");
- const personal=d.personal.map(x=>'<div class="item"><div class="row between"><strong>'+esc(x.name)+'</strong><strong>'+x.total+' Bingos</strong></div><small class="muted">Bestes Ergebnis: '+(x.bestDay?esc(x.bestDay[0])+" ("+x.bestDay[1]+")":"noch kein Bingo")+' · Beste Runde: '+(x.bestRound?esc(x.bestRound[0])+" ("+x.bestRound[1]+")":"–")+'</small></div>').join("");
- const records=d.personal.filter(x=>x.total>0).slice(0,5);
- const issues=[];
+ const donut='<div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap"><div style="width:150px;height:150px;border-radius:50%;background:conic-gradient('+(sumDist?stops:"#393246 0% 100%")+');position:relative;flex:none"><div style="position:absolute;inset:32px;border-radius:50%;background:var(--card);display:grid;place-items:center;text-align:center;font-weight:800">'+sumDist+'<small style="font-weight:400">Personen</small></div></div><div>'+distribution.map((x,i)=>'<div class="item"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'+colors[i]+'"></span> '+x[0]+' Bingos: <strong>'+x[1]+'</strong></div>').join("")+'</div></div>';
+ const dayRows=returningByDay.map(x=>'<div class="item"><div class="row between"><strong>'+esc(x.session)+'</strong><strong>'+x.total+' Bingos · '+x.participants+' Bingo-Spieler</strong></div>'+(x.returning===null?"":'<p class="muted">Bereits beim vorherigen Spieltag mit Bingo: '+x.returning+' · Neu mit Bingo: '+x.newcomers+'</p>')+'</div>').join("");
+ const personal=d.personal.map(x=>'<div class="item"><div class="row between"><strong>'+esc(x.name)+'</strong><strong>'+x.total+' Bingos</strong></div><small class="muted">Bestes Tagesergebnis: '+(x.bestDay?esc(x.bestDay[0])+" ("+x.bestDay[1]+")":"noch kein Bingo")+' · Beste Runde: '+(x.bestRound?esc(x.bestRound[0])+" ("+x.bestRound[1]+")":"–")+'</small></div>').join("");
+ const records=d.personal.filter(x=>x.total>0).slice(0,5),issues=[];
  if(!d.results.length)issues.push("Für die Auswahl liegen noch keine Bingo-Ergebnisse vor.");
  const missing=d.results.filter(r=>!d.players.some(p=>p.id===r.playerId)).length;if(missing)issues.push(missing+" Ergebnis(se) ohne zugeordneten Teilnehmer.");
- const duplicateKeys=new Set();let duplicates=0;d.results.forEach(r=>{const k=[r.session,r.round,r.bingoNo].join("|");if(r.bingoNo&&duplicateKeys.has(k))duplicates++;duplicateKeys.add(k)});if(duplicates)issues.push(duplicates+" doppelte Bingo-Nummern innerhalb desselben Spieltags und derselben Runde.");
- if(!d.attendanceKnown)issues.push("Teilnahme ist nicht für alle ausgewählten Spieltage separat dokumentiert. Teilnehmerzahlen ohne Anwesenheitsliste zählen nur Personen mit mindestens einem erfassten Bingo. Bitte die Anwesenheit oben nachtragen, um auch Teilnehmer ohne Bingo korrekt mitzuzählen.");
- const summary=d.selected.length===1?(d.ids.length+" erfasste Teilnehmer · "+d.total+" Bingos"+(best?" · Spitzenwert: "+(best.p?.name||"Unbekannt")+" ("+best.total+")":"")+(maxRound?" · stärkste Runde: "+maxRound[0]+" ("+maxRound[1]+")":"")):d.total+" Bingos von "+d.ids.length+" erfassten Teilnehmern über "+d.selected.length+" Spieltage.";
+ const keys=new Set();let duplicates=0;d.results.forEach(r=>{const k=[r.session,r.round,r.bingoNo].join("|");if(r.bingoNo&&keys.has(k))duplicates++;keys.add(k)});if(duplicates)issues.push(duplicates+" doppelte Bingo-Nummern innerhalb eines Spieltags und einer Runde.");
+ const summary=d.selected.length===1?d.players.length+" Personen im Teilnehmerstamm · "+d.total+" Bingos"+(best?" · Spitzenwert: "+(best.p?.name||"Unbekannt")+" ("+best.total+")":"")+(maxRound?" · stärkste Runde: "+maxRound[0]+" ("+maxRound[1]+")":""):d.total+" Bingos bei "+d.players.length+" Personen im Teilnehmerstamm über "+d.selected.length+" Spieltage.";
  $("statsReport").innerHTML=
- '<div class="grid"><div class="card"><div class="muted">Teilnehmer'+(d.attendanceKnown?"":" mit Bingo")+'</div><div class="stat">'+d.ids.length+'</div></div><div class="card"><div class="muted">Bingos gesamt</div><div class="stat">'+d.total+'</div></div><div class="card"><div class="muted">Bingos je Teilnehmer</div><div class="stat">'+(d.ids.length?(d.total/d.ids.length).toFixed(1):"–")+'</div></div><div class="card"><div class="muted">Erfasste Einzel-Bingos</div><div class="stat">'+d.results.length+'</div></div></div>'+
+ '<div class="grid"><div class="card"><div class="muted">Personen im Teilnehmerstamm</div><div class="stat">'+d.players.length+'</div></div><div class="card"><div class="muted">Bingos gesamt</div><div class="stat">'+d.total+'</div></div><div class="card"><div class="muted">Bingos je Person im Stamm</div><div class="stat">'+(d.players.length?(d.total/d.players.length).toFixed(1):"–")+'</div></div><div class="card"><div class="muted">Erfasste Einzel-Bingos</div><div class="stat">'+d.results.length+'</div></div></div>'+
  '<div class="card"><h3>📣 Statistik-Highlights</h3><p>'+esc(summary)+'</p></div>'+
  '<div class="card"><h3>🏆 Rangliste & Gewinnerübersicht</h3>'+rank+'</div>'+
  '<div class="card"><h3>🎯 Bingo-Verteilung</h3>'+donut+'</div>'+
  '<div class="card"><h3>📊 Bingos je Spieltag und Runde</h3>'+bars+'</div>'+
- '<div class="card"><h3>📅 Teilnehmerentwicklung</h3>'+dayRows+'</div>'+
+ '<div class="card"><h3>📅 Entwicklung der Bingo-Spieler</h3>'+dayRows+'</div>'+
  '<div class="card"><h3>⭐ Persönliche Bestleistungen</h3>'+personal+'</div>'+
- '<div class="card"><h3>📖 Rekordbuch</h3>'+ (records.length?'<p>Meiste Bingos im ausgewählten Zeitraum: <strong>'+esc(records[0].name)+'</strong> mit '+records[0].total+'.</p>'+records.slice(1).map((x,i)=>'<p>'+(i+2)+'. '+esc(x.name)+' – '+x.total+'</p>').join(""):'Noch keine Rekorde.')+'</div>'+
- '<div class="card"><h3>🔎 Vergleich je Spieltag</h3>'+days.map(x=>'<div class="item row between"><span>'+esc(x.session)+'</span><strong>'+x.participants+' Teilnehmer · '+x.total+' Bingos</strong></div>').join("")+'</div>'+
+ '<div class="card"><h3>📖 Rekordbuch</h3>'+(records.length?'<p>Meiste Bingos im ausgewählten Zeitraum: <strong>'+esc(records[0].name)+'</strong> mit '+records[0].total+'.</p>'+records.slice(1).map((x,i)=>'<p>'+(i+2)+'. '+esc(x.name)+' – '+x.total+'</p>').join(""):'Noch keine Rekorde.')+'</div>'+
+ '<div class="card"><h3>🔎 Vergleich je Spieltag</h3>'+days.map(x=>'<div class="item row between"><span>'+esc(x.session)+'</span><strong>'+x.participants+' Bingo-Spieler · '+x.total+' Bingos</strong></div>').join("")+'</div>'+
  '<div class="card"><h3>🧪 Datenqualitätsprüfung</h3>'+(issues.length?'<ul>'+issues.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul>':'Keine Auffälligkeiten erkannt.')+'</div>';
 }
 function statsTitle(){return $("statsSession").value==="__all"?"Gesamter Adventszeitraum":$("statsSession").value}
