@@ -161,36 +161,34 @@ function statSessions(){
 function statData(session){
  const sessions=statSessions(),selected=session==="__all"?sessions:[session];
  const results=db.results.filter(r=>selected.includes(String(r.session||"Spieltag").trim()));
- const players=db.players.slice();
- const ids=players.map(p=>p.id);
- const counts={};ids.forEach(id=>counts[id]=0);
+ const players=db.players.slice(),ids=players.map(p=>p.id),counts={};ids.forEach(id=>counts[id]=0);
  results.forEach(r=>{if(Object.prototype.hasOwnProperty.call(counts,r.playerId))counts[r.playerId]+=Math.max(0,Number(r.count)||0)});
  const ranking=Object.entries(counts).map(([id,total])=>({id,total,p:players.find(p=>p.id===id)})).sort((a,b)=>b.total-a.total||(a.p?.name||"").localeCompare(b.p?.name||""));
  const rounds={};results.forEach(r=>{const k="Runde "+r.round;rounds[k]=(rounds[k]||0)+(Number(r.count)||0)});
- const distribution={"0":0,"1":0,"2":0,"3–4":0,"5+":0};
+ const distribution={"0":0,"1":0,"2":0,"3–4":0,"5+" :0};
  ids.forEach(id=>{const n=counts[id]||0;distribution[n===0?"0":n===1?"1":n===2?"2":n<=4?"3–4":"5+"]++});
- const daily=sessions.filter(s=>selected.includes(s)).map(s=>{
-  const rs=results.filter(r=>String(r.session||"Spieltag").trim()===s);
-  const roomRecords=db.rounds.map(rd=>db.roomStats?.[s+"|"+rd.n]).filter(Boolean);
-  const roomPeak=roomRecords.length?Math.max(...roomRecords.map(x=>Number(x.peak??x.current??0))):null;
-  return {session:s,total:rs.reduce((a,r)=>a+(Number(r.count)||0),0),participants:db.players.length,roomCount:roomPeak,results:rs};
+ const daily=selected.map(s=>{
+  const rs=results.filter(r=>String(r.session||"Spieltag").trim()===s),bingoPlayers=new Set(rs.filter(r=>(Number(r.count)||0)>0).map(r=>r.playerId));
+  const roomRecords=db.rounds.map(rd=>db.roomStats?.[s+"|"+rd.n]).filter(Boolean),roomValues=roomRecords.map(x=>Number(x.current??x.peak??x.start)).filter(Number.isFinite);
+  return {session:s,total:rs.reduce((a,r)=>a+(Number(r.count)||0),0),participants:bingoPlayers.size,bingoPlayers,roomCount:roomValues.length?Math.max(...roomValues):null,results:rs};
  });
- const roundDaily=selected.flatMap(s=>db.rounds.map(rd=>{const rs=results.filter(r=>String(r.session||"Spieltag").trim()===s&&Number(r.round)===rd.n);const room=db.roomStats?.[s+"|"+rd.n]||null;return {session:s,round:rd.n,total:rs.reduce((a,r)=>a+(Number(r.count)||0),0),roomCount:room?Number(room.peak??room.current??room.start):null}}));
+ const roundDaily=selected.flatMap(s=>db.rounds.map(rd=>{
+  const rs=results.filter(r=>String(r.session||"Spieltag").trim()===s&&Number(r.round)===rd.n),room=db.roomStats?.[s+"|"+rd.n]||null;
+  return {session:s,round:rd.n,total:rs.reduce((a,r)=>a+(Number(r.count)||0),0),roomCount:room?Number(room.current??room.peak??room.start):null};
+ }));
  const personal=players.map(p=>{
-  const own=results.filter(r=>r.playerId===p.id);
-  const byDay={};own.forEach(r=>byDay[r.session]=(byDay[r.session]||0)+(Number(r.count)||0));
-  const byRound={};own.forEach(r=>{const k=String(r.session)+" · Runde "+r.round;byRound[k]=(byRound[k]||0)+(Number(r.count)||0)});
-  const bestDay=Object.entries(byDay).sort((a,b)=>b[1]-a[1])[0]||null;
-  const bestRound=Object.entries(byRound).sort((a,b)=>b[1]-a[1])[0]||null;
+  const own=results.filter(r=>r.playerId===p.id),byDay={},byRound={};
+  own.forEach(r=>byDay[r.session]=(byDay[r.session]||0)+(Number(r.count)||0));
+  own.forEach(r=>{const k=String(r.session)+" · Runde "+r.round;byRound[k]=(byRound[k]||0)+(Number(r.count)||0)});
+  const bestDay=Object.entries(byDay).sort((a,b)=>b[1]-a[1])[0]||null,bestRound=Object.entries(byRound).sort((a,b)=>b[1]-a[1])[0]||null;
   return {id:p.id,name:p.name+(p.family?" ("+p.family+")":""),total:own.reduce((a,r)=>a+(Number(r.count)||0),0),bestDay,bestRound};
  }).sort((a,b)=>b.total-a.total);
- const total=results.reduce((a,r)=>a+(Number(r.count)||0),0);
+ const total=results.reduce((a,r)=>a+(Number(r.count)||0),0),bingoPlayerIds=[...new Set(results.filter(r=>(Number(r.count)||0)>0).map(r=>r.playerId))];
  const roundRankings=Object.fromEntries(selected.map(s=>[s,db.rounds.map(rd=>{
-  const rs=results.filter(r=>String(r.session||"Spieltag").trim()===s&&Number(r.round)===rd.n);
-  const map={};rs.forEach(r=>map[r.playerId]=(map[r.playerId]||0)+(Number(r.count)||0));
+  const rs=results.filter(r=>String(r.session||"Spieltag").trim()===s&&Number(r.round)===rd.n),map={};rs.forEach(r=>map[r.playerId]=(map[r.playerId]||0)+(Number(r.count)||0));
   return {round:rd.n,total:rs.reduce((a,r)=>a+(Number(r.count)||0),0),ranking:Object.entries(map).map(([id,n])=>({id,total:n,p:players.find(p=>p.id===id)})).sort((a,b)=>b.total-a.total)};
  })]));
- return {sessions,selected,results,players,ids,counts,ranking,rounds,distribution,daily,roundDaily,personal,total,roundRankings};
+ return {sessions,selected,results,players,ids,counts,ranking,rounds,distribution,daily,roundDaily,personal,total,roundRankings,bingoPlayerIds};
 }
 function renderStats(){
  const select=$("statsSession"),old=select.value||"__all",sessions=statSessions();
@@ -198,32 +196,31 @@ function renderStats(){
  select.value=[...sessions,"__all"].includes(old)?old:"__all";
  const d=statData(select.value),days=d.daily;
  const returningByDay=days.map((day,i)=>{
-  if(i===0)return {...day,returning:null,newcomers:null};
-  const prior=new Set(days[i-1].results.map(r=>r.playerId)),current=new Set(day.results.map(r=>r.playerId));
+  if(i===0)return {...day,returning:null,newcomers:day.participants};
+  const prior=days[i-1].bingoPlayers,current=day.bingoPlayers;
   return {...day,returning:[...current].filter(id=>prior.has(id)).length,newcomers:[...current].filter(id=>!prior.has(id)).length};
  });
- const best=d.ranking.find(x=>x.total>0),maxRound=Object.entries(d.rounds).sort((a,b)=>b[1]-a[1])[0];
- const barRows=d.roundDaily.filter(x=>x.total>0).map(x=>({label:x.session+" · R"+x.round,value:x.total}));
- const maxBar=Math.max(1,...barRows.map(x=>x.value));
+ const best=d.ranking.find(x=>x.total>0),maxRound=Object.entries(d.rounds).sort((a,b)=>b[1]-a[1])[0],active=d.bingoPlayerIds.length;
+ const barRows=d.roundDaily.filter(x=>x.total>0).map(x=>({label:x.session+" · R"+x.round,value:x.total})),maxBar=Math.max(1,...barRows.map(x=>x.value));
  const bars=barRows.map(x=>'<div class="chartbar"><span class="barlabel">'+esc(x.label)+'</span><div class="track"><div class="fill" style="width:'+(x.value/maxBar*100)+'%"></div></div><b>'+x.value+'</b></div>').join("")||'<p class="muted">Noch keine Runden-Bingos erfasst.</p>';
  const rank=d.ranking.filter(x=>x.total>0).map((x,i)=>'<div class="item row between"><span>'+(i+1)+'. '+esc(x.p?.name||"Unbekannt")+(x.p?.family?' ('+esc(x.p.family)+')':'')+'</span><strong>'+x.total+' Bingos</strong></div>').join("")||'<p class="muted">Noch keine Bingo-Ergebnisse.</p>';
  const distribution=Object.entries(d.distribution),sumDist=distribution.reduce((a,x)=>a+x[1],0),colors=["#6e54ad","#8c65c8","#ad78d4","#d18cc4","#e8b56d"];
  let acc=0;const stops=distribution.map((x,i)=>{const from=acc;acc+=sumDist?x[1]/sumDist*100:0;return colors[i]+" "+from+"% "+acc+"%"}).join(",");
- const donut='<div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap"><div style="width:150px;height:150px;border-radius:50%;background:conic-gradient('+(sumDist?stops:"#393246 0% 100%")+');position:relative;flex:none"><div style="position:absolute;inset:32px;border-radius:50%;background:var(--card);display:grid;place-items:center;text-align:center;font-weight:800">'+sumDist+'<small style="font-weight:400">Personen</small></div></div><div>'+distribution.map((x,i)=>'<div class="item"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'+colors[i]+'"></span> '+x[0]+' Bingos: <strong>'+x[1]+'</strong></div>').join("")+'</div></div>';
- const dayRows=returningByDay.map(x=>'<div class="item"><div class="row between"><strong>'+esc(x.session)+'</strong><strong>'+x.total+' Bingos · '+x.participants+' Personen im Teilnehmerstamm</strong></div>'+(x.returning===null?"":'<p class="muted">Bereits beim vorherigen Spieltag mit Bingo: '+x.returning+' · Neu mit Bingo: '+x.newcomers+'</p>')+'</div>').join("");
+ const donut='<div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap"><div style="width:150px;height:150px;border-radius:50%;background:conic-gradient('+(sumDist?stops:"#393246 0% 100%")+');position:relative;flex:none"><div style="position:absolute;inset:32px;border-radius:50%;background:var(--panel);display:grid;place-items:center;text-align:center;font-weight:800">'+sumDist+'<small style="font-weight:400">Personen</small></div></div><div>'+distribution.map((x,i)=>'<div class="item"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'+colors[i]+'"></span> '+x[0]+' Bingos: <strong>'+x[1]+'</strong></div>').join("")+'</div></div>';
+ const dayRows=returningByDay.map(x=>'<div class="item"><div class="row between"><strong>'+esc(x.session)+'</strong><strong>'+x.participants+' Bingo-Spieler · '+x.total+' Bingos</strong></div>'+(x.returning===null?'<p class="muted">Erster erfasster Spieltag · '+x.newcomers+' Bingo-Spieler</p>':'<p class="muted">'+x.returning+' Teilnehmer waren bereits beim vorherigen Spieltag dabei · '+x.newcomers+' neu hinzugekommen</p>')+'</div>').join("");
  const personal=d.personal.map(x=>'<div class="item"><div class="row between"><strong>'+esc(x.name)+'</strong><strong>'+x.total+' Bingos</strong></div><small class="muted">Bestes Tagesergebnis: '+(x.bestDay?esc(x.bestDay[0])+" ("+x.bestDay[1]+")":"noch kein Bingo")+' · Beste Runde: '+(x.bestRound?esc(x.bestRound[0])+" ("+x.bestRound[1]+")":"–")+'</small></div>').join("");
  const records=d.personal.filter(x=>x.total>0).slice(0,5),issues=[];
  if(!d.results.length)issues.push("Für die Auswahl liegen noch keine Bingo-Ergebnisse vor.");
  const missing=d.results.filter(r=>!d.players.some(p=>p.id===r.playerId)).length;if(missing)issues.push(missing+" Ergebnis(se) ohne zugeordneten Teilnehmer.");
  const keys=new Set();let duplicates=0;d.results.forEach(r=>{const k=[r.session,r.round,r.bingoNo].join("|");if(r.bingoNo&&keys.has(k))duplicates++;keys.add(k)});if(duplicates)issues.push(duplicates+" doppelte Bingo-Nummern innerhalb eines Spieltags und einer Runde.");
- const summary=d.selected.length===1?d.players.length+" Personen im Teilnehmerstamm · "+d.total+" Bingos"+(best?" · Spitzenwert: "+(best.p?.name||"Unbekannt")+" ("+best.total+")":"")+(maxRound?" · stärkste Runde: "+maxRound[0]+" ("+maxRound[1]+")":""):d.total+" Bingos bei "+d.players.length+" Personen im Teilnehmerstamm über "+d.selected.length+" Spieltage.";
+ const summary=active+" Bingo-Spieler · "+d.total+" Bingos"+(best?" · Spitzenwert: "+(best.p?.name||"Unbekannt")+" ("+best.total+")":"")+(maxRound?" · stärkste Runde: "+maxRound[0]+" ("+maxRound[1]+")":"");
  $("statsReport").innerHTML=
- '<div class="grid"><div class="card"><div class="muted">Personen im Teilnehmerstamm</div><div class="stat">'+d.players.length+'</div></div><div class="card"><div class="muted">Bingos gesamt</div><div class="stat">'+d.total+'</div></div><div class="card"><div class="muted">Bingos je Person im Stamm</div><div class="stat">'+(d.players.length?(d.total/d.players.length).toFixed(1):"–")+'</div></div><div class="card"><div class="muted">Erfasste Einzel-Bingos</div><div class="stat">'+d.results.length+'</div></div></div>'+
+ '<div class="grid"><div class="card"><div class="muted">Teilnehmer im Teilnehmerstamm</div><div class="stat">'+d.players.length+'</div></div><div class="card"><div class="muted">Bingo-Spieler im Zeitraum</div><div class="stat">'+active+'</div></div><div class="card"><div class="muted">Bingos gesamt</div><div class="stat">'+d.total+'</div></div><div class="card"><div class="muted">Bingos je Bingo-Spieler</div><div class="stat">'+(active?(d.total/active).toFixed(1):"–")+'</div></div></div>'+
  '<div class="card"><h3>📣 Statistik-Highlights</h3><p>'+esc(summary)+'</p></div>'+
  '<div class="card"><h3>🏆 Rangliste & Gewinnerübersicht</h3>'+rank+'</div>'+
- '<div class="card"><h3>🎯 Bingo-Verteilung</h3>'+donut+'</div>'+
- '<div class="card"><h3>📊 Bingos je Spieltag und Runde</h3>'+bars+'<h4>Höchster erfasster Personenstand im Voice-Raum</h4>'+(d.roundDaily.filter(x=>x.roomCount!==null).map(x=>'<div class="item row between"><span>'+esc(x.session)+' · Runde '+x.round+'</span><strong>'+x.roomCount+' Personen</strong></div>').join("")||'<p class="muted">Noch keine Raumgrößen bei Bingo-Ergebnissen erfasst.</p>')+'</div>'+
- '<div class="card"><h3>📅 Entwicklung der Bingo-Spieler</h3>'+dayRows+'</div>'+
+ '<div class="card"><h3>🎯 Bingo-Verteilung im Teilnehmerstamm</h3>'+donut+'</div>'+
+ '<div class="card"><h3>📊 Bingos je Spieltag und Runde</h3>'+bars+'<h4>Höchster erfasster Voice-Raumstand je Runde</h4>'+(d.roundDaily.filter(x=>x.roomCount!==null).map(x=>'<div class="item row between"><span>'+esc(x.session)+' · Runde '+x.round+'</span><strong>'+x.roomCount+' Personen</strong></div>').join("")||'<p class="muted">Noch keine Raumgrößen erfasst.</p>')+'</div>'+
+ '<div class="card"><h3>📅 Teilnehmerentwicklung</h3>'+dayRows+'</div>'+
  '<div class="card"><h3>⭐ Persönliche Bestleistungen</h3>'+personal+'</div>'+
  '<div class="card"><h3>📖 Rekordbuch</h3>'+(records.length?'<p>Meiste Bingos im ausgewählten Zeitraum: <strong>'+esc(records[0].name)+'</strong> mit '+records[0].total+'.</p>'+records.slice(1).map((x,i)=>'<p>'+(i+2)+'. '+esc(x.name)+' – '+x.total+'</p>').join(""):'Noch keine Rekorde.')+'</div>'+
  '<div class="card"><h3>🔎 Vergleich je Spieltag</h3>'+days.map(x=>'<div class="item row between"><span>'+esc(x.session)+'</span><strong>'+x.participants+' Bingo-Spieler · '+x.total+' Bingos</strong></div>').join("")+'</div>'+
@@ -256,7 +253,7 @@ function roomKey(){return ($("sessionName").value.trim()||"Spieltag")+"|"+$("res
 function fillRoomRounds(){return}
 function roomRecord(){let key=roomKey(),n=Number($("resultRound").value);if(!db.roomStats[key])db.roomStats[key]={round:n,start:0,current:0,peak:0,low:0,changes:[]};return db.roomStats[key]}
 function setRoomCount(){let raw=$("roomCount").value.trim();if(raw==="")return alert("Bitte die Personenzahl zu Rundenbeginn eingeben.");let n=Number(raw);if(!Number.isInteger(n)||n<0)return alert("Bitte eine gültige Personenzahl ab 0 eingeben.");let r=roomRecord();r.start=n;r.current=n;r.peak=n;r.low=n;r.changes=[{delta:0,value:n,label:"Startbestand zu Rundenbeginn"}];persist();renderRoomStats()}
-function renderRoomStats(){if(!$("roomStatsView")||!$("resultRound"))return;let s=$("sessionName").value.trim()||"Spieltag",n=Number($("resultRound").value);if(!n)return;let r=db.roomStats[s+"|"+n],prev=db.rounds.filter(x=>x.n<n).map(x=>db.roomStats[s+"|"+x.n]).filter(Boolean).sort((a,b)=>b.round-a.round)[0];let start=r?r.start:null,current=r?r.current:null;let vals=db.rounds.map(x=>db.roomStats[s+"|"+x.n]).filter(Boolean).map(x=>x.current);let avg=vals.length?(vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1):"–";$("roomCount").value=r?String(r.start):"";$("roomStatsView").innerHTML='<div class="grid"><div class="card"><div class="muted">Startbestand zu Rundenbeginn</div><div class="stat">'+(start===null?"–":start)+'</div></div><div class="card"><div class="muted">Erfasster Rundenbestand</div><div class="stat">'+(current===null?"–":current)+'</div></div><div class="card"><div class="muted">Höchster erfasster Stand</div><div class="stat">'+(r?r.peak:"–") +'</div></div><div class="card"><div class="muted">Niedrigster erfasster Stand</div><div class="stat">'+(r?r.low:"–") +'</div></div></div><p class="muted">Durchschnitt der gespeicherten Rundenstände: '+avg+'</p>'+(r&&r.changes.length?'<h3>Änderungen</h3>'+r.changes.slice().reverse().map(x=>'<div class="item">'+(x.delta>0?'+':'')+x.delta+' · '+x.label+' → '+x.value+' Personen</div>').join(""):'<p class="muted">Für diese Runde wurde noch kein Startbestand gespeichert. Gib die Personenzahl zu Rundenbeginn ein.</p>')}
+function renderRoomStats(){if(!$("roomStatsView")||!$("resultRound"))return;let s=$("sessionName").value.trim()||"Spieltag",n=Number($("resultRound").value);if(!n)return;let r=db.roomStats[s+"|"+n];let vals=db.rounds.map(x=>db.roomStats[s+"|"+x.n]).filter(Boolean).map(x=>Number(x.current??x.peak??x.start)).filter(Number.isFinite);let avg=vals.length?(vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1):"–",high=vals.length?Math.max(...vals):null,low=vals.length?Math.min(...vals):null;$("roomCount").value=r?String(r.start):"";$("roomStatsView").innerHTML='<div class="grid"><div class="card"><div class="muted">Startbestand in dieser Runde</div><div class="stat">'+(r?r.start:"–")+'</div></div><div class="card"><div class="muted">Erfasster Stand in dieser Runde</div><div class="stat">'+(r?r.current:"–")+'</div></div><div class="card"><div class="muted">Höchster Stand über alle erfassten Runden</div><div class="stat">'+(high===null?"–":high)+'</div></div><div class="card"><div class="muted">Niedrigster Stand über alle erfassten Runden</div><div class="stat">'+(low===null?"–":low)+'</div></div></div><p class="muted">Durchschnitt der gespeicherten Rundenstände: '+avg+'</p>'+(r&&r.changes.length?'<h3>Änderungen</h3>'+r.changes.slice().reverse().map(x=>'<div class="item">'+(x.delta>0?'+':'')+x.delta+' · '+x.label+' → '+x.value+' Personen</div>').join(""):'<p class="muted">Für diese Runde wurde noch kein Raumstand gespeichert.</p>')}
 
 renderAll();
 (function runIntro(){
