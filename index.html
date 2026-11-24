@@ -20,8 +20,15 @@
 }
 @media(max-width:600px){
  #introSplash{background-image:url("WeFamilyHintergrundMobile.png");background-position:center center;background-size:cover}
- .introSleigh{left:0;top:0;width:94vw;max-height:none;animation:sleighFlightMobile 5s cubic-bezier(.2,.62,.34,1) .12s forwards}
- @keyframes sleighFlightMobile{0%{transform:translate(2vw,51vh) scale(1);opacity:1}22%{transform:translate(5vw,34vh) scale(.78);opacity:1}58%{transform:translate(15vw,-5vh) scale(.34);opacity:.88}100%{transform:translate(25vw,-65vh) scale(.055);opacity:0}}
+ .introSleigh{left:0;top:auto;bottom:5vh;width:100vw;max-height:none;animation:sleighFlightMobile 5.1s cubic-bezier(.2,.62,.34,1) .12s forwards}
+ @keyframes sleighFlightMobile{
+  0%{transform:translate(-3vw,0) scale(1);opacity:1}
+  18%{transform:translate(2vw,-10vh) scale(.88) rotate(-3deg);opacity:1}
+  38%{transform:translate(13vw,-25vh) scale(.70) rotate(2deg);opacity:1}
+  58%{transform:translate(25vw,-45vh) scale(.43) rotate(-3deg);opacity:.92}
+  78%{transform:translate(38vw,-68vh) scale(.20) rotate(1deg);opacity:.72}
+  100%{transform:translate(48vw,-100vh) scale(.045);opacity:0}
+ }
  .introCaption{font-size:13px;bottom:4%;padding:9px 14px}
 }
 @media(prefers-reduced-motion:reduce){.introSleigh{animation-duration:1ms!important;animation-delay:0s!important}#introSplash{transition:none}}
