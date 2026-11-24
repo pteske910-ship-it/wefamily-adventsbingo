@@ -160,8 +160,9 @@ function persist(){
   try{
    if(!cloudBaseline||!cloudVersion)throw new Error("Kein bestätigter Cloud-Ausgangsstand. Bitte neu laden.");
    const operations=buildCloudOperations(cloudBaseline,snapshot);
-   for(const [entity,operation,payload] of operations){
-    const {data,error}=await supabaseClient.rpc("apply_bingo_change",{p_event_id:IMPORTED_EVENT_ID,p_expected_updated_at:cloudVersion,p_entity:entity,p_operation:operation,p_payload:payload});
+   if(operations.length){
+    const changes=operations.map(([entity,operation,payload])=>({entity,operation,payload}));
+    const {data,error}=await supabaseClient.rpc("apply_bingo_changes",{p_event_id:IMPORTED_EVENT_ID,p_expected_updated_at:cloudVersion,p_changes:changes});
     if(error)throw error;
     cloudVersion=data;
    }
@@ -302,7 +303,7 @@ async function runCloudReadOnlyCompare(){
   cloudComparePassed=checks.every(([name,a,b])=>norm(a)===norm(b));
   cloudSyncFunctionReady=false;
   if(cloudComparePassed){
-   const probe=await supabaseClient.rpc("apply_bingo_change",{p_event_id:IMPORTED_EVENT_ID,p_expected_updated_at:cloudVersion,p_entity:"__readiness_probe__",p_operation:"upsert",p_payload:{}});
+   const probe=await supabaseClient.rpc("apply_bingo_changes",{p_event_id:IMPORTED_EVENT_ID,p_expected_updated_at:cloudVersion,p_changes:[{entity:"__readiness_probe__",operation:"upsert",payload:{}}]});
    cloudSyncFunctionReady=!!probe.error&&String(probe.error.message||"").includes("Unsupported entity");
   }
   $("cloudWriteTestButton").disabled=!(cloudComparePassed&&cloudSyncFunctionReady&&!cloudWriteTestPassed);
@@ -318,7 +319,7 @@ async function runCloudWriteTest(){
  if(!sample?.id){status.textContent="Kein Teilnehmer für den kontrollierten Schreibtest vorhanden.";return}
  btn.disabled=true;status.textContent="Kontrollierter Schreibtest: ein vorhandener Teilnehmer wird mit identischen Werten erneut gespeichert …";
  try{
-  const {data,error}=await supabaseClient.rpc("apply_bingo_change",{p_event_id:IMPORTED_EVENT_ID,p_expected_updated_at:cloudVersion,p_entity:"participant",p_operation:"upsert",p_payload:{id:sample.id,name:sample.name,family:sample.family||""}});
+  const {data,error}=await supabaseClient.rpc("apply_bingo_changes",{p_event_id:IMPORTED_EVENT_ID,p_expected_updated_at:cloudVersion,p_changes:[{entity:"participant",operation:"upsert",payload:{id:sample.id,name:sample.name,family:sample.family||""}}]});
   if(error)throw error;
   cloudVersion=data;
   cloudWriteTestPassed=true;
