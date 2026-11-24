@@ -79,7 +79,7 @@
 <section id="settings" class="pane hidden">
 <div class="card"><h2>Turnier-Einstellungen</h2><p class="muted">Lege die Rundenanzahl fest und konfiguriere Modus und Punkte je Runde. So kannst du den Manager auch für spätere Bingo-Ligen wiederverwenden.</p><div class="row"><div class="field"><label for="roundCount">Anzahl der Runden</label><input id="roundCount" type="number" min="1" max="250" step="1" value="25"></div><button class="primary" onclick="applyRoundCount()">Rundenanzahl übernehmen</button></div><div class="card"><h3>Punktevergabe</h3><label>Wertungssystem</label><select id="scoringMode" onchange="setScoringMode(this.value)"><option value="mode">Feste Punkte je Bingo-Spielmodus</option><option value="place">Punkte nach Platzierung</option></select><div id="modePoints" class="grid"><div><label>Normales Bingo · Punkte pro Bingo</label><input id="normalPoints" type="number" min="0" step="1" value="2" onchange="saveModePoints()"></div><div><label>Power-up · Punkte pro Bingo</label><input id="powerPoints" type="number" min="0" step="1" value="1" onchange="saveModePoints()"></div><div><label>Blackout · Punkte pro Bingo</label><input id="blackoutPoints" type="number" min="0" step="1" value="3" onchange="saveModePoints()"></div></div><div id="placePoints" class="hidden"><label>Punkte je Platzierung (Komma-getrennt)</label><input id="placementPoints" value="10,8,7,6,5,4,3,2,1,1" onchange="savePlacementPoints()"><p class="muted">Beispiel: 1. Platz = 10, 2. = 8, 3. = 7 Punkte usw.</p></div></div><div id="roundList"></div></div>
 <div class="card"><h2>🔎 Doppelte Teilnehmer prüfen</h2><p class="muted">Zeigt die beiden bestätigten Namenspaare und zählt je Eintrag die gespeicherten Ergebnisdatensätze sowie Bingos. Es wird nichts verändert.</p><div class="actions"><button class="primary" id="duplicatePreviewButton" type="button">Dubletten-Vorschau erstellen</button></div><div id="duplicatePreviewStatus" class="muted" role="status">Noch nicht geprüft.</div><div id="duplicatePreview"></div></div>
-<div class="card"><h2>☁️ Importierten Cloud-Bestand prüfen</h2><p class="muted">Lädt die importierte Veranstaltung aus Supabase. Danach kann ein einmaliger, kontrollierter Speichertest mit exakt diesem Datenstand ausgeführt werden.</p><div class="actions"><button class="primary" id="loadCloudEventButton" type="button">Importierten Bestand laden</button><button id="cloudWriteTestButton" type="button" disabled>Unveränderten Datenstand speichern und prüfen</button></div><p id="cloudLoadStatus" class="muted" role="status">Noch nicht geladen.</p></div>
+<div class="card"><h2>☁️ Importierten Cloud-Bestand prüfen</h2><p class="muted">Lädt die importierte Veranstaltung aus Supabase. Danach kann ein einmaliger, kontrollierter Speichertest mit exakt diesem Datenstand ausgeführt werden.</p><div class="actions"><button class="primary" id="loadCloudEventButton" type="button">Importierten Bestand laden</button><button id="cloudWriteTestButton" type="button" disabled>Unveränderten Datenstand speichern und prüfen</button><button id="cloudCompareButton" type="button" disabled>Inhalt nur lesend vergleichen</button></div><p id="cloudLoadStatus" class="muted" role="status">Noch nicht geladen.</p></div>
 <div class="card"><h2>☁️ Lokale Sicherung in Supabase übernehmen</h2><p class="muted">Importiert eine vorhandene JSON-Sicherung als separate Bingo-Veranstaltung. Die Datei auf deinem Gerät und deine bisherigen lokalen Daten bleiben unverändert.</p><label for="cloudEventTitle">Name der neuen Veranstaltung</label><input id="cloudEventTitle" value="WeFamily Adventsbingo – importierter Bestand"><label class="tab" style="display:inline-block;margin-top:10px">JSON-Sicherung auswählen<input id="cloudImportFile" type="file" accept="application/json,.json" style="display:none"></label><div class="actions"><button class="primary" id="cloudImportButton" type="button">Sicherung in Supabase importieren</button></div><p id="cloudImportStatus" class="muted" role="status">Noch keine Datei ausgewählt.</p></div>
 <div class="card"><h2>Datensicherung</h2><p class="muted">Exportiere regelmäßig eine Sicherung. Import überschreibt den aktuellen lokalen Datenbestand.</p><div class="actions"><button class="primary" onclick="exportData()">Daten exportieren (JSON)</button><label class="tab" style="display:inline-block">Sicherung importieren<input id="importFile" type="file" accept="application/json" style="display:none" onchange="importData(event)"></label><button class="danger" onclick="resetData()">Alle lokalen Daten löschen</button></div></div>
 </section>
@@ -190,8 +190,9 @@ async function loadImportedCloudEvent(){
   cloudReadOnly=true;
   cloudVersion=eventResult.data.updated_at;
   $("cloudWriteTestButton").disabled=false;
+  $("cloudCompareButton").disabled=false;
   renderAll();
-  document.querySelectorAll("#appMain button:not(.tab[data-tab]):not(#duplicatePreviewButton):not(#cloudWriteTestButton),#appMain input,#appMain select,#appMain textarea").forEach(el=>el.disabled=true);
+  document.querySelectorAll("#appMain button:not(.tab[data-tab]):not(#duplicatePreviewButton):not(#cloudWriteTestButton):not(#cloudCompareButton),#appMain input,#appMain select,#appMain textarea").forEach(el=>el.disabled=true);
   document.querySelectorAll(".tab[data-tab]").forEach(el=>el.disabled=false);
   $("appMain").querySelector(".notice").textContent="Cloud-Prüfmodus: "+eventResult.data.title+" · Daten werden direkt aus Supabase angezeigt. Bearbeitung ist bis zur vollständigen Synchronisierung gesperrt.";
   $("appHeader").querySelector("p").textContent="Angemeldet als "+(await supabaseClient.auth.getUser()).data.user?.email+" · Cloud-Prüfmodus (nur lesen)";
@@ -219,6 +220,35 @@ async function previewKnownDuplicates(){
   status.textContent=missing?"Prüfung unvollständig: Ein Eintrag fehlt oder ist mehrfach vorhanden. Es wurde nichts verändert.":"Vorschau fertig. Insgesamt "+bRes.data.length+" Ergebnisdatensätze im Cloud-Bestand. Es wurde nichts verändert.";
  }catch(e){status.textContent="Prüfung fehlgeschlagen: "+(e.message||String(e));}
  finally{btn.disabled=false;}
+}
+async function runCloudReadOnlyCompare(){
+ const btn=$("cloudCompareButton"),status=$("cloudLoadStatus");
+ if(!cloudVersion||!cloudReadOnly){status.textContent="Bitte zuerst den Cloud-Bestand laden.";return}
+ btn.disabled=true;status.textContent="Reiner Inhaltsvergleich läuft – es wird nichts gespeichert …";
+ try{
+  const payload={players:db.players,rounds:db.rounds,results:db.results,roomStats:db.roomStats||{}};
+  const [pQ,rQ,bQ,sQ]=await Promise.all([
+   supabaseClient.from("event_participants").select("id,display_name,family,source_participant_id").eq("event_id",IMPORTED_EVENT_ID),
+   supabaseClient.from("rounds").select("id,round_number,mode,points_per_bingo,note").eq("event_id",IMPORTED_EVENT_ID),
+   supabaseClient.from("bingo_results").select("session_key,count,bingo_no,place,points,room_count,participant_id,round_id").eq("event_id",IMPORTED_EVENT_ID),
+   supabaseClient.from("room_statistics").select("session_key,start_count,current_count,peak_count,low_count,changes,round_id").eq("event_id",IMPORTED_EVENT_ID)
+  ]);
+  for(const q of [pQ,rQ,bQ,sQ])if(q.error)throw q.error;
+  const norm=x=>JSON.stringify(x);
+  const expP=payload.players.map(p=>({id:p.id,name:p.name,family:p.family||""})).sort((a,b)=>a.id.localeCompare(b.id));
+  const gotP=pQ.data.map(p=>({id:p.source_participant_id,name:p.display_name,family:p.family||""})).sort((a,b)=>(a.id||"").localeCompare(b.id||""));
+  const expR=payload.rounds.map(r=>({n:Number(r.n),mode:r.mode||"Normal",points:Number(r.pointsPerBingo??1),note:r.note||""})).sort((a,b)=>a.n-b.n);
+  const gotR=rQ.data.map(r=>({n:Number(r.round_number),mode:r.mode||"Normal",points:Number(r.points_per_bingo??1),note:r.note||""})).sort((a,b)=>a.n-b.n);
+  const pMap=new Map(pQ.data.map(p=>[p.id,p.source_participant_id]));
+  const gotB=bQ.data.map(x=>({session:x.session_key,count:Number(x.count),bingoNo:x.bingo_no??null,place:x.place??null,points:x.points==null?0:Number(x.points),roomCount:x.room_count==null?null:Number(x.room_count),playerId:pMap.get(x.participant_id),round:Number(rQ.data.find(r=>r.id===x.round_id)?.round_number)})).sort((a,b)=>norm(a).localeCompare(norm(b)));
+  const expB=payload.results.map(x=>({session:x.session||"Spieltag",count:Math.max(1,Number(x.count)||1),bingoNo:x.bingoNo??null,place:x.place??null,points:x.points==null?0:Number(x.points),roomCount:x.roomCount==null?null:Number(x.roomCount),playerId:x.playerId,round:Number(x.round)})).sort((a,b)=>norm(a).localeCompare(norm(b)));
+  const gotS=sQ.data.map(x=>({key:x.session_key+"|"+rQ.data.find(r=>r.id===x.round_id)?.round_number,start:x.start_count??0,current:x.current_count??0,peak:x.peak_count??0,low:x.low_count??0,changes:x.changes||[]})).sort((a,b)=>a.key.localeCompare(b.key));
+  const expS=Object.entries(payload.roomStats).map(([key,x])=>({key,start:x.start??0,current:x.current??0,peak:x.peak??0,low:x.low??0,changes:x.changes||[]})).sort((a,b)=>a.key.localeCompare(b.key));
+  const checks=[["Teilnehmer",expP,gotP],["Runden",expR,gotR],["Bingo-Ergebnisse",expB,gotB],["Raumstatistiken",expS,gotS]];
+  const lines=checks.map(([name,a,b])=>name+": "+(norm(a)===norm(b)?"OK":"ABWEICHUNG")+" ("+a.length+" / "+b.length+")");
+  status.textContent="Nur-Lese-Prüfung abgeschlossen. "+lines.join(" · ")+". Es wurde nichts verändert.";
+ }catch(e){status.textContent="Nur-Lese-Prüfung fehlgeschlagen: "+(e.message||String(e))+". Es wurde nichts verändert."}
+ finally{btn.disabled=false}
 }
 async function runCloudWriteTest(){
  const btn=$("cloudWriteTestButton"),status=$("cloudLoadStatus");
@@ -257,6 +287,7 @@ async function runCloudWriteTest(){
 $("duplicatePreviewButton").addEventListener("click",previewKnownDuplicates);
 $("loadCloudEventButton").addEventListener("click",loadImportedCloudEvent);
 $("cloudWriteTestButton").addEventListener("click",runCloudWriteTest);
+$("cloudCompareButton").addEventListener("click",runCloudReadOnlyCompare);
 $("cloudImportButton").addEventListener("click",importBackupToCloud);$("cloudImportFile").addEventListener("change",()=>{$("cloudImportStatus").textContent=$("cloudImportFile").files[0]?.name||"Noch keine Datei ausgewählt.";});
 function exportData(){let a=document.createElement("a"),u=URL.createObjectURL(new Blob([JSON.stringify(db,null,2)],{type:"application/json"}));a.href=u;a.download="wefamily-adventsbingo-sicherung.json";a.click();URL.revokeObjectURL(u)}
 function importData(e){let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let d=JSON.parse(r.result);if(!Array.isArray(d.players)||!Array.isArray(d.rounds)||!Array.isArray(d.results))throw Error();db=d;persist();alert("Sicherung importiert.")}catch{alert("Datei ist keine gültige Sicherung.")}};r.readAsText(f)}
