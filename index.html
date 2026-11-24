@@ -174,7 +174,7 @@ function statData(session){
   const roomValues=rs.map(r=>r.roomCount).filter(v=>v!==null&&v!==undefined&&Number.isFinite(Number(v))).map(Number);
   return {session:s,total:rs.reduce((a,r)=>a+(Number(r.count)||0),0),participants:db.players.length,roomCount:roomValues.length?roomValues[roomValues.length-1]:null,results:rs};
  });
- const roundDaily=selected.flatMap(s=>db.rounds.map(rd=>{const rs=results.filter(r=>String(r.session||"Spieltag").trim()===s&&Number(r.round)===rd.n);const roomValues=rs.map(r=>Number(r.roomCount)).filter(Number.isFinite);return {session:s,round:rd.n,total:rs.reduce((a,r)=>a+(Number(r.count)||0),0),roomCount:roomValues.length?roomValues[roomValues.length-1]:null}}));
+ const roundDaily=selected.flatMap(s=>db.rounds.map(rd=>{const rs=results.filter(r=>String(r.session||"Spieltag").trim()===s&&Number(r.round)===rd.n);const roomValues=rs.map(r=>r.roomCount).filter(v=>v!==null&&v!==undefined&&v!==""&&Number.isFinite(Number(v))).map(Number);return {session:s,round:rd.n,total:rs.reduce((a,r)=>a+(Number(r.count)||0),0),roomCount:roomValues.length?roomValues[roomValues.length-1]:null}}));
  const personal=players.map(p=>{
   const own=results.filter(r=>r.playerId===p.id);
   const byDay={};own.forEach(r=>byDay[r.session]=(byDay[r.session]||0)+(Number(r.count)||0));
