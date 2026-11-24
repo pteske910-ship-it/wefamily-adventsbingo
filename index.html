@@ -344,6 +344,7 @@ $("enableCloudEditButton").addEventListener("click",()=>{
  if(!confirm("Cloud-Bearbeitung aktivieren? Künftige Änderungen werden zentral in Supabase gespeichert. Die Live-Version bleibt unverändert."))return;
  cloudEditable=true;cloudReadOnly=false;
  document.querySelectorAll("#appMain button,#appMain input,#appMain select,#appMain textarea").forEach(el=>el.disabled=false);
+ $("cloudWriteTestButton").disabled=true;
  document.querySelectorAll(".tab[data-tab]").forEach(el=>el.disabled=false);
  $("appMain").querySelector(".notice").textContent="Cloud-Bearbeitung aktiv: Änderungen werden zentral in Supabase gespeichert.";
  $("appHeader").querySelector("p").textContent="Cloud-Bearbeitung aktiv · Änderungen werden zentral gespeichert";
