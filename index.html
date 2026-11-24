@@ -164,7 +164,7 @@ function statData(session){
  const players=db.players.slice();
  const attendanceKnown=selected.length>0&&selected.every(s=>Array.isArray(db.attendance?.[s]));
  const attendedIds=new Set(selected.flatMap(s=>Array.isArray(db.attendance?.[s])?db.attendance[s]:[]));
- const ids=attendanceKnown?[...attendedIds]:[...new Set(results.map(r=>r.playerId))];
+ const ids=[...new Set([...attendedIds,...results.map(r=>r.playerId)])];
  const counts={};ids.forEach(id=>counts[id]=0);
  results.forEach(r=>{if(Object.prototype.hasOwnProperty.call(counts,r.playerId))counts[r.playerId]+=Math.max(0,Number(r.count)||0)});
  const ranking=Object.entries(counts).map(([id,total])=>({id,total,p:players.find(p=>p.id===id)})).sort((a,b)=>b.total-a.total||(a.p?.name||"").localeCompare(b.p?.name||""));
@@ -173,7 +173,7 @@ function statData(session){
  ids.forEach(id=>{const n=counts[id]||0;distribution[n===0?"0":n===1?"1":n===2?"2":n<=4?"3–4":"5+"]++});
  const daily=sessions.filter(s=>selected.includes(s)).map(s=>{
   const rs=results.filter(r=>String(r.session||"Spieltag").trim()===s);
-  const dayIds=Array.isArray(db.attendance?.[s])?db.attendance[s]:[...new Set(rs.map(r=>r.playerId))];
+  const dayIds=[...new Set([...(Array.isArray(db.attendance?.[s])?db.attendance[s]:[]),...rs.map(r=>r.playerId)])];
   return {session:s,total:rs.reduce((a,r)=>a+(Number(r.count)||0),0),participants:dayIds.length,tracked:Array.isArray(db.attendance?.[s]),results:rs};
  });
  const roundDaily=selected.flatMap(s=>db.rounds.map(rd=>({session:s,round:rd.n,total:results.filter(r=>String(r.session||"Spieltag").trim()===s&&Number(r.round)===rd.n).reduce((a,r)=>a+(Number(r.count)||0),0)})));
