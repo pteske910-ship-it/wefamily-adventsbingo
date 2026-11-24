@@ -165,8 +165,8 @@ function statData(session){
  results.forEach(r=>{if(Object.prototype.hasOwnProperty.call(counts,r.playerId))counts[r.playerId]+=Math.max(0,Number(r.count)||0)});
  const ranking=Object.entries(counts).map(([id,total])=>({id,total,p:players.find(p=>p.id===id)})).sort((a,b)=>b.total-a.total||(a.p?.name||"").localeCompare(b.p?.name||""));
  const rounds={};results.forEach(r=>{const k="Runde "+r.round;rounds[k]=(rounds[k]||0)+(Number(r.count)||0)});
- const distribution={"0":0,"1":0,"2":0,"3–4":0,"5+" :0};
- ids.forEach(id=>{const n=counts[id]||0;distribution[n===0?"0":n===1?"1":n===2?"2":n<=4?"3–4":"5+"]++});
+ const distribution={"1":0,"2":0,"3–4":0,"5+":0};
+ ids.filter(id=>(counts[id]||0)>0).forEach(id=>{const n=counts[id];distribution[n===1?"1":n===2?"2":n<=4?"3–4":"5+"]++});
  const daily=selected.map(s=>{
   const rs=results.filter(r=>String(r.session||"Spieltag").trim()===s),bingoPlayers=new Set(rs.filter(r=>(Number(r.count)||0)>0).map(r=>r.playerId));
   const roomRecords=db.rounds.map(rd=>db.roomStats?.[s+"|"+rd.n]).filter(Boolean),roomValues=roomRecords.map(x=>Number(x.current??x.peak??x.start)).filter(Number.isFinite);
@@ -215,10 +215,10 @@ function renderStats(){
  const keys=new Set();let duplicates=0;d.results.forEach(r=>{const k=[r.session,r.round,r.bingoNo].join("|");if(r.bingoNo&&keys.has(k))duplicates++;keys.add(k)});if(duplicates)issues.push(duplicates+" doppelte Bingo-Nummern innerhalb eines Spieltags und einer Runde.");
  const summary=active+" Bingo-Spieler · "+d.total+" Bingos"+(best?" · Spitzenwert: "+(best.p?.name||"Unbekannt")+" ("+best.total+")":"")+(maxRound?" · stärkste Runde: "+maxRound[0]+" ("+maxRound[1]+")":"");
  $("statsReport").innerHTML=
- '<div class="grid"><div class="card"><div class="muted">Teilnehmer im Teilnehmerstamm</div><div class="stat">'+d.players.length+'</div></div><div class="card"><div class="muted">Bingo-Spieler im Zeitraum</div><div class="stat">'+active+'</div></div><div class="card"><div class="muted">Bingos gesamt</div><div class="stat">'+d.total+'</div></div><div class="card"><div class="muted">Bingos je Bingo-Spieler</div><div class="stat">'+(active?(d.total/active).toFixed(1):"–")+'</div></div></div>'+
+ '<div class="grid"><div class="card"><div class="muted">Registrierte Teilnehmer</div><div class="stat">'+d.players.length+'</div></div><div class="card"><div class="muted">Bingo-Spieler im Zeitraum</div><div class="stat">'+active+'</div></div><div class="card"><div class="muted">Bingos gesamt</div><div class="stat">'+d.total+'</div></div><div class="card"><div class="muted">Bingos je Bingo-Spieler</div><div class="stat">'+(active?(d.total/active).toFixed(1):"–")+'</div></div></div>'+
  '<div class="card"><h3>📣 Statistik-Highlights</h3><p>'+esc(summary)+'</p></div>'+
  '<div class="card"><h3>🏆 Rangliste & Gewinnerübersicht</h3>'+rank+'</div>'+
- '<div class="card"><h3>🎯 Bingo-Verteilung im Teilnehmerstamm</h3>'+donut+'</div>'+
+ '<div class="card"><h3>🎯 Bingo-Verteilung der Bingo-Spieler</h3>'+donut+'</div>'+
  '<div class="card"><h3>📊 Bingos je Spieltag und Runde</h3>'+bars+'<h4>Höchster erfasster Voice-Raumstand je Runde</h4>'+(d.roundDaily.filter(x=>x.roomCount!==null).map(x=>'<div class="item row between"><span>'+esc(x.session)+' · Runde '+x.round+'</span><strong>'+x.roomCount+' Personen</strong></div>').join("")||'<p class="muted">Noch keine Raumgrößen erfasst.</p>')+'</div>'+
  '<div class="card"><h3>📅 Teilnehmerentwicklung</h3>'+dayRows+'</div>'+
  '<div class="card"><h3>⭐ Persönliche Bestleistungen</h3>'+personal+'</div>'+
