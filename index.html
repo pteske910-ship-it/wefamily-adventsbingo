@@ -315,28 +315,36 @@ async function runCloudReadOnlyCompare(){
 async function runCloudWriteTest(){
  const btn=$("cloudWriteTestButton"),status=$("cloudLoadStatus");
  if(!cloudVersion||!cloudReadOnly||!cloudComparePassed||!cloudSyncFunctionReady){status.textContent="Bitte zuerst Cloud laden, vergleichen und die neue SQL-Funktion bestätigen lassen.";return}
- const sample=db.players[0];
- if(!sample?.id){status.textContent="Kein Teilnehmer für den kontrollierten Schreibtest vorhanden.";return}
- btn.disabled=true;status.textContent="Kontrollierter Schreibtest: ein vorhandener Teilnehmer wird mit identischen Werten erneut gespeichert …";
+ const player=db.players[0],round=db.rounds[0],result=db.results[0],roomEntry=Object.entries(db.roomStats||{})[0];
+ if(!player?.id||!round||!result?.id||!roomEntry){status.textContent="Für den vollständigen Schreibtest fehlen Teilnehmer, Runde, Bingo-Ergebnis oder Raumstatistik.";return}
+ const [roomKey,room]=roomEntry,roomParts=roomKey.split("|");
+ const changes=[
+  {entity:"participant",operation:"upsert",payload:{id:player.id,name:player.name,family:player.family||""}},
+  {entity:"round",operation:"upsert",payload:{n:round.n,mode:round.mode||"Normal",pointsPerBingo:round.pointsPerBingo??1,note:round.note||""}},
+  {entity:"result",operation:"upsert",payload:{id:result.id,session:result.session||"Spieltag",round:result.round,playerId:result.playerId,count:result.count,bingoNo:result.bingoNo??null,place:result.place??null,points:result.points??null,roomCount:result.roomCount??null}},
+  {entity:"room",operation:"upsert",payload:{session:roomParts[0],round:Number(room.round||roomParts[1]),start:room.start??0,current:room.current??0,peak:room.peak??0,low:room.low??0,changes:room.changes||[]}},
+  {entity:"meta",operation:"upsert",payload:{presence:db.presence||{},attendance:db.attendance||{},scoring:db.scoring||{}}}
+ ];
+ btn.disabled=true;status.textContent="Kontrollierter Batch-Test: je ein vorhandener Teilnehmer-, Runden-, Ergebnis-, Raumstatistik- und Metadatensatz wird mit identischen Werten gespeichert …";
  try{
-  const {data,error}=await supabaseClient.rpc("apply_bingo_changes",{p_event_id:IMPORTED_EVENT_ID,p_expected_updated_at:cloudVersion,p_changes:[{entity:"participant",operation:"upsert",payload:{id:sample.id,name:sample.name,family:sample.family||""}}]});
+  const {data,error}=await supabaseClient.rpc("apply_bingo_changes",{p_event_id:IMPORTED_EVENT_ID,p_expected_updated_at:cloudVersion,p_changes:changes});
   if(error)throw error;
   cloudVersion=data;
   cloudWriteTestPassed=true;
-  status.textContent="Schreibzugriff bestätigt. Prüfe jetzt erneut alle Daten …";
+  status.textContent="Alle fünf Upsert-Wege wurden ausgeführt. Prüfe jetzt erneut alle Daten …";
   await runCloudReadOnlyCompare();
   if(cloudComparePassed&&cloudSyncFunctionReady){
    $("enableCloudEditButton").disabled=false;
-   status.textContent="Kontrollierter Schreibtest erfolgreich. Teilnehmer unverändert gespeichert; alle 4 Datenvergleiche weiterhin OK. Cloud-Bearbeitung bleibt bis zu deiner Freigabe gesperrt.";
+   status.textContent="Batch-Schreibtest erfolgreich: Teilnehmer, Runde, Bingo-Ergebnis, Raumstatistik und Metadaten unverändert gespeichert. Alle 4 Datenvergleiche weiterhin OK. Cloud-Bearbeitung bleibt bis zu deiner Freigabe gesperrt.";
   }else{
    cloudWriteTestPassed=false;
    $("enableCloudEditButton").disabled=true;
-   status.textContent="Schreibtest ausgeführt, aber der anschließende Datenvergleich war nicht erfolgreich. Bearbeitung bleibt gesperrt.";
+   status.textContent="Batch-Schreibtest ausgeführt, aber der anschließende Datenvergleich war nicht erfolgreich. Bearbeitung bleibt gesperrt.";
   }
  }catch(e){
   cloudWriteTestPassed=false;
   cloudEditable=false;cloudReadOnly=true;
-  status.textContent="Kontrollierter Schreibtest fehlgeschlagen: "+(e.message||String(e))+". Es wurden keine Bingo-Ergebnisse verändert.";
+  status.textContent="Kontrollierter Batch-Schreibtest fehlgeschlagen: "+(e.message||String(e))+". Der gesamte Batch wurde zurückgerollt; es wurden keine Bingo-Ergebnisse teilweise gespeichert.";
  }finally{
   btn.disabled=!(cloudComparePassed&&cloudSyncFunctionReady&&!cloudWriteTestPassed);
  }
