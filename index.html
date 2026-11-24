@@ -232,7 +232,7 @@ async function runCloudWriteTest(){
   cloudVersion=data;
   const [pCheck,rCheck,bCheck,sCheck]=await Promise.all([
    supabaseClient.from("event_participants").select("display_name,family,source_participant_id").eq("event_id",IMPORTED_EVENT_ID),
-   supabaseClient.from("rounds").select("round_number,mode,points_per_bingo,note").eq("event_id",IMPORTED_EVENT_ID),
+   supabaseClient.from("rounds").select("id,round_number,mode,points_per_bingo,note").eq("event_id",IMPORTED_EVENT_ID),
    supabaseClient.from("bingo_results").select("session_key,count,bingo_no,place,points,room_count,participant_id,round_id").eq("event_id",IMPORTED_EVENT_ID),
    supabaseClient.from("room_statistics").select("session_key,start_count,current_count,peak_count,low_count,changes,round_id").eq("event_id",IMPORTED_EVENT_ID)
   ]);
