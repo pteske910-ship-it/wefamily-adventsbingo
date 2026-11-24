@@ -98,7 +98,8 @@ begin
       greatest(1, coalesce(nullif(v_result->>'count','')::integer,1)),
       nullif(v_result->>'bingoNo','')::integer,
       nullif(v_result->>'place','')::integer,
-      nullif(v_result->>'points','')::numeric
+      nullif(v_result->>'points','')::numeric,
+      nullif(v_result->>'roomCount','')::integer
     from public.event_participants p
     where p.event_id = v_event_id
       and p.source_participant_id = (v_result->>'playerId')::uuid;
