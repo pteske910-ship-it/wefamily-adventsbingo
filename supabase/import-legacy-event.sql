@@ -41,9 +41,9 @@ begin
     raise exception 'Import key is required';
   end if;
   if jsonb_typeof(p_payload) <> 'object'
-     or jsonb_typeof(p_payload->'players') <> 'array'
-     or jsonb_typeof(p_payload->'rounds') <> 'array'
-     or jsonb_typeof(p_payload->'results') <> 'array' then
+     or coalesce(jsonb_typeof(p_payload->'players'), '') <> 'array'
+     or coalesce(jsonb_typeof(p_payload->'rounds'), '') <> 'array'
+     or coalesce(jsonb_typeof(p_payload->'results'), '') <> 'array' then
     raise exception 'Backup JSON is missing required arrays';
   end if;
 
