@@ -188,7 +188,7 @@ async function loadImportedCloudEvent(){
   };
   cloudReadOnly=true;
   renderAll();
-  document.querySelectorAll("#appMain button:not(.tab[data-tab]),#appMain input,#appMain select,#appMain textarea").forEach(el=>el.disabled=true);
+  document.querySelectorAll("#appMain button:not(.tab[data-tab]):not(#duplicatePreviewButton),#appMain input,#appMain select,#appMain textarea").forEach(el=>el.disabled=true);
   document.querySelectorAll(".tab[data-tab]").forEach(el=>el.disabled=false);
   $("appMain").querySelector(".notice").textContent="Cloud-Prüfmodus: "+eventResult.data.title+" · Daten werden direkt aus Supabase angezeigt. Bearbeitung ist bis zur vollständigen Synchronisierung gesperrt.";
   $("appHeader").querySelector("p").textContent="Angemeldet als "+(await supabaseClient.auth.getUser()).data.user?.email+" · Cloud-Prüfmodus (nur lesen)";
