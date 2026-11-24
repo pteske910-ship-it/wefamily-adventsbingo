@@ -15,7 +15,7 @@
 .introCaption{position:absolute;z-index:3;left:50%;bottom:5%;transform:translateX(-50%);margin:0;padding:10px 18px;border-radius:999px;background:#07152dcc;border:1px solid #ffffff55;color:#fff;font-weight:800;letter-spacing:.04em;text-shadow:0 2px 8px #000;white-space:nowrap;box-shadow:0 4px 24px #0005}
 @media(min-width:901px){
  #introSplash{background-position:center center;background-size:cover}
- .introSleigh{width:min(78vw,1120px);max-height:78vh;animation:sleighFlightDesktop 7.5s cubic-bezier(.2,.62,.34,1) .12s forwards}
+ .introSleigh{width:min(78vw,1120px);max-height:78vh;animation:sleighFlightDesktop 7.8s cubic-bezier(.2,.62,.34,1) .12s forwards}
  @keyframes sleighFlightDesktop{0%{transform:translate(-34vw,30vh) scale(1.02);opacity:1}22%{transform:translate(-10vw,20vh) scale(.82);opacity:1}62%{transform:translate(52vw,-24vh) scale(.32);opacity:.9}100%{transform:translate(118vw,-82vh) scale(.07);opacity:0}}
 }
 @media(max-width:900px){
@@ -215,7 +215,7 @@ function startIntroProgress(splash,duration){
   sleigh.style.left=p[0]+"px";sleigh.style.top=p[1]+"px";
   sleigh.style.transform="translate(-50%,-50%) scale(1)";
   sleigh.style.opacity="1";
-  startIntroProgress(splash,7500);
+  startIntroProgress(splash,7800);
   const begin=performance.now(),duration=6800;
   function frame(now){
    const raw=Math.min(1,(now-begin)/duration),scaled=raw*3,idx=Math.min(2,Math.floor(scaled)),t=raw>=1?1:scaled-idx,q=curves[idx];
@@ -225,7 +225,7 @@ function startIntroProgress(splash,duration){
   }
   requestAnimationFrame(frame);
  }else{
-  startIntroProgress(splash,7500);
+  startIntroProgress(splash,7800);
  }
 })();
 </script></body></html>
