@@ -26,10 +26,26 @@
 @media(prefers-reduced-motion:reduce){.introSleigh{animation-duration:1ms!important;animation-delay:0s!important}#introSplash{transition:none}}
 .admin-subnav{display:flex;gap:8px;overflow:auto;padding:4px 0 12px}
 .chartbar{display:flex;align-items:center;gap:9px;margin:9px 0}.barlabel{width:100px;font-size:12px;color:var(--muted)}.track{flex:1;background:#100e1b;border-radius:99px;overflow:hidden;height:13px}.fill{height:100%;background:linear-gradient(90deg,#8d49a1,#5c83df);border-radius:99px}
+.introLoader{position:absolute;z-index:5;left:50%;bottom:5.5%;transform:translateX(-50%);width:min( min(760px,88vw), 760px);padding:0 10px;color:#fff;text-align:center;text-shadow:0 3px 5px #07152b,0 0 12px #000;font-family:Georgia,serif}
+.introLoaderTitle{display:flex;align-items:center;justify-content:center;gap:clamp(10px,2.2vw,24px);font-size:clamp(20px,3vw,38px);font-weight:900;font-style:italic;white-space:nowrap;margin-bottom:12px;-webkit-text-stroke:.35px #542d16}
+.introLoaderTitle span:nth-child(2){color:#fff3dc;text-shadow:0 2px 0 #693a20,0 4px 9px #000}
+.introLoader .snowflake{font-family:Arial,sans-serif;color:#e9f8ff;font-size:1.22em;text-shadow:0 0 5px #fff,0 0 14px #6edfff,0 2px 4px #06152e}
+.introLoaderTrack{height:clamp(24px,4.2vw,42px);padding:4px;border-radius:999px;background:repeating-linear-gradient(135deg,#fff 0 8px,#d62c27 8px 15px);border:2px solid #fff4d6;box-shadow:0 0 0 2px #9e3728,0 5px 18px #000a,inset 0 1px 4px #fff}
+.introLoaderFill{height:100%;width:0%;border-radius:999px;background:linear-gradient(180deg,#fff7b1 0%,#ffd84b 38%,#ffae16 72%,#f08b05 100%);box-shadow:inset 0 2px 3px #fff9,0 0 12px #ffce43;position:relative;overflow:hidden}
+.introLoaderFill:after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 25%,#fff9 48%,transparent 68%);transform:translateX(-100%);animation:loaderShine 1.5s ease-in-out infinite}
+@keyframes loaderShine{to{transform:translateX(100%)}}
+#introSplash:not(.ready) .introSleigh{animation-play-state:paused}
+@media(max-width:900px){.introLoader{width:92vw;bottom:6.5%;padding:0 5px}.introLoaderTitle{font-size:clamp(18px,5.1vw,27px);gap:10px;margin-bottom:10px}.introLoaderTrack{height:30px;padding:3px}}
 @media print{header,.tabs,.admin-subnav,.no-print,footer{display:none!important}body{background:white;color:#171329}.card{break-inside:avoid;box-shadow:none;background:white;color:#171329;border:1px solid #bbb}.muted{color:#555}}
 </style></head>
 <body>
-<div id="introSplash" aria-label="WeFamily fliegt über den Nordpol"><img class="introSleigh" src="wefamily-sleigh.webp" alt="WeFamily-Schlitten mit Pinguin und zwei Rentieren"><p class="introCaption">🎄 WeFamily Adventsbingo 🎄</p></div>
+<div id="introSplash" aria-label="WeFamily fliegt über den Nordpol">
+ <img class="introSleigh" src="wefamily-sleigh.webp" alt="WeFamily-Schlitten mit Pinguin und zwei Rentieren">
+ <div class="introLoader" aria-live="polite">
+  <div class="introLoaderTitle"><span class="snowflake">❄</span><span>Lade Adventsbingo ...</span><span class="snowflake">❄</span></div>
+  <div class="introLoaderTrack"><div class="introLoaderFill" id="introLoaderFill"></div></div>
+ </div>
+</div>
 <header><div class="wrap" style="padding:0"><h1>🎄 WeFamily Adventsbingo</h1><p>Organisations- und Auswertungstest · Version 0.2 · lokal auf diesem Gerät</p></div></header>
 <main class="wrap">
 <div class="notice">Testversion: Daten werden nur in diesem Browser gespeichert. Noch kein gemeinsamer Heidi-Zugang und keine echte Anmeldung. Vor echtem Einsatz bitte Daten exportieren.</div>
@@ -169,37 +185,47 @@ function setRoomCount(){let raw=$("roomCount").value.trim();if(raw==="")return a
 function renderRoomStats(){if(!$("roomStatsView")||!$("roomRound"))return;let s=$("roomSession").value.trim()||"Spieltag",n=Number($("roomRound").value);if(!n)return;let r=db.roomStats[s+"|"+n],prev=db.rounds.filter(x=>x.n<n).map(x=>db.roomStats[s+"|"+x.n]).filter(Boolean).sort((a,b)=>b.round-a.round)[0];let start=r?r.start:null,current=r?r.current:null;let vals=db.rounds.map(x=>db.roomStats[s+"|"+x.n]).filter(Boolean).map(x=>x.current);let avg=vals.length?(vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1):"–";$("roomCount").value=r?String(r.start):"";$("roomStatsView").innerHTML='<div class="grid"><div class="card"><div class="muted">Startbestand zu Rundenbeginn</div><div class="stat">'+(start===null?"–":start)+'</div></div><div class="card"><div class="muted">Erfasster Rundenbestand</div><div class="stat">'+(current===null?"–":current)+'</div></div><div class="card"><div class="muted">Höchster erfasster Stand</div><div class="stat">'+(r?r.peak:"–") +'</div></div><div class="card"><div class="muted">Niedrigster erfasster Stand</div><div class="stat">'+(r?r.low:"–") +'</div></div></div><p class="muted">Durchschnitt der gespeicherten Rundenstände: '+avg+'</p>'+(r&&r.changes.length?'<h3>Änderungen</h3>'+r.changes.slice().reverse().map(x=>'<div class="item">'+(x.delta>0?'+':'')+x.delta+' · '+x.label+' → '+x.value+' Personen</div>').join(""):'<p class="muted">Für diese Runde wurde noch kein Startbestand gespeichert. Gib die Personenzahl zu Rundenbeginn ein.</p>')}
 
 renderAll();
-(async function runMobileSleighFlight(){
- const splash=$("introSplash"),sleigh=splash?.querySelector(".introSleigh");
- if(!splash||!sleigh||!window.matchMedia("(max-width:900px)").matches)return;
- const w=window.innerWidth,h=window.innerHeight;
- const curves=[
-  {p0:[.39*w,.84*h],p1:[.70*w,.82*h],p2:[.96*w,.73*h],p3:[.76*w,.64*h],s0:1,s1:.84},
-  {p0:[.76*w,.64*h],p1:[.48*w,.60*h],p2:[.14*w,.53*h],p3:[.38*w,.42*h],s0:.84,s1:.60},
-  {p0:[.38*w,.42*h],p1:[.72*w,.32*h],p2:[1.02*w,.12*h],p3:[1.16*w,-.12*h],s0:.60,s1:.10}
- ];
- function bez(a,b,c,d,t){const u=1-t;return u*u*u*a+3*u*u*t*b+3*u*t*t*c+t*t*t*d}
- const p=curves[0].p0;
- sleigh.style.left=p[0]+"px";sleigh.style.top=p[1]+"px";
- sleigh.style.transform="translate(-50%,-50%) scale(1)";
- sleigh.style.opacity="0";
- try{if(sleigh.decode)await sleigh.decode();else if(!sleigh.complete)await new Promise(resolve=>{sleigh.addEventListener("load",resolve,{once:true});sleigh.addEventListener("error",resolve,{once:true})});}catch(e){}
- // Reassert the exact starting position after image decode and before first paint.
- sleigh.style.left=p[0]+"px";sleigh.style.top=p[1]+"px";
- sleigh.style.transform="translate(-50%,-50%) scale(1)";
- const start=performance.now(),duration=6800;
- sleigh.style.opacity="1";
- function frame(now){
-  const raw=Math.min(1,(now-start)/duration),scaled=raw*3,idx=Math.min(2,Math.floor(scaled)),t=raw>=1?1:scaled-idx,q=curves[idx];
-  const x=bez(q.p0[0],q.p1[0],q.p2[0],q.p3[0],t);
-  const y=bez(q.p0[1],q.p1[1],q.p2[1],q.p3[1],t);
-  const scale=q.s0+(q.s1-q.s0)*t;
-  sleigh.style.left=x+"px";sleigh.style.top=y+"px";
-  sleigh.style.transform="translate(-50%,-50%) scale("+scale+")";
-  if(raw<1)requestAnimationFrame(frame);
+function startIntroProgress(splash,duration){
+ const fill=$("introLoaderFill"),start=performance.now();
+ splash.classList.add("ready");
+ function tick(now){
+  const p=Math.min(1,(now-start)/duration);
+  if(fill)fill.style.width=(p*100).toFixed(1)+"%";
+  if(p<1)requestAnimationFrame(tick);
+  else{if(fill)fill.style.width="100%";setTimeout(()=>{splash.classList.add("out");setTimeout(()=>splash.remove(),600)},180)}
  }
- requestAnimationFrame(frame);
- setTimeout(()=>{splash.classList.add("out");setTimeout(()=>splash.remove(),600)},7500);
+ requestAnimationFrame(tick);
+}
+(async function runIntro(){
+ const splash=$("introSplash"),sleigh=splash?.querySelector(".introSleigh");
+ if(!splash||!sleigh)return;
+ const mobile=window.matchMedia("(max-width:900px)").matches;
+ const bg=new Image();
+ bg.src=mobile?"WeFamilyHintergrundMobile.png?v=8":"northpole-bg.webp";
+ try{await Promise.all([sleigh.decode?sleigh.decode():Promise.resolve(),bg.decode?bg.decode():Promise.resolve()]);}catch(e){}
+ if(mobile){
+  const w=window.innerWidth,h=window.innerHeight;
+  const curves=[
+   {p0:[.39*w,.84*h],p1:[.70*w,.82*h],p2:[.96*w,.73*h],p3:[.76*w,.64*h],s0:1,s1:.84},
+   {p0:[.76*w,.64*h],p1:[.48*w,.60*h],p2:[.14*w,.53*h],p3:[.38*w,.42*h],s0:.84,s1:.60},
+   {p0:[.38*w,.42*h],p1:[.72*w,.32*h],p2:[1.02*w,.12*h],p3:[1.16*w,-.12*h],s0:.60,s1:.10}
+  ];
+  function bez(a,b,c,d,t){const u=1-t;return u*u*u*a+3*u*u*t*b+3*u*t*t*c+t*t*t*d}
+  const p=curves[0].p0;
+  sleigh.style.left=p[0]+"px";sleigh.style.top=p[1]+"px";
+  sleigh.style.transform="translate(-50%,-50%) scale(1)";
+  sleigh.style.opacity="1";
+  startIntroProgress(splash,7500);
+  const begin=performance.now(),duration=6800;
+  function frame(now){
+   const raw=Math.min(1,(now-begin)/duration),scaled=raw*3,idx=Math.min(2,Math.floor(scaled)),t=raw>=1?1:scaled-idx,q=curves[idx];
+   const x=bez(q.p0[0],q.p1[0],q.p2[0],q.p3[0],t),y=bez(q.p0[1],q.p1[1],q.p2[1],q.p3[1],t),scale=q.s0+(q.s1-q.s0)*t;
+   sleigh.style.left=x+"px";sleigh.style.top=y+"px";sleigh.style.transform="translate(-50%,-50%) scale("+scale+")";
+   if(raw<1)requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+ }else{
+  startIntroProgress(splash,7500);
+ }
 })();
-if(!window.matchMedia("(max-width:900px)").matches)setTimeout(()=>{const splash=$("introSplash");if(splash){splash.classList.add("out");setTimeout(()=>splash.remove(),600)}},7200);
 </script></body></html>
