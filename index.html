@@ -49,7 +49,10 @@
   <div class="introLoaderTrack"><div class="introLoaderFill" id="introLoaderFill"></div></div>
  </div>
 </div>
-<section id="authGate"><div class="card"><h2>🔐 WeFamily Adventsbingo</h2><p class="muted">Bitte mit deinem WeFamily-Konto anmelden.</p><form id="loginForm"><label for="loginEmail">E-Mail-Adresse</label><input id="loginEmail" type="email" autocomplete="username" required><label for="loginPassword">Passwort</label><input id="loginPassword" type="password" autocomplete="current-password" required><div class="actions"><button class="primary" id="loginButton" type="submit">Anmelden</button></div><p id="authMessage" role="status"></p></form></div></section>
+<section id="authGate"><div class="card"><h2>🔐 WeFamily Adventsbingo</h2>
+<div id="loginView"><p class="muted">Bitte mit deinem WeFamily-Konto anmelden.</p><form id="loginForm"><label for="loginEmail">E-Mail-Adresse</label><input id="loginEmail" type="email" autocomplete="username" required><label for="loginPassword">Passwort</label><input id="loginPassword" type="password" autocomplete="current-password" required><div class="actions"><button class="primary" id="loginButton" type="submit">Anmelden</button><button type="button" id="showRegisterButton">Neues Konto erstellen</button></div></form></div>
+<div id="registerView" class="hidden"><p class="muted">Erstelle dein persönliches WeFamily-Manager-Konto. Der Zugang wird erst nach Freigabe durch Pascal aktiviert.</p><form id="registerForm"><label for="registerName">Anzeigename</label><input id="registerName" type="text" maxlength="80" autocomplete="name" required><label for="registerEmail">E-Mail-Adresse</label><input id="registerEmail" type="email" autocomplete="email" required><label for="registerPassword">Passwort (mindestens 8 Zeichen)</label><input id="registerPassword" type="password" minlength="8" autocomplete="new-password" required><label for="registerPasswordConfirm">Passwort wiederholen</label><input id="registerPasswordConfirm" type="password" minlength="8" autocomplete="new-password" required><div class="actions"><button class="primary" id="registerButton" type="submit">Registrierung absenden</button><button type="button" id="showLoginButton">Zur Anmeldung</button></div></form></div>
+<p id="authMessage" role="status" aria-live="polite"></p></div></section>
 <header class="hidden" id="appHeader"><div class="wrap" style="padding:0"><h1>🎄 WeFamily Adventsbingo</h1><p>Organisations- und Auswertungstest · Version 0.8 · Daten aktuell noch lokal auf diesem Gerät</p><button id="logoutButton" class="small">Abmelden</button></div></header>
 <main class="wrap hidden" id="appMain">
 <div class="notice">Testversion: Daten werden nur in diesem Browser gespeichert. Noch kein gemeinsamer Heidi-Zugang und keine echte Anmeldung. Vor echtem Einsatz bitte Daten exportieren.</div>
@@ -81,7 +84,7 @@
 <div class="card"><h2>🔎 Doppelte Teilnehmer prüfen</h2><p class="muted">Zeigt die beiden bestätigten Namenspaare und zählt je Eintrag die gespeicherten Ergebnisdatensätze sowie Bingos. Es wird nichts verändert.</p><div class="actions"><button class="primary" id="duplicatePreviewButton" type="button">Dubletten-Vorschau erstellen</button></div><div id="duplicatePreviewStatus" class="muted" role="status">Noch nicht geprüft.</div><div id="duplicatePreview"></div></div>
 <div class="card"><h2>☁️ Importierten Cloud-Bestand prüfen</h2><p class="muted">Lädt die importierte Veranstaltung aus Supabase. Danach kann ein einmaliger, kontrollierter Speichertest mit exakt diesem Datenstand ausgeführt werden.</p><div class="actions"><button class="primary" id="loadCloudEventButton" type="button">Importierten Bestand laden</button><button id="cloudWriteTestButton" type="button" disabled>Kontrollierten Schreibtest ausführen</button><button id="cloudCompareButton" type="button" disabled>Inhalt nur lesend vergleichen</button><button id="enableCloudEditButton" type="button" disabled>Cloud-Bearbeitung freigeben</button></div><p id="cloudLoadStatus" class="muted" role="status">Noch nicht geladen.</p></div>
 <div class="card"><h2>☁️ Lokale Sicherung in Supabase übernehmen</h2><p class="muted">Importiert eine vorhandene JSON-Sicherung als separate Bingo-Veranstaltung. Die Datei auf deinem Gerät und deine bisherigen lokalen Daten bleiben unverändert.</p><label for="cloudEventTitle">Name der neuen Veranstaltung</label><input id="cloudEventTitle" value="WeFamily Adventsbingo – importierter Bestand"><label class="tab" style="display:inline-block;margin-top:10px">JSON-Sicherung auswählen<input id="cloudImportFile" type="file" accept="application/json,.json" style="display:none"></label><div class="actions"><button class="primary" id="cloudImportButton" type="button">Sicherung in Supabase importieren</button></div><p id="cloudImportStatus" class="muted" role="status">Noch keine Datei ausgewählt.</p></div>
-<div class="card"><h2>Datensicherung</h2><p class="muted">Exportiere regelmäßig eine Sicherung. Import überschreibt den aktuellen lokalen Datenbestand.</p><div class="actions"><button class="primary" onclick="exportData()">Daten exportieren (JSON)</button><label class="tab" style="display:inline-block">Sicherung importieren<input id="importFile" type="file" accept="application/json" style="display:none" onchange="importData(event)"></label><button class="danger" onclick="resetData()">Alle lokalen Daten löschen</button></div></div>
+<div class="card" id="registrationAdminCard"><h2>👥 Kontoanfragen</h2><p class="muted">Nur Pascal als Eigentümer sieht offene Registrierungen. Neue Konten erhalten erst nach deiner Freigabe Zugriff.</p><div class="actions"><button class="primary" id="refreshRegistrationsButton" type="button">Anfragen aktualisieren</button></div><p id="registrationAdminStatus" class="muted" role="status">Wird geladen …</p><div id="registrationRequests"></div></div><div class="card"><h2>Datensicherung</h2><p class="muted">Exportiere regelmäßig eine Sicherung. Import überschreibt den aktuellen lokalen Datenbestand.</p><div class="actions"><button class="primary" onclick="exportData()">Daten exportieren (JSON)</button><label class="tab" style="display:inline-block">Sicherung importieren<input id="importFile" type="file" accept="application/json" style="display:none" onchange="importData(event)"></label><button class="danger" onclick="resetData()">Alle lokalen Daten löschen</button></div></div>
 </section>
 </main><footer class="hidden" id="appFooter">WeFamily Adventsbingo-Manager · Prototyp 0.1</footer>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -99,12 +102,66 @@ let cloudBaseline=null;
 let cloudSyncFunctionReady=false;
 let cloudWriteTestPassed=false;
 const IMPORTED_EVENT_ID="9f575448-a1b6-4e07-990d-d73f3696b844";
-function setAuthenticatedUI(user){const ok=!!user;$("authGate").classList.toggle("hidden",ok);["appHeader","appMain","appFooter"].forEach(id=>$(id).classList.toggle("hidden",!ok));if(ok){$("appHeader").querySelector("p").textContent="Angemeldet als "+(user.email||"WeFamily-Konto")+" · Daten aktuell noch lokal auf diesem Gerät";}}
-async function initAuth(){try{const {data,error}=await supabaseClient.auth.getSession();if(error)throw error;setAuthenticatedUI(data.session?.user||null);}catch(e){$("authMessage").textContent="Anmeldung konnte nicht geprüft werden: "+e.message;}}
-$("loginForm").addEventListener("submit",async e=>{e.preventDefault();const btn=$("loginButton");btn.disabled=true;$("authMessage").textContent="Anmeldung läuft …";try{const {data,error}=await supabaseClient.auth.signInWithPassword({email:$("loginEmail").value.trim(),password:$("loginPassword").value});if(error)throw error;setAuthenticatedUI(data.user);}catch(err){$("authMessage").textContent="Anmeldung fehlgeschlagen: "+err.message;}finally{btn.disabled=false;}});
-supabaseClient.auth.onAuthStateChange((_event,session)=>setAuthenticatedUI(session?.user||null));
+function showAuthMessage(message){$("authMessage").textContent=message;}
+function showAuthView(view){$("loginView").classList.toggle("hidden",view!=="login");$("registerView").classList.toggle("hidden",view!=="register");showAuthMessage("");}
+$("showRegisterButton").addEventListener("click",()=>showAuthView("register"));
+$("showLoginButton").addEventListener("click",()=>showAuthView("login"));
+function showSignedInUI(user,role){$("authGate").classList.add("hidden");["appHeader","appMain","appFooter"].forEach(id=>$(id).classList.remove("hidden"));$("appHeader").querySelector("p").textContent="Angemeldet als "+(user.email||"WeFamily-Konto")+" · Rolle: "+role;}
+async function verifyAndShowSession(user){
+ if(!user){$("authGate").classList.remove("hidden");["appHeader","appMain","appFooter"].forEach(id=>$(id).classList.add("hidden"));return;}
+ const {data:profile,error}=await supabaseClient.from("app_users").select("display_name,app_role,account_status").eq("user_id",user.id).maybeSingle();
+ if(error){showAuthMessage("Kontostatus konnte nicht geprüft werden: "+error.message);await supabaseClient.auth.signOut();return;}
+ if(!profile||profile.account_status!=="active"){const message=!profile?"Für dieses Konto wurde noch kein Manager-Profil angelegt.":"Deine Registrierung ist noch nicht freigegeben.";await supabaseClient.auth.signOut();$("authGate").classList.remove("hidden");["appHeader","appMain","appFooter"].forEach(id=>$(id).classList.add("hidden"));showAuthMessage(message);return;}
+ showSignedInUI(user,profile.app_role);
+ if(profile.app_role==="owner")loadPendingRegistrations();
+}
+async function initAuth(){try{const {data,error}=await supabaseClient.auth.getSession();if(error)throw error;await verifyAndShowSession(data.session?.user||null);}catch(e){showAuthMessage("Anmeldung konnte nicht geprüft werden: "+e.message);}}
+$("loginForm").addEventListener("submit",async e=>{e.preventDefault();const btn=$("loginButton");btn.disabled=true;showAuthMessage("Anmeldung läuft …");try{const {error}=await supabaseClient.auth.signInWithPassword({email:$("loginEmail").value.trim(),password:$("loginPassword").value});if(error)throw error;const {data}=await supabaseClient.auth.getUser();await verifyAndShowSession(data.user);}catch(err){showAuthMessage("Anmeldung fehlgeschlagen: "+err.message);}finally{btn.disabled=false;}});
+$("registerForm").addEventListener("submit",async e=>{e.preventDefault();const btn=$("registerButton");const email=$("registerEmail").value.trim().toLowerCase();const password=$("registerPassword").value;btn.disabled=true;showAuthMessage("Registrierung wird angelegt …");try{if(password!==$("registerPasswordConfirm").value)throw new Error("Die beiden Passwörter stimmen nicht überein.");if(password.length<8)throw new Error("Das Passwort muss mindestens 8 Zeichen lang sein.");const {data,error}=await supabaseClient.auth.signUp({email,password,options:{data:{display_name:$("registerName").value.trim()}}});if(error)throw error;if(data.session){await supabaseClient.auth.signOut();}showAuthMessage("Registrierung eingegangen. Bitte bestätige gegebenenfalls deine E-Mail-Adresse. Pascal muss dein Konto anschließend freigeben. Du kannst dich erst danach anmelden.");$("registerForm").reset();}catch(err){showAuthMessage("Registrierung fehlgeschlagen: "+err.message);}finally{btn.disabled=false;}});
+supabaseClient.auth.onAuthStateChange((event,session)=>{if(event==="SIGNED_OUT")verifyAndShowSession(null);});
 $("logoutButton").addEventListener("click",async()=>{const {error}=await supabaseClient.auth.signOut();if(error)alert("Abmeldung fehlgeschlagen: "+error.message);});
 initAuth();
+function escapeHTML(value){return String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));}
+async function loadPendingRegistrations(){
+ const card=$("registrationAdminCard");if(!card)return;
+ const {data:me}=await supabaseClient.auth.getUser();
+ const {data:myProfile,error:myError}=await supabaseClient.from("app_users").select("app_role").eq("user_id",me.user?.id).maybeSingle();
+ if(myError||myProfile?.app_role!=="owner"){card.classList.add("hidden");return;}
+ card.classList.remove("hidden");
+ $("registrationAdminStatus").textContent="Registrierungen werden geladen …";
+ const {data,error}=await supabaseClient.from("app_users").select("user_id,email,display_name,created_at,account_status,app_role").in("account_status",["pending","rejected"]).order("created_at",{ascending:true});
+ if(error){$("registrationAdminStatus").textContent="Anfragen konnten nicht geladen werden: "+error.message;return;}
+ const target=$("registrationRequests");target.replaceChildren();
+ if(!data?.length){$("registrationAdminStatus").textContent="Keine offenen oder abgelehnten Registrierungen.";return;}
+ const pending=data.filter(row=>row.account_status==="pending");
+ $("registrationAdminStatus").textContent=pending.length+" offene Registrierung(en).";
+ for(const row of data){
+  const item=document.createElement("div");item.className="card";
+  const heading=document.createElement("strong");heading.textContent=row.display_name||"Ohne Anzeigenamen";
+  const detail=document.createElement("p");detail.className="muted";detail.textContent=(row.email||"Keine E-Mail hinterlegt")+" · "+new Date(row.created_at).toLocaleString("de-DE")+" · Status: "+row.account_status;
+  item.append(heading,detail);
+  if(row.account_status==="pending"){
+   const actions=document.createElement("div");actions.className="actions";
+   const approve=document.createElement("button");approve.className="primary";approve.textContent="Freigeben als Administrator";approve.addEventListener("click",()=>updateRegistration(row.user_id,"active"));
+   const reject=document.createElement("button");reject.className="danger";reject.textContent="Ablehnen";reject.addEventListener("click",()=>updateRegistration(row.user_id,"rejected"));
+   actions.append(approve,reject);item.append(actions);
+  }else{
+   const restore=document.createElement("button");restore.textContent="Wieder auf pending setzen";restore.addEventListener("click",()=>updateRegistration(row.user_id,"pending"));item.append(restore);
+  }
+  target.append(item);
+ }
+}
+async function updateRegistration(userId,status){
+ const label=status==="active"?"freigeben":status==="rejected"?"ablehnen":"zurücksetzen";
+ if(!confirm("Registrierung wirklich "+label+"?"))return;
+ const {data:me}=await supabaseClient.auth.getUser();
+ const {data:owner,error:ownerError}=await supabaseClient.from("app_users").select("app_role").eq("user_id",me.user?.id).maybeSingle();
+ if(ownerError||owner?.app_role!=="owner"){alert("Nur Pascal als Eigentümer darf Registrierungen freigeben.");return;}
+ const {error}=await supabaseClient.from("app_users").update({account_status:status,app_role:"administrator"}).eq("user_id",userId);
+ if(error){alert("Änderung fehlgeschlagen: "+error.message);return;}
+ await loadPendingRegistrations();
+}
+$("refreshRegistrationsButton")?.addEventListener("click",loadPendingRegistrations);
 const defaultRounds=Array.from({length:25},(_,i)=>({n:i+1,mode:"Normal",pointsPerBingo:1,note:""}));
 const emptyDB=()=>({players:[],rounds:defaultRounds.map(r=>({...r})),results:[],presence:{},attendance:{},roomStats:{},scoring:{mode:"mode",normal:2,power:1,blackout:3,placements:[10,8,7,6,5,4,3,2,1,1]}});
 function loadDB(){
