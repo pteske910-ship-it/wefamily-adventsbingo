@@ -140,7 +140,7 @@ function buildCloudOperations(before,after){
  for(const [k,v] of oldResults)if(!newResults.has(k))ops.push(["result","delete",{id:v.id}]);
  for(const [k,v] of newResults)if(!oldResults.has(k)||!sameJSON(oldResults.get(k),v))ops.push(["result","upsert",v]);
  for(const [k,v] of Object.entries(oldRooms))if(!(k in newRooms)){const [session,round]=k.split("|");ops.push(["room","delete",{session,round:Number(round)}]);}
- for(const [k,v] of Object.entries(newRooms))if(!(k in oldRooms)){const [session,round]=k.split("|");ops.push(["room","upsert",{session,round:Number(v.round||round),...v}]);}
+ for(const [k,v] of Object.entries(newRooms))if(!(k in oldRooms)||!sameJSON(oldRooms[k],v)){const [session,round]=k.split("|");ops.push(["room","upsert",{session,round:Number(v.round||round),...v}]);}
  for(const [k,v] of oldPlayers)if(!newPlayers.has(k))ops.push(["participant","delete",{id:v.id}]);
  for(const [k,v] of oldRounds)if(!newRounds.has(k))ops.push(["round","delete",{n:v.n}]);
  if(!sameJSON(before.presence,after.presence)||!sameJSON(before.attendance,after.attendance)||!sameJSON(before.scoring,after.scoring))
@@ -240,7 +240,7 @@ async function loadImportedCloudEvent(){
   cloudBaseline=JSON.parse(JSON.stringify(db));
   cloudEditable=false;cloudReadOnly=true;cloudComparePassed=false;
   $("enableCloudEditButton").disabled=true;
-  $("cloudWriteTestButton").disabled=false;
+  $("cloudWriteTestButton").disabled=true;
   $("cloudCompareButton").disabled=false;
   renderAll();
   document.querySelectorAll("#appMain button:not(.tab[data-tab]):not(#duplicatePreviewButton):not(#cloudWriteTestButton):not(#cloudCompareButton):not(#enableCloudEditButton),#appMain input,#appMain select,#appMain textarea").forEach(el=>el.disabled=true);
