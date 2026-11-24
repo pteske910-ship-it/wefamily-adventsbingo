@@ -194,7 +194,7 @@ async function loadImportedCloudEvent(){
   const [pRes,rRes,bRes,roomRes]=await Promise.all([
    supabaseClient.from("event_participants").select("id,display_name,family,source_participant_id").eq("event_id",IMPORTED_EVENT_ID).order("display_name"),
    supabaseClient.from("rounds").select("id,round_number,mode,points_per_bingo,note").eq("event_id",IMPORTED_EVENT_ID).order("round_number"),
-   supabaseClient.from("bingo_results").select("id,round_id,participant_id,session_key,count,bingo_no,place,points,room_count").eq("event_id",IMPORTED_EVENT_ID),
+   supabaseClient.from("bingo_results").select("id,source_result_id,round_id,participant_id,session_key,count,bingo_no,place,points,room_count").eq("event_id",IMPORTED_EVENT_ID),
    supabaseClient.from("room_statistics").select("session_key,round_id,start_count,current_count,peak_count,low_count,changes").eq("event_id",IMPORTED_EVENT_ID)
   ]);
   for(const x of [pRes,rRes,bRes,roomRes])if(x.error)throw x.error;
@@ -204,7 +204,7 @@ async function loadImportedCloudEvent(){
   db={
    players:pRes.data.map(p=>({id:p.source_participant_id||p.id,name:p.display_name,family:p.family||""})),
    rounds:rRes.data.map(r=>({n:r.round_number,mode:r.mode||"Normal",pointsPerBingo:Number(r.points_per_bingo??1),note:r.note||""})),
-   results:bRes.data.map(x=>{const p=participantByDbId.get(x.participant_id),r=roundByDbId.get(x.round_id);return {id:x.id,session:x.session_key,round:r?.round_number||1,playerId:p?.source_participant_id||p?.id||x.participant_id,count:Number(x.count)||1,bingoNo:x.bingo_no,place:x.place,points:x.points==null?0:Number(x.points),roomCount:x.room_count==null?null:Number(x.room_count)};}),
+   results:bRes.data.map(x=>{const p=participantByDbId.get(x.participant_id),r=roundByDbId.get(x.round_id);return {id:x.source_result_id||x.id,session:x.session_key,round:r?.round_number||1,playerId:p?.source_participant_id||p?.id||x.participant_id,count:Number(x.count)||1,bingoNo:x.bingo_no,place:x.place,points:x.points==null?0:Number(x.points),roomCount:x.room_count==null?null:Number(x.room_count)};}),
    presence:original.presence&&typeof original.presence==="object"?original.presence:{},
    attendance:original.attendance&&typeof original.attendance==="object"?original.attendance:{},
    roomStats:Object.fromEntries(roomRes.data.map(x=>{const r=roundByDbId.get(x.round_id),key=x.session_key+"|"+(r?.round_number||"");return [key,{round:r?.round_number||0,start:x.start_count??0,current:x.current_count??0,peak:x.peak_count??0,low:x.low_count??0,changes:Array.isArray(x.changes)?x.changes:[]}]})),
