@@ -82,7 +82,7 @@
 <section id="settings" class="pane hidden">
 <div class="card"><h2>Turnier-Einstellungen</h2><p class="muted">Lege die Rundenanzahl fest und konfiguriere Modus und Punkte je Runde. So kannst du den Manager auch für spätere Bingo-Ligen wiederverwenden.</p><div class="row"><div class="field"><label for="roundCount">Anzahl der Runden</label><input id="roundCount" type="number" min="1" max="250" step="1" value="25"></div><button class="primary" onclick="applyRoundCount()">Rundenanzahl übernehmen</button></div><div class="card"><h3>Punktevergabe</h3><label>Wertungssystem</label><select id="scoringMode" onchange="setScoringMode(this.value)"><option value="mode">Feste Punkte je Bingo-Spielmodus</option><option value="place">Punkte nach Platzierung</option></select><div id="modePoints" class="grid"><div><label>Normales Bingo · Punkte pro Bingo</label><input id="normalPoints" type="number" min="0" step="1" value="2" onchange="saveModePoints()"></div><div><label>Power-up · Punkte pro Bingo</label><input id="powerPoints" type="number" min="0" step="1" value="1" onchange="saveModePoints()"></div><div><label>Blackout · Punkte pro Bingo</label><input id="blackoutPoints" type="number" min="0" step="1" value="3" onchange="saveModePoints()"></div></div><div id="placePoints" class="hidden"><label>Punkte je Platzierung (Komma-getrennt)</label><input id="placementPoints" value="10,8,7,6,5,4,3,2,1,1" onchange="savePlacementPoints()"><p class="muted">Beispiel: 1. Platz = 10, 2. = 8, 3. = 7 Punkte usw.</p></div></div><div id="roundList"></div></div>
 <div class="card"><h2>🔎 Doppelte Teilnehmer prüfen</h2><p class="muted">Zeigt die beiden bestätigten Namenspaare und zählt je Eintrag die gespeicherten Ergebnisdatensätze sowie Bingos. Es wird nichts verändert.</p><div class="actions"><button class="primary" id="duplicatePreviewButton" type="button">Dubletten-Vorschau erstellen</button></div><div id="duplicatePreviewStatus" class="muted" role="status">Noch nicht geprüft.</div><div id="duplicatePreview"></div></div>
-<div class="card"><h2>☁️ Importierten Cloud-Bestand prüfen</h2><p class="muted">Lädt die importierte Veranstaltung aus Supabase. Danach kann ein einmaliger, kontrollierter Speichertest mit exakt diesem Datenstand ausgeführt werden.</p><div class="actions"><button class="primary" id="loadCloudEventButton" type="button">Importierten Bestand laden</button><button id="cloudWriteTestButton" type="button" disabled>Kontrollierten Schreibtest ausführen</button><button id="cloudCompareButton" type="button" disabled>Inhalt nur lesend vergleichen</button><button id="enableCloudEditButton" type="button" disabled>Cloud-Bearbeitung freigeben</button></div><p id="cloudLoadStatus" class="muted" role="status">Noch nicht geladen.</p></div>
+<div class="card"><h2>☁️ Importierten Cloud-Bestand prüfen</h2><p class="muted">Lädt den Cloud-Bestand als lokale Testkopie. Änderungen bleiben ausschließlich in diesem Browser.</p><div class="actions"><button class="primary" id="loadCloudEventButton" type="button">Importierten Bestand laden</button><button id="cloudWriteTestButton" type="button" disabled>Cloud-Schreibtest deaktiviert</button><button id="cloudCompareButton" type="button" disabled>Inhalt nur lesend vergleichen</button><button id="enableCloudEditButton" type="button" disabled>Cloud-Bearbeitung deaktiviert</button></div><p id="cloudLoadStatus" class="muted" role="status">Noch nicht geladen.</p></div>
 <div class="card"><h2>☁️ Lokale Sicherung in Supabase übernehmen</h2><p class="muted">Importiert eine vorhandene JSON-Sicherung als separate Bingo-Veranstaltung. Die Datei auf deinem Gerät und deine bisherigen lokalen Daten bleiben unverändert.</p><label for="cloudEventTitle">Name der neuen Veranstaltung</label><input id="cloudEventTitle" value="WeFamily Adventsbingo – importierter Bestand"><label class="tab" style="display:inline-block;margin-top:10px">JSON-Sicherung auswählen<input id="cloudImportFile" type="file" accept="application/json,.json" style="display:none"></label><div class="actions"><button class="primary" id="cloudImportButton" type="button">Sicherung in Supabase importieren</button></div><p id="cloudImportStatus" class="muted" role="status">Noch keine Datei ausgewählt.</p></div>
 <div class="card" id="registrationAdminCard" hidden style="display:none"><h2>👥 Kontoanfragen</h2><p class="muted">Nur Pascal als Eigentümer sieht offene Registrierungen. Neue Konten erhalten erst nach deiner Freigabe Zugriff.</p><div class="actions"><button class="primary" id="refreshRegistrationsButton" type="button">Anfragen aktualisieren</button></div><p id="registrationAdminStatus" class="muted" role="status">Wird geladen …</p><div id="registrationRequests"></div></div><div class="card"><h2>Datensicherung</h2><p class="muted">Exportiere regelmäßig eine Sicherung. Import überschreibt den aktuellen lokalen Datenbestand.</p><div class="actions"><button class="primary" onclick="exportData()">Daten exportieren (JSON)</button><label class="tab" style="display:inline-block">Sicherung importieren<input id="importFile" type="file" accept="application/json" style="display:none" onchange="importData(event)"></label><button class="danger" onclick="resetData()">Alle lokalen Daten löschen</button></div></div>
 </section>
@@ -334,7 +334,7 @@ async function previewKnownDuplicates(){
 }
 async function runCloudReadOnlyCompare(){
  const btn=$("cloudCompareButton"),status=$("cloudLoadStatus");
- if(!cloudVersion||!cloudReadOnly){status.textContent="Bitte zuerst den Cloud-Bestand laden.";return}
+ if(!cloudVersion||cloudEditable){status.textContent="Bitte zuerst den Cloud-Bestand als lokale Testkopie laden.";return}
  btn.disabled=true;status.textContent="Reiner Inhaltsvergleich läuft – es wird nichts gespeichert …";
  try{
   const payload={players:db.players,rounds:db.rounds,results:db.results,roomStats:db.roomStats||{}};
@@ -358,19 +358,16 @@ async function runCloudReadOnlyCompare(){
   const checks=[["Teilnehmer",expP,gotP],["Runden",expR,gotR],["Bingo-Ergebnisse",expB,gotB],["Raumstatistiken",expS,gotS]];
   const lines=checks.map(([name,a,b])=>name+": "+(norm(a)===norm(b)?"OK":"ABWEICHUNG")+" ("+a.length+" / "+b.length+")");
   cloudComparePassed=checks.every(([name,a,b])=>norm(a)===norm(b));
-  cloudSyncFunctionReady=false;
-  if(cloudComparePassed){
-   const probe=await supabaseClient.rpc("apply_bingo_changes",{p_event_id:IMPORTED_EVENT_ID,p_expected_updated_at:cloudVersion,p_changes:[{entity:"__readiness_probe__",operation:"upsert",payload:{}}]});
-   cloudSyncFunctionReady=!!probe.error&&String(probe.error.message||"").includes("Unsupported entity");
-  }
-  $("cloudWriteTestButton").disabled=!(cloudComparePassed&&cloudSyncFunctionReady&&!cloudWriteTestPassed);
-  $("enableCloudEditButton").disabled=!(cloudComparePassed&&cloudSyncFunctionReady&&cloudWriteTestPassed);
-  status.textContent="Nur-Lese-Prüfung abgeschlossen. "+lines.join(" · ")+(cloudComparePassed?". Datenvergleich erfolgreich.":". Datenabweichung gefunden.")+(cloudSyncFunctionReady?" Neue SQL-Funktion erkannt.":" Neue SQL-Funktion nicht sicher bestätigt; Bearbeitung bleibt gesperrt.")+" Es wurde nichts verändert.";
+  cloudSyncFunctionReady=false;cloudWriteTestPassed=false;
+  $("cloudWriteTestButton").disabled=true;
+  $("enableCloudEditButton").disabled=true;
+  status.textContent="Nur-Lese-Prüfung abgeschlossen. "+lines.join(" · ")+(cloudComparePassed?". Datenvergleich erfolgreich.":". Datenabweichung gefunden.")+" Cloud-Schreibtests und Cloud-Bearbeitung sind in dieser Testfassung deaktiviert. Es wurde nichts verändert.";
  }catch(e){status.textContent="Nur-Lese-Prüfung fehlgeschlagen: "+(e.message||String(e))+". Es wurde nichts verändert."}
  finally{btn.disabled=false}
 }
 async function runCloudWriteTest(){
- const btn=$("cloudWriteTestButton"),status=$("cloudLoadStatus");
+ const status=$("cloudLoadStatus");status.textContent="Cloud-Schreibtests sind in dieser lokalen Testfassung deaktiviert.";return;
+ const btn=$("cloudWriteTestButton");
  if(!cloudVersion||!cloudReadOnly||!cloudComparePassed||!cloudSyncFunctionReady){status.textContent="Bitte zuerst Cloud laden, vergleichen und die neue SQL-Funktion bestätigen lassen.";return}
  const player=db.players[0],result=db.results[0],roomEntry=Object.entries(db.roomStats||{})[0];
  const usedRounds=new Set(db.rounds.map(x=>Number(x.n)));
