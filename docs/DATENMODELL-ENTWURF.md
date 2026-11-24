@@ -14,6 +14,19 @@ Wichtig: Dieses Dokument enthält keine privaten Teilnehmer- oder Ergebnisdaten.
 6. Der Datenexport muss ein einzelnes Event oder alle Events vollständig sichern und wiederherstellen können.
 7. Die alte Version bleibt online, bis Import, Abgleich und Tests erfolgreich abgeschlossen sind.
 
+## Benutzer und Berechtigungen
+
+Es gibt zwei Konten mit vollständigen Verwaltungsrechten: den Eigentümer und Heidi.
+
+- Beide können Events erstellen, bearbeiten, duplizieren, archivieren, wieder öffnen, zurücksetzen und löschen.
+- Beide können Teilnehmer, Runden, Ergebnisse, Einstellungen und Statistiken verwalten.
+- Der Eigentümer behält dauerhaft die höchste Berechtigungsstufe.
+- Nur der Eigentümer kann Heidi Verwaltungsrechte entziehen oder wieder erteilen.
+- Heidi kann sich nicht selbst zum Eigentümer machen, die Eigentümerrechte ändern oder dem Eigentümer Rechte entziehen.
+- Der Eigentümerzugang muss gegen versehentliche Entfernung geschützt sein; es muss immer mindestens einen Eigentümer geben.
+- Rechteänderungen werden protokolliert (wer hat wann welche Rolle geändert).
+- Die konkrete Anmeldung und technische Absicherung werden vor dem Produktivbetrieb getestet.
+
 ## Vorgeschlagene Struktur
 
 ```text
@@ -26,7 +39,7 @@ users
 eventMemberships
   eventId
   userId
-  role                 # Rolle wird noch festgelegt
+  role                 # owner | administrator
 
 events
   eventId
@@ -114,7 +127,3 @@ Der Export enthält aktuell nur den Spieltag „1. Advent“ mit Ergebnissen. Di
 5. Anmeldung und Berechtigungen mit mindestens zwei Konten testen.
 6. Erst nach Freigabe den neuen Dienst produktiv schalten.
 7. Alte Version und Originalexport als Rückfalloption behalten.
-
-## Noch offene Produktentscheidung
-
-Vor dem Einrichten der Konten muss geklärt werden, ob Heidi dieselben Verwaltungsrechte wie der Hauptadministrator erhalten soll oder ob es getrennte Rollen geben soll (z. B. Administrator und Spielleitung). Bis dahin wird keine Berechtigungsannahme fest eingebaut.
