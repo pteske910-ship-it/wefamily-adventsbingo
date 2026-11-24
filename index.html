@@ -153,10 +153,10 @@ function setAdminView(v){
 }
 function statSessions(){
  const fromResults=db.results.map(r=>String(r.session||"Spieltag").trim()).filter(Boolean);
- 
+ const fromRoom=Object.keys(db.roomStats||{}).map(k=>String(k).split("|")[0].trim()).filter(Boolean);
+ const available=[...new Set([...fromResults,...fromRoom])];
  const preferred=["1. Advent","2. Advent","3. Advent","4. Advent"];
- const all=[...new Set([...preferred.filter(s=>fromResults.includes(s)),...fromResults])];
- return all;
+ return [...new Set([...preferred.filter(s=>available.includes(s)),...available])];
 }
 function statData(session){
  const sessions=statSessions(),selected=session==="__all"?sessions:[session];
