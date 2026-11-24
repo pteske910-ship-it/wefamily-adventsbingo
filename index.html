@@ -25,7 +25,7 @@
 }
 @media(prefers-reduced-motion:reduce){.introSleigh{animation-duration:1ms!important;animation-delay:0s!important}#introSplash{transition:none}}
 .admin-subnav{display:flex;gap:8px;overflow:auto;padding:4px 0 12px}
-.player-autocomplete{position:relative}.player-suggestions{position:absolute;z-index:15;top:calc(100% + 4px);left:0;right:0;max-height:240px;overflow:auto;background:#211b36;border:1px solid #66548b;border-radius:12px;box-shadow:0 12px 28px #0009;padding:5px}.player-suggestion{display:block;width:100%;text-align:left;background:transparent;border:0;border-radius:8px;padding:11px 12px;white-space:normal}.player-suggestion:hover,.player-suggestion:focus{background:#49336b;outline:none}.player-no-match{padding:11px;color:var(--muted)}
+.player-autocomplete{position:relative}.player-suggestions{position:absolute;z-index:50;bottom:calc(100% + 4px);top:auto;left:0;right:0;max-height:min(220px,32vh);overflow:auto;background:#211b36;border:1px solid #8c72b7;border-radius:12px;box-shadow:0 12px 28px #000b;padding:5px;overscroll-behavior:contain}.player-suggestion{touch-action:manipulation}.player-suggestion{display:block;width:100%;text-align:left;background:transparent;border:0;border-radius:8px;padding:11px 12px;white-space:normal}.player-suggestion:hover,.player-suggestion:focus{background:#49336b;outline:none}.player-no-match{padding:11px;color:var(--muted)}
 .chartbar{display:flex;align-items:center;gap:9px;margin:9px 0}.barlabel{width:100px;font-size:12px;color:var(--muted)}.track{flex:1;background:#100e1b;border-radius:99px;overflow:hidden;height:13px}.fill{height:100%;background:linear-gradient(90deg,#8d49a1,#5c83df);border-radius:99px}
 .introLoader{position:absolute;z-index:5;left:50%;bottom:5.5%;transform:translateX(-50%);width:min( min(760px,88vw), 760px);padding:0 10px;color:#fff;text-align:center;text-shadow:0 3px 5px #07152b,0 0 12px #000;font-family:Georgia,serif}
 .introLoaderTitle{display:flex;align-items:center;justify-content:center;gap:clamp(10px,2.2vw,24px);font-size:clamp(20px,3vw,38px);font-weight:900;font-style:italic;white-space:nowrap;margin-bottom:12px;-webkit-text-stroke:.35px #542d16}
@@ -48,7 +48,7 @@
   <div class="introLoaderTrack"><div class="introLoaderFill" id="introLoaderFill"></div></div>
  </div>
 </div>
-<header><div class="wrap" style="padding:0"><h1>🎄 WeFamily Adventsbingo</h1><p>Organisations- und Auswertungstest · Version 0.4 · lokal auf diesem Gerät</p></div></header>
+<header><div class="wrap" style="padding:0"><h1>🎄 WeFamily Adventsbingo</h1><p>Organisations- und Auswertungstest · Version 0.5 · lokal auf diesem Gerät</p></div></header>
 <main class="wrap">
 <div class="notice">Testversion: Daten werden nur in diesem Browser gespeichert. Noch kein gemeinsamer Heidi-Zugang und keine echte Anmeldung. Vor echtem Einsatz bitte Daten exportieren.</div>
 <nav class="tabs" aria-label="Bereiche">
