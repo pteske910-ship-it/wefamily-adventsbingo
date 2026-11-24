@@ -212,7 +212,7 @@ returns trigger
 language plpgsql
 security definer
 set search_path = ''
-as $
+as $$
 begin
   insert into public.audit_log(actor_user_id, action, target_type, target_id, details)
   values (
@@ -228,13 +228,13 @@ begin
   if tg_op = 'DELETE' then return old; end if;
   return new;
 end;
-$;
+$$;
 
 create or replace function public.protect_owner_account()
 returns trigger
 language plpgsql
 set search_path = ''
-as $
+as $$
 begin
   if tg_op = 'DELETE' and old.app_role = 'owner' then
     raise exception 'The owner account cannot be deleted';
@@ -248,7 +248,7 @@ begin
   if tg_op = 'DELETE' then return old; end if;
   return new;
 end;
-$;
+$$;
 
 drop trigger if exists app_users_protect_owner on public.app_users;
 create trigger app_users_protect_owner
