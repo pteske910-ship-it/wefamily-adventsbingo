@@ -315,36 +315,48 @@ async function runCloudReadOnlyCompare(){
 async function runCloudWriteTest(){
  const btn=$("cloudWriteTestButton"),status=$("cloudLoadStatus");
  if(!cloudVersion||!cloudReadOnly||!cloudComparePassed||!cloudSyncFunctionReady){status.textContent="Bitte zuerst Cloud laden, vergleichen und die neue SQL-Funktion bestätigen lassen.";return}
- const player=db.players[0],round=db.rounds[0],result=db.results[0],roomEntry=Object.entries(db.roomStats||{})[0];
- if(!player?.id||!round||!result?.id||!roomEntry){status.textContent="Für den vollständigen Schreibtest fehlen Teilnehmer, Runde, Bingo-Ergebnis oder Raumstatistik.";return}
+ const player=db.players[0],result=db.results[0],roomEntry=Object.entries(db.roomStats||{})[0];
+ const usedRounds=new Set(db.rounds.map(x=>Number(x.n)));
+ let testRound=250;while(usedRounds.has(testRound)&&testRound>0)testRound--;
+ if(!player?.id||!result?.id||!roomEntry||testRound<1){status.textContent="Für den vollständigen Test fehlen passende Ausgangsdaten oder eine freie Rundennummer.";return}
  const [roomKey,room]=roomEntry,roomParts=roomKey.split("|");
+ const tempParticipantId=crypto.randomUUID(),tempSession="__sync_test_"+crypto.randomUUID();
+ const resultPayload={id:result.id,session:result.session||"Spieltag",round:result.round,playerId:result.playerId,count:result.count,bingoNo:result.bingoNo??null,place:result.place??null,points:result.points??null,roomCount:result.roomCount??null};
+ const roomPayload={session:roomParts[0],round:Number(room.round||roomParts[1]),start:room.start??0,current:room.current??0,peak:room.peak??0,low:room.low??0,changes:room.changes||[]};
  const changes=[
-  {entity:"participant",operation:"upsert",payload:{id:player.id,name:player.name,family:player.family||""}},
-  {entity:"round",operation:"upsert",payload:{n:round.n,mode:round.mode||"Normal",pointsPerBingo:round.pointsPerBingo??1,note:round.note||""}},
-  {entity:"result",operation:"upsert",payload:{id:result.id,session:result.session||"Spieltag",round:result.round,playerId:result.playerId,count:result.count,bingoNo:result.bingoNo??null,place:result.place??null,points:result.points??null,roomCount:result.roomCount??null}},
-  {entity:"room",operation:"upsert",payload:{session:roomParts[0],round:Number(room.round||roomParts[1]),start:room.start??0,current:room.current??0,peak:room.peak??0,low:room.low??0,changes:room.changes||[]}},
+  {entity:"participant",operation:"upsert",payload:{id:tempParticipantId,name:"__SYNC_TEST__",family:""}},
+  {entity:"participant",operation:"delete",payload:{id:tempParticipantId}},
+  {entity:"round",operation:"upsert",payload:{n:testRound,mode:"Normal",pointsPerBingo:1,note:"__SYNC_TEST__"}},
+  {entity:"room",operation:"upsert",payload:{session:tempSession,round:testRound,start:0,current:0,peak:0,low:0,changes:[]}},
+  {entity:"room",operation:"delete",payload:{session:tempSession,round:testRound}},
+  {entity:"round",operation:"delete",payload:{n:testRound}},
+  {entity:"result",operation:"delete",payload:{id:result.id}},
+  {entity:"result",operation:"upsert",payload:resultPayload},
+  {entity:"room",operation:"delete",payload:{session:roomPayload.session,round:roomPayload.round}},
+  {entity:"room",operation:"upsert",payload:roomPayload},
   {entity:"meta",operation:"upsert",payload:{presence:db.presence||{},attendance:db.attendance||{},scoring:db.scoring||{}}}
  ];
- btn.disabled=true;status.textContent="Kontrollierter Batch-Test: je ein vorhandener Teilnehmer-, Runden-, Ergebnis-, Raumstatistik- und Metadatensatz wird mit identischen Werten gespeichert …";
+ const oldVersion=cloudVersion;
+ btn.disabled=true;status.textContent="Sicherer Test: temporäre Teilnehmer-/Runden-/Raumdaten werden angelegt und wieder gelöscht; ein Bingo-Ergebnis wird gelöscht und identisch wiederhergestellt …";
  try{
-  const {data,error}=await supabaseClient.rpc("apply_bingo_changes",{p_event_id:IMPORTED_EVENT_ID,p_expected_updated_at:cloudVersion,p_changes:changes});
+  const {data,error}=await supabaseClient.rpc("apply_bingo_changes",{p_event_id:IMPORTED_EVENT_ID,p_expected_updated_at:oldVersion,p_changes:changes});
   if(error)throw error;
   cloudVersion=data;
-  cloudWriteTestPassed=true;
-  status.textContent="Alle fünf Upsert-Wege wurden ausgeführt. Prüfe jetzt erneut alle Daten …";
+  status.textContent="Delete-/Restore-Batch erfolgreich. Prüfe zusätzlich die Versionssperre …";
+  const stale=await supabaseClient.rpc("apply_bingo_changes",{p_event_id:IMPORTED_EVENT_ID,p_expected_updated_at:oldVersion,p_changes:[{entity:"__stale_probe__",operation:"upsert",payload:{}}]});
+  if(!stale.error||!String(stale.error.message||"").includes("VERSION_CONFLICT"))throw new Error("Versionskonflikt wurde nicht wie erwartet erkannt.");
   await runCloudReadOnlyCompare();
   if(cloudComparePassed&&cloudSyncFunctionReady){
+   cloudWriteTestPassed=true;
    $("enableCloudEditButton").disabled=false;
-   status.textContent="Batch-Schreibtest erfolgreich: Teilnehmer, Runde, Bingo-Ergebnis, Raumstatistik und Metadaten unverändert gespeichert. Alle 4 Datenvergleiche weiterhin OK. Cloud-Bearbeitung bleibt bis zu deiner Freigabe gesperrt.";
+   status.textContent="Lösch-/Wiederherstellungstest erfolgreich: temporäre Datensätze wurden vollständig entfernt, Bingo-Ergebnis identisch wiederhergestellt und veraltete Version sicher abgewiesen. Alle 4 Datenvergleiche weiterhin OK.";
   }else{
-   cloudWriteTestPassed=false;
-   $("enableCloudEditButton").disabled=true;
-   status.textContent="Batch-Schreibtest ausgeführt, aber der anschließende Datenvergleich war nicht erfolgreich. Bearbeitung bleibt gesperrt.";
+   cloudWriteTestPassed=false;$("enableCloudEditButton").disabled=true;
+   status.textContent="Test ausgeführt, aber Datenvergleich danach nicht vollständig erfolgreich. Bearbeitung bleibt gesperrt.";
   }
  }catch(e){
-  cloudWriteTestPassed=false;
-  cloudEditable=false;cloudReadOnly=true;
-  status.textContent="Kontrollierter Batch-Schreibtest fehlgeschlagen: "+(e.message||String(e))+". Der gesamte Batch wurde zurückgerollt; es wurden keine Bingo-Ergebnisse teilweise gespeichert.";
+  cloudWriteTestPassed=false;cloudEditable=false;cloudReadOnly=true;
+  status.textContent="Sicherer Lösch-/Konflikttest fehlgeschlagen: "+(e.message||String(e))+". Bitte Cloud nicht freigeben; der atomare Batch sollte vollständig zurückgerollt sein.";
  }finally{
   btn.disabled=!(cloudComparePassed&&cloudSyncFunctionReady&&!cloudWriteTestPassed);
  }
