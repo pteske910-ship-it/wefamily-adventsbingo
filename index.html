@@ -19,9 +19,8 @@
  @keyframes sleighFlightDesktop{0%{transform:translate(-34vw,30vh) scale(1.02);opacity:1}22%{transform:translate(-10vw,20vh) scale(.82);opacity:1}62%{transform:translate(52vw,-24vh) scale(.32);opacity:.9}100%{transform:translate(118vw,-82vh) scale(.07);opacity:0}}
 }
 @media(max-width:600px){
- #introSplash{background-image:url("WeFamilyHintergrundMobile.png?v=8");background-position:center center;background-size:100% 100%;opacity:0}
- #introSplash.mobile-ready{opacity:1}
- .introSleigh{left:50%;top:0;bottom:auto;width:74vw;max-height:none;transform:translate(-50%,-50%);animation:none;will-change:left,top,transform,opacity}
+ #introSplash{background-image:url("WeFamilyHintergrundMobile.png?v=8");background-position:center center;background-size:100% 100%;opacity:1}
+ .introSleigh{left:0;top:0;bottom:auto;width:74vw;max-height:none;transform:translate(-50%,-50%);animation:none;opacity:0;will-change:left,top,transform,opacity}
  .introCaption{font-size:13px;bottom:4%;padding:9px 14px}
 }
 @media(prefers-reduced-motion:reduce){.introSleigh{animation-duration:1ms!important;animation-delay:0s!important}#introSplash{transition:none}}
@@ -170,31 +169,26 @@ function setRoomCount(){let raw=$("roomCount").value.trim();if(raw==="")return a
 function renderRoomStats(){if(!$("roomStatsView")||!$("roomRound"))return;let s=$("roomSession").value.trim()||"Spieltag",n=Number($("roomRound").value);if(!n)return;let r=db.roomStats[s+"|"+n],prev=db.rounds.filter(x=>x.n<n).map(x=>db.roomStats[s+"|"+x.n]).filter(Boolean).sort((a,b)=>b.round-a.round)[0];let start=r?r.start:null,current=r?r.current:null;let vals=db.rounds.map(x=>db.roomStats[s+"|"+x.n]).filter(Boolean).map(x=>x.current);let avg=vals.length?(vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1):"–";$("roomCount").value=r?String(r.start):"";$("roomStatsView").innerHTML='<div class="grid"><div class="card"><div class="muted">Startbestand zu Rundenbeginn</div><div class="stat">'+(start===null?"–":start)+'</div></div><div class="card"><div class="muted">Erfasster Rundenbestand</div><div class="stat">'+(current===null?"–":current)+'</div></div><div class="card"><div class="muted">Höchster erfasster Stand</div><div class="stat">'+(r?r.peak:"–") +'</div></div><div class="card"><div class="muted">Niedrigster erfasster Stand</div><div class="stat">'+(r?r.low:"–") +'</div></div></div><p class="muted">Durchschnitt der gespeicherten Rundenstände: '+avg+'</p>'+(r&&r.changes.length?'<h3>Änderungen</h3>'+r.changes.slice().reverse().map(x=>'<div class="item">'+(x.delta>0?'+':'')+x.delta+' · '+x.label+' → '+x.value+' Personen</div>').join(""):'<p class="muted">Für diese Runde wurde noch kein Startbestand gespeichert. Gib die Personenzahl zu Rundenbeginn ein.</p>')}
 
 renderAll();
-(async function runMobileSleighFlight(){
+(function runMobileSleighFlight(){
  const splash=$("introSplash"),sleigh=splash?.querySelector(".introSleigh");
  if(!splash||!sleigh||!window.matchMedia("(max-width:600px)").matches)return;
- const reduce=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
- const bg=new Image();bg.src="WeFamilyHintergrundMobile.png?v=8";
- try{await Promise.all([sleigh.decode(),bg.decode()]);}catch(e){
-  await Promise.all([
-   new Promise(resolve=>{if(sleigh.complete&&sleigh.naturalWidth)resolve();else sleigh.addEventListener("load",resolve,{once:true})}),
-   new Promise(resolve=>{if(bg.complete&&bg.naturalWidth)resolve();else bg.addEventListener("load",resolve,{once:true})})
-  ]);
- }
  const w=window.innerWidth,h=window.innerHeight;
  const curves=[
-  {p0:[.34*w,.86*h],p1:[.72*w,.84*h],p2:[.94*w,.76*h],p3:[.76*w,.66*h],s0:1,s1:.84},
-  {p0:[.76*w,.66*h],p1:[.48*w,.60*h],p2:[.12*w,.54*h],p3:[.36*w,.43*h],s0:.84,s1:.60},
-  {p0:[.36*w,.43*h],p1:[.72*w,.32*h],p2:[1.04*w,.12*h],p3:[1.18*w,-.12*h],s0:.60,s1:.12}
+  {p0:[.39*w,.84*h],p1:[.70*w,.82*h],p2:[.96*w,.73*h],p3:[.76*w,.64*h],s0:1,s1:.84},
+  {p0:[.76*w,.64*h],p1:[.48*w,.60*h],p2:[.14*w,.53*h],p3:[.38*w,.42*h],s0:.84,s1:.60},
+  {p0:[.38*w,.42*h],p1:[.72*w,.32*h],p2:[1.02*w,.12*h],p3:[1.16*w,-.12*h],s0:.60,s1:.10}
  ];
- splash.classList.add("mobile-ready");
- const duration=reduce?80:6800,start=performance.now();
  function bez(a,b,c,d,t){const u=1-t;return u*u*u*a+3*u*u*t*b+3*u*t*t*c+t*t*t*d}
+ const p=curves[0].p0;
+ sleigh.style.left=p[0]+"px";sleigh.style.top=p[1]+"px";
+ sleigh.style.transform="translate(-50%,-50%) scale(1)";
+ sleigh.style.opacity="1";
+ const start=performance.now(),duration=6800;
  function frame(now){
-  const raw=Math.min(1,(now-start)/duration),scaled=raw*3,idx=Math.min(2,Math.floor(scaled)),t=raw>=1?1:scaled-idx,p=curves[idx];
-  const x=bez(p.p0[0],p.p1[0],p.p2[0],p.p3[0],t);
-  const y=bez(p.p0[1],p.p1[1],p.p2[1],p.p3[1],t);
-  const scale=p.s0+(p.s1-p.s0)*t;
+  const raw=Math.min(1,(now-start)/duration),scaled=raw*3,idx=Math.min(2,Math.floor(scaled)),t=raw>=1?1:scaled-idx,q=curves[idx];
+  const x=bez(q.p0[0],q.p1[0],q.p2[0],q.p3[0],t);
+  const y=bez(q.p0[1],q.p1[1],q.p2[1],q.p3[1],t);
+  const scale=q.s0+(q.s1-q.s0)*t;
   sleigh.style.left=x+"px";sleigh.style.top=y+"px";
   sleigh.style.transform="translate(-50%,-50%) scale("+scale+")";
   sleigh.style.opacity="1";
