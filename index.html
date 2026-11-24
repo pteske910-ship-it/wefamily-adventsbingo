@@ -79,7 +79,7 @@
 <section id="settings" class="pane hidden">
 <div class="card"><h2>Turnier-Einstellungen</h2><p class="muted">Lege die Rundenanzahl fest und konfiguriere Modus und Punkte je Runde. So kannst du den Manager auch für spätere Bingo-Ligen wiederverwenden.</p><div class="row"><div class="field"><label for="roundCount">Anzahl der Runden</label><input id="roundCount" type="number" min="1" max="250" step="1" value="25"></div><button class="primary" onclick="applyRoundCount()">Rundenanzahl übernehmen</button></div><div class="card"><h3>Punktevergabe</h3><label>Wertungssystem</label><select id="scoringMode" onchange="setScoringMode(this.value)"><option value="mode">Feste Punkte je Bingo-Spielmodus</option><option value="place">Punkte nach Platzierung</option></select><div id="modePoints" class="grid"><div><label>Normales Bingo · Punkte pro Bingo</label><input id="normalPoints" type="number" min="0" step="1" value="2" onchange="saveModePoints()"></div><div><label>Power-up · Punkte pro Bingo</label><input id="powerPoints" type="number" min="0" step="1" value="1" onchange="saveModePoints()"></div><div><label>Blackout · Punkte pro Bingo</label><input id="blackoutPoints" type="number" min="0" step="1" value="3" onchange="saveModePoints()"></div></div><div id="placePoints" class="hidden"><label>Punkte je Platzierung (Komma-getrennt)</label><input id="placementPoints" value="10,8,7,6,5,4,3,2,1,1" onchange="savePlacementPoints()"><p class="muted">Beispiel: 1. Platz = 10, 2. = 8, 3. = 7 Punkte usw.</p></div></div><div id="roundList"></div></div>
 <div class="card"><h2>🔎 Doppelte Teilnehmer prüfen</h2><p class="muted">Zeigt die beiden bestätigten Namenspaare und zählt je Eintrag die gespeicherten Ergebnisdatensätze sowie Bingos. Es wird nichts verändert.</p><div class="actions"><button class="primary" id="duplicatePreviewButton" type="button">Dubletten-Vorschau erstellen</button></div><div id="duplicatePreviewStatus" class="muted" role="status">Noch nicht geprüft.</div><div id="duplicatePreview"></div></div>
-<div class="card"><h2>☁️ Importierten Cloud-Bestand prüfen</h2><p class="muted">Lädt die importierte Veranstaltung aus Supabase. Danach kann ein einmaliger, kontrollierter Speichertest mit exakt diesem Datenstand ausgeführt werden.</p><div class="actions"><button class="primary" id="loadCloudEventButton" type="button">Importierten Bestand laden</button><button id="cloudWriteTestButton" type="button" disabled>Unveränderten Datenstand speichern und prüfen</button><button id="cloudCompareButton" type="button" disabled>Inhalt nur lesend vergleichen</button><button id="enableCloudEditButton" type="button" disabled>Cloud-Bearbeitung freigeben</button></div><p id="cloudLoadStatus" class="muted" role="status">Noch nicht geladen.</p></div>
+<div class="card"><h2>☁️ Importierten Cloud-Bestand prüfen</h2><p class="muted">Lädt die importierte Veranstaltung aus Supabase. Danach kann ein einmaliger, kontrollierter Speichertest mit exakt diesem Datenstand ausgeführt werden.</p><div class="actions"><button class="primary" id="loadCloudEventButton" type="button">Importierten Bestand laden</button><button id="cloudWriteTestButton" type="button" disabled>Kontrollierten Schreibtest ausführen</button><button id="cloudCompareButton" type="button" disabled>Inhalt nur lesend vergleichen</button><button id="enableCloudEditButton" type="button" disabled>Cloud-Bearbeitung freigeben</button></div><p id="cloudLoadStatus" class="muted" role="status">Noch nicht geladen.</p></div>
 <div class="card"><h2>☁️ Lokale Sicherung in Supabase übernehmen</h2><p class="muted">Importiert eine vorhandene JSON-Sicherung als separate Bingo-Veranstaltung. Die Datei auf deinem Gerät und deine bisherigen lokalen Daten bleiben unverändert.</p><label for="cloudEventTitle">Name der neuen Veranstaltung</label><input id="cloudEventTitle" value="WeFamily Adventsbingo – importierter Bestand"><label class="tab" style="display:inline-block;margin-top:10px">JSON-Sicherung auswählen<input id="cloudImportFile" type="file" accept="application/json,.json" style="display:none"></label><div class="actions"><button class="primary" id="cloudImportButton" type="button">Sicherung in Supabase importieren</button></div><p id="cloudImportStatus" class="muted" role="status">Noch keine Datei ausgewählt.</p></div>
 <div class="card"><h2>Datensicherung</h2><p class="muted">Exportiere regelmäßig eine Sicherung. Import überschreibt den aktuellen lokalen Datenbestand.</p><div class="actions"><button class="primary" onclick="exportData()">Daten exportieren (JSON)</button><label class="tab" style="display:inline-block">Sicherung importieren<input id="importFile" type="file" accept="application/json" style="display:none" onchange="importData(event)"></label><button class="danger" onclick="resetData()">Alle lokalen Daten löschen</button></div></div>
 </section>
@@ -97,6 +97,7 @@ let cloudSaveQueue=Promise.resolve();
 let cloudVersion=null;
 let cloudBaseline=null;
 let cloudSyncFunctionReady=false;
+let cloudWriteTestPassed=false;
 const IMPORTED_EVENT_ID="9f575448-a1b6-4e07-990d-d73f3696b844";
 function setAuthenticatedUI(user){const ok=!!user;$("authGate").classList.toggle("hidden",ok);["appHeader","appMain","appFooter"].forEach(id=>$(id).classList.toggle("hidden",!ok));if(ok){$("appHeader").querySelector("p").textContent="Angemeldet als "+(user.email||"WeFamily-Konto")+" · Daten aktuell noch lokal auf diesem Gerät";}}
 async function initAuth(){try{const {data,error}=await supabaseClient.auth.getSession();if(error)throw error;setAuthenticatedUI(data.session?.user||null);}catch(e){$("authMessage").textContent="Anmeldung konnte nicht geprüft werden: "+e.message;}}
@@ -311,44 +312,39 @@ async function runCloudReadOnlyCompare(){
 }
 async function runCloudWriteTest(){
  const btn=$("cloudWriteTestButton"),status=$("cloudLoadStatus");
- if(!cloudVersion||!cloudReadOnly){status.textContent="Bitte zuerst den Cloud-Bestand neu laden.";return}
- if(db.players.some(p=>!p.id)||db.results.some(r=>!db.players.some(p=>p.id===r.playerId))||db.results.some(r=>!db.rounds.some(rd=>Number(rd.n)===Number(r.round)))){status.textContent="Sicherheitsprüfung fehlgeschlagen: Es gibt nicht zuordenbare Teilnehmer- oder Rundendaten. Es wurde nichts gespeichert.";return}
- const payload={players:db.players,rounds:db.rounds,results:db.results,presence:db.presence||{},attendance:db.attendance||{},roomStats:db.roomStats||{},scoring:db.scoring||{}};
- btn.disabled=true;status.textContent="Unveränderter Datenstand wird transaktionsgesichert gespeichert …";
+ if(!cloudVersion||!cloudReadOnly||!cloudComparePassed||!cloudSyncFunctionReady){status.textContent="Bitte zuerst Cloud laden, vergleichen und die neue SQL-Funktion bestätigen lassen.";return}
+ const sample=db.players[0];
+ if(!sample?.id){status.textContent="Kein Teilnehmer für den kontrollierten Schreibtest vorhanden.";return}
+ btn.disabled=true;status.textContent="Kontrollierter Schreibtest: ein vorhandener Teilnehmer wird mit identischen Werten erneut gespeichert …";
  try{
-  const {data,error}=await supabaseClient.rpc("sync_legacy_bingo_event",{p_event_id:IMPORTED_EVENT_ID,p_expected_updated_at:cloudVersion,p_payload:payload});
+  const {data,error}=await supabaseClient.rpc("apply_bingo_change",{p_event_id:IMPORTED_EVENT_ID,p_expected_updated_at:cloudVersion,p_entity:"participant",p_operation:"upsert",p_payload:{id:sample.id,name:sample.name,family:sample.family||""}});
   if(error)throw error;
   cloudVersion=data;
-  const [pCheck,rCheck,bCheck,sCheck]=await Promise.all([
-   supabaseClient.from("event_participants").select("display_name,family,source_participant_id").eq("event_id",IMPORTED_EVENT_ID),
-   supabaseClient.from("rounds").select("id,round_number,mode,points_per_bingo,note").eq("event_id",IMPORTED_EVENT_ID),
-   supabaseClient.from("bingo_results").select("session_key,count,bingo_no,place,points,room_count,participant_id,round_id").eq("event_id",IMPORTED_EVENT_ID),
-   supabaseClient.from("room_statistics").select("session_key,start_count,current_count,peak_count,low_count,changes,round_id").eq("event_id",IMPORTED_EVENT_ID)
-  ]);
-  for(const x of [pCheck,rCheck,bCheck,sCheck])if(x.error)throw x.error;
-  const norm=x=>JSON.stringify(x);
-  const expectedPlayers=payload.players.map(p=>({id:p.id,name:p.name,family:p.family||""})).sort((a,b)=>a.id.localeCompare(b.id));
-  const actualPlayers=pCheck.data.map(p=>({id:p.source_participant_id,name:p.display_name,family:p.family||""})).sort((a,b)=>(a.id||"").localeCompare(b.id||""));
-  const expectedRounds=payload.rounds.map(r=>({n:Number(r.n),mode:r.mode||"Normal",points:Number(r.pointsPerBingo??1),note:r.note||""})).sort((a,b)=>a.n-b.n);
-  const actualRounds=rCheck.data.map(r=>({n:Number(r.round_number),mode:r.mode||"Normal",points:Number(r.points_per_bingo??1),note:r.note||""})).sort((a,b)=>a.n-b.n);
-  const participantByDb=new Map(pCheck.data.map(p=>[p.id,p.source_participant_id]));
-  const roundByDb=new Map(rCheck.data.map(r=>[r.round_number,r.round_number]));
-  const actualResults=bCheck.data.map(x=>({session:x.session_key,count:Number(x.count),bingoNo:x.bingo_no,place:x.place,points:x.points==null?0:Number(x.points),roomCount:x.room_count==null?null:Number(x.room_count),playerId:participantByDb.get(x.participant_id),round:Number([...rCheck.data].find(r=>r.id===x.round_id)?.round_number)})).sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b)));
-  const expectedResults=payload.results.map(x=>({session:x.session||"Spieltag",count:Math.max(1,Number(x.count)||1),bingoNo:x.bingoNo??null,place:x.place??null,points:x.points==null?0:Number(x.points),roomCount:x.roomCount==null?null:Number(x.roomCount),playerId:x.playerId,round:Number(x.round)})).sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b)));
-  const actualStats=sCheck.data.map(x=>({key:x.session_key+"|"+rCheck.data.find(r=>r.id===x.round_id)?.round_number,start:x.start_count??null,current:x.current_count??null,peak:x.peak_count??null,low:x.low_count??null,changes:x.changes||[]})).sort((a,b)=>a.key.localeCompare(b.key));
-  const expectedStats=Object.entries(payload.roomStats).map(([key,x])=>({key,start:x.start??null,current:x.current??null,peak:x.peak??null,low:x.low??null,changes:x.changes||[]})).sort((a,b)=>a.key.localeCompare(b.key));
-  if(norm(expectedPlayers)!==norm(actualPlayers)||norm(expectedRounds)!==norm(actualRounds)||norm(expectedResults)!==norm(actualResults)||norm(expectedStats)!==norm(actualStats))throw new Error("Inhaltsvergleich fehlgeschlagen. Bitte nicht weiterbearbeiten; Datenbestand muss geprüft werden.");
-  const counts=[pCheck.data.length,rCheck.data.length,bCheck.data.length,sCheck.data.length];
-  status.textContent="Speichertest erfolgreich: vollständiger Inhaltsvergleich bestanden. "+counts[0]+" Teilnehmer, "+counts[1]+" Runden, "+counts[2]+" Bingo-Ergebnisse, "+counts[3]+" Raumstatistiken. Bearbeitung bleibt gesperrt.";
- }catch(e){status.textContent="Speichertest fehlgeschlagen: "+(e.message||String(e))+". Der Schreibschutz bleibt aktiv.";}
- finally{btn.disabled=false;}
+  cloudWriteTestPassed=true;
+  status.textContent="Schreibzugriff bestätigt. Prüfe jetzt erneut alle Daten …";
+  await runCloudReadOnlyCompare();
+  if(cloudComparePassed&&cloudSyncFunctionReady){
+   $("enableCloudEditButton").disabled=false;
+   status.textContent="Kontrollierter Schreibtest erfolgreich. Teilnehmer unverändert gespeichert; alle 4 Datenvergleiche weiterhin OK. Cloud-Bearbeitung bleibt bis zu deiner Freigabe gesperrt.";
+  }else{
+   cloudWriteTestPassed=false;
+   $("enableCloudEditButton").disabled=true;
+   status.textContent="Schreibtest ausgeführt, aber der anschließende Datenvergleich war nicht erfolgreich. Bearbeitung bleibt gesperrt.";
+  }
+ }catch(e){
+  cloudWriteTestPassed=false;
+  cloudEditable=false;cloudReadOnly=true;
+  status.textContent="Kontrollierter Schreibtest fehlgeschlagen: "+(e.message||String(e))+". Es wurden keine Bingo-Ergebnisse verändert.";
+ }finally{
+  btn.disabled=!(cloudComparePassed&&cloudSyncFunctionReady&&!cloudWriteTestPassed);
+ }
 }
 $("duplicatePreviewButton").addEventListener("click",previewKnownDuplicates);
 $("loadCloudEventButton").addEventListener("click",loadImportedCloudEvent);
 $("cloudWriteTestButton").addEventListener("click",runCloudWriteTest);
 $("cloudCompareButton").addEventListener("click",runCloudReadOnlyCompare);
 $("enableCloudEditButton").addEventListener("click",()=>{
- if(!cloudComparePassed||!cloudVersion||!cloudSyncFunctionReady){alert("Cloud-Bearbeitung bleibt gesperrt, bis Datenvergleich und neue SQL-Synchronisierung bestätigt sind.");return}
+ if(!cloudComparePassed||!cloudVersion||!cloudSyncFunctionReady||!cloudWriteTestPassed){alert("Cloud-Bearbeitung bleibt gesperrt, bis Datenvergleich, SQL-Funktion und kontrollierter Schreibtest bestanden sind.");return}
  if(!confirm("Cloud-Bearbeitung aktivieren? Künftige Änderungen werden zentral in Supabase gespeichert. Die Live-Version bleibt unverändert."))return;
  cloudEditable=true;cloudReadOnly=false;
  document.querySelectorAll("#appMain button,#appMain input,#appMain select,#appMain textarea").forEach(el=>el.disabled=false);
