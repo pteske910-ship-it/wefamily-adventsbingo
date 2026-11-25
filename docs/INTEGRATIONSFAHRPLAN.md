@@ -76,3 +76,17 @@ Die bestehende Adventsbingo-Webapp wird schrittweise zu einer gemeinsam genutzte
 - Die Anmeldung verwendet das vorhandene Supabase-Projekt und die bereits vorhandenen `app_users`-Profile/Rollen. Der aktive Status wird vor Freigabe der Oberfläche geprüft.
 - Noch nicht erledigt: Browser-Test mit Owner- und Administrator-Konto, Registrierung/Freigabe mit einem frischen Testkonto, anschließend Cloud-Lesen und Datenvergleich.
 - Keine produktiven Tabellen oder Datensätze wurden durch diese Integration verändert.
+
+
+## Ergänzung: Registrierung und E-Mail-Bestätigung
+
+- [x] Registrierung ist als WeFamily-Spielmanager-Zugang formuliert; Nutzer benötigen keinen eigenen Supabase-Projektzugang.
+- [x] Nach Registrierung wird die Bestätigungs-E-Mail an die Spielmanager-Adresse zurückgeleitet (`window.location.origin + window.location.pathname`).
+- [x] Rückmeldung nach Registrierung erklärt die zwei Schritte: E-Mail bestätigen und anschließend Freigabe durch den Eigentümer.
+- [x] Deutsche, responsive WeFamily-E-Mail-Vorlage erstellt: [email-vorlage-bestaetigung.html](./email-vorlage-bestaetigung.html).
+- [ ] Vorlage im Supabase-Dashboard unter Authentication → Email Templates → Confirm signup einfügen und speichern.
+- [ ] Redirect-Allowlist im Supabase-Dashboard um die offizielle Spielmanager-URL ergänzen: `https://pteske910-ship-it.github.io/wefamily-adventsbingo/`.
+- [ ] Bestätigung mit einer frischen Testadresse auf Handy und Desktop prüfen.
+- [ ] Absendername und Versanddomain festlegen; für einen professionellen Absender später eigenen SMTP-Dienst und passende Domain einrichten.
+
+**Wichtig:** Die Supabase-Authentifizierung bleibt die technische Grundlage im Hintergrund. Heidi braucht weder ein Supabase-Konto noch einen Supabase-Dashboard-Zugang. Die Änderung an der E-Mail-Vorlage und der Redirect-Allowlist erfolgt im Supabase-Dashboard; diese Projekt-Einstellungen lassen sich über die hier verfügbaren Datenbankwerkzeuge nicht setzen. Die Live-E-Mail-Vorlage wurde daher noch nicht verändert.
