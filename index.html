@@ -51,12 +51,12 @@
  </div>
 </div>
 <section id="authGate"><div class="card"><h2>🔐 WeFamily Adventsbingo</h2>
-<div id="loginView"><p class="muted">Bitte mit deinem WeFamily-Konto anmelden.</p><form id="loginForm"><label for="loginEmail">E-Mail-Adresse</label><input id="loginEmail" type="email" autocomplete="username" required><label for="loginPassword">Passwort</label><input id="loginPassword" type="password" autocomplete="current-password" required><div class="actions"><button class="primary" id="loginButton" type="submit">Anmelden</button><button type="button" id="showRegisterButton">Neues Konto erstellen</button></div></form></div>
-<div id="registerView" class="hidden"><p class="muted">Erstelle dein persönliches WeFamily-Manager-Konto. Der Zugang wird erst nach Freigabe durch den Eigentümer aktiviert.</p><form id="registerForm"><label for="registerName">Anzeigename</label><input id="registerName" type="text" maxlength="80" autocomplete="name" required><label for="registerEmail">E-Mail-Adresse</label><input id="registerEmail" type="email" autocomplete="email" required><label for="registerPassword">Passwort (mindestens 8 Zeichen)</label><input id="registerPassword" type="password" minlength="8" autocomplete="new-password" required><label for="registerPasswordConfirm">Passwort wiederholen</label><input id="registerPasswordConfirm" type="password" minlength="8" autocomplete="new-password" required><div class="actions"><button class="primary" id="registerButton" type="submit">Registrierung absenden</button><button type="button" id="showLoginButton">Zur Anmeldung</button></div></form></div>
+<div id="loginView"><p class="muted">Melde dich mit deinem persönlichen Zugang zum WeFamily-Spielmanager an.</p><form id="loginForm"><label for="loginEmail">E-Mail-Adresse</label><input id="loginEmail" type="email" autocomplete="username" required><label for="loginPassword">Passwort</label><input id="loginPassword" type="password" autocomplete="current-password" required><div class="actions"><button class="primary" id="loginButton" type="submit">Anmelden</button><button type="button" id="showRegisterButton">Neues Konto erstellen</button></div></form></div>
+<div id="registerView" class="hidden"><p class="muted">Erstelle deinen persönlichen Zugang zum WeFamily-Spielmanager. Du brauchst dafür kein eigenes Supabase-Konto. Nach der E-Mail-Bestätigung schaltet der Eigentümer deinen Zugang frei.</p><form id="registerForm"><label for="registerName">Anzeigename</label><input id="registerName" type="text" maxlength="80" autocomplete="name" required><label for="registerEmail">E-Mail-Adresse</label><input id="registerEmail" type="email" autocomplete="email" required><label for="registerPassword">Passwort (mindestens 8 Zeichen)</label><input id="registerPassword" type="password" minlength="8" autocomplete="new-password" required><label for="registerPasswordConfirm">Passwort wiederholen</label><input id="registerPasswordConfirm" type="password" minlength="8" autocomplete="new-password" required><div class="actions"><button class="primary" id="registerButton" type="submit">Registrierung absenden</button><button type="button" id="showLoginButton">Zur Anmeldung</button></div></form></div>
 <p id="authMessage" role="status" aria-live="polite"></p></div></section>
 <header class="hidden" id="appHeader"><div class="wrap" style="padding:0"><h1>🎄 WeFamily Adventsbingo</h1><p id="signedInLabel">Angemeldet · lokale Daten auf diesem Gerät</p><button id="logoutButton" class="small" type="button">Abmelden</button></div></header>
 <main class="wrap hidden" id="appMain">
-<div class="notice">Testversion: Daten werden nur in diesem Browser gespeichert. Noch kein gemeinsamer Heidi-Zugang und keine echte Anmeldung. Vor echtem Einsatz bitte Daten exportieren.</div>
+<div class="notice">Die Anmeldung ist bereits mit deinem WeFamily-Konto geschützt. Spielstände werden in dieser Integrationsstufe noch lokal in diesem Browser gespeichert. Vor Änderungen bitte regelmäßig exportieren.</div>
 <nav class="tabs" aria-label="Bereiche">
 <button class="tab active" data-tab="home">Übersicht</button><button class="tab" data-tab="players">Teilnehmer</button><button class="tab" data-tab="results">Ergebnisse</button><button class="tab secret" data-tab="internal">🔒 Nur Moderation</button><button class="tab" data-tab="settings">Einstellungen</button>
 </nav>
@@ -327,7 +327,7 @@ async function verifyAndShowSession(user){
  if(error){await supabaseClient.auth.signOut();showSignedOut();showAuthMessage("Kontostatus konnte nicht geprüft werden: "+error.message);return;}
  if(!profile||profile.account_status!=="active"||!["owner","administrator"].includes(profile.app_role)){
   await supabaseClient.auth.signOut();showSignedOut();
-  showAuthMessage(!profile?"Für dieses Konto wurde kein Manager-Profil angelegt.":"Deine Registrierung ist noch nicht freigegeben.");
+  showAuthMessage(!profile?"Für dieses Konto wurde kein Manager-Profil angelegt.":"Deine E-Mail-Adresse ist bestätigt. Dein WeFamily-Zugang wartet jetzt noch auf die Freigabe durch den Eigentümer.");
   return;
  }
  $("authGate").classList.add("hidden");
@@ -348,10 +348,10 @@ $("registerForm").addEventListener("submit",async e=>{
  try{
   if(password!==$("registerPasswordConfirm").value)throw new Error("Die beiden Passwörter stimmen nicht überein.");
   if(password.length<8)throw new Error("Das Passwort muss mindestens 8 Zeichen lang sein.");
-  const {data,error}=await supabaseClient.auth.signUp({email,password,options:{data:{display_name:$("registerName").value.trim()}}});if(error)throw error;
+  const {data,error}=await supabaseClient.auth.signUp({email,password,options:{data:{display_name:$("registerName").value.trim()},emailRedirectTo:window.location.origin+window.location.pathname}});if(error)throw error;
   if(data.session)await supabaseClient.auth.signOut();
   $("registerForm").reset();
-  showAuthMessage("Registrierung eingegangen. Bitte bestätige gegebenenfalls deine E-Mail-Adresse. Der Eigentümer muss dein Konto freigeben. Erst danach ist die Anmeldung möglich.");
+  showAuthMessage("Fast geschafft! Wir haben dir eine E-Mail von WeFamily geschickt. Bitte bestätige zuerst deine E-Mail-Adresse. Danach muss der Eigentümer deinen Zugang freigeben.");
  }catch(err){showAuthMessage("Registrierung fehlgeschlagen: "+err.message);}
  finally{btn.disabled=false;}
 });
