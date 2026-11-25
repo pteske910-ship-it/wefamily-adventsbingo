@@ -403,15 +403,15 @@ function renderInternal(){
  const previousDays=sessions.slice(0,selectedIndex);
  const priorMap={},currentMap={};
  db.players.forEach(p=>{
-  const base={id:p.id,name:(p.name||"?")+(p.family?" ("+p.family+")":""),total:0,points:0,modePoints:{normal:0,power:0,blackout:0}};
-  priorMap[p.id]={...base,modePoints:{...base.modePoints}};
-  currentMap[p.id]={...base,modePoints:{...base.modePoints}};
+  const base={id:p.id,name:(p.name||"?")+(p.family?" ("+p.family+")":""),total:0,points:0,modePoints:{normal:0,power:0,blackout:0},modeBingos:{normal:0,power:0,blackout:0}};
+  priorMap[p.id]={...base,modePoints:{...base.modePoints},modeBingos:{...base.modeBingos}};
+  currentMap[p.id]={...base,modePoints:{...base.modePoints},modeBingos:{...base.modeBingos}};
  });
  const addDay=(target,day)=>{
   tally(day).forEach(x=>{
    const t=target[x.id];if(!t)return;
    t.points+=x.points;t.total+=x.total;
-   for(const mode of ["normal","power","blackout"])t.modePoints[mode]+=x.modePoints[mode];
+   for(const mode of ["normal","power","blackout"]){t.modePoints[mode]+=x.modePoints[mode];t.modeBingos[mode]+=x.modeBingos[mode];}
   });
  };
  previousDays.forEach(day=>addDay(priorMap,day));
@@ -426,7 +426,7 @@ function renderInternal(){
   const before=priorRanks[x.id],now=currentRanks[x.id];
   const movement=before===undefined?"Neu":before>now?"↑ "+(before-now):before<now?"↓ "+(now-before):"—";
   const days=sessions.slice(0,selectedIndex+1).filter(dayName=>{const t=tally(dayName).find(v=>v.id===x.id);return t&&(t.points>0||t.total>0)}).map(dayName=>{const t=tally(dayName).find(v=>v.id===x.id);return '<span class="tournament-chip">'+esc(dayName)+': <strong>'+t.points+' P.</strong> · '+t.total+' Bingos</span>'}).join("");
-  return {...x,rank:now,movement,dayPoints:day.points,dayBingos:day.total,days,normal:x.modePoints.normal,power:x.modePoints.power,blackout:x.modePoints.blackout};
+  return {...x,rank:now,movement,dayPoints:day.points,dayBingos:day.total,days,normal:x.modePoints.normal,power:x.modePoints.power,blackout:x.modePoints.blackout,normalBingos:x.modeBingos.normal,powerBingos:x.modeBingos.power,blackoutBingos:x.modeBingos.blackout};
  });
  $("tournamentList").innerHTML='<label for="tournamentDay">Gesamtwertung bis einschließlich Spieltag</label><select id="tournamentDay" onchange="$(\'internalSession\').value=this.value;renderInternal()">'+sessions.map(day=>'<option value="'+esc(day)+'" '+(day===selectedDay?'selected':'')+'>'+esc(day)+'</option>').join("")+'</select><p class="muted">Die Tagespunkte zählen nur für den ausgewählten Spieltag. Die Gesamtpunkte enthalten diesen und alle vorherigen Spieltage. Fehlende Spieltage werden als keine Teilnahme gewertet.</p>';
  renderTournamentList(ranked);
@@ -611,7 +611,7 @@ function setAdminView(v){
  document.querySelectorAll("[data-adminview]").forEach(b=>b.classList.toggle("primary",b.dataset.adminview===v));
  if(v==="stats"){renderStats();renderInternal();setStatsView("overview");}
 }
-let tournamentPage=0,tournamentQuery="";
+let tournamentPage=0,tournamentQuery="",tournamentSort="points";
 function setStatsView(v){
  $("statsOverviewView").classList.toggle("hidden",v!=="overview");
  $("statsTournamentView").classList.toggle("hidden",v!=="tournament");
@@ -621,14 +621,22 @@ function setStatsView(v){
 function renderTournamentList(items){
  const q=tournamentQuery.trim().toLocaleLowerCase("de");
  const filtered=items.filter(x=>!q||x.name.toLocaleLowerCase("de").includes(q));
- const pageSize=20,pages=Math.max(1,Math.ceil(filtered.length/pageSize));
+ const sorted=filtered.slice().sort((a,b)=>{
+  if(tournamentSort==="name")return a.name.localeCompare(b.name,"de");
+  if(tournamentSort==="bingos")return b.total-a.total||b.points-a.points||a.name.localeCompare(b.name,"de");
+  if(tournamentSort==="movement")return (a.movement==="Neu"?-1:Number((a.movement.match(/\\d+/)||[0])[0])*(a.movement.startsWith("↑")? -1:1))-(b.movement==="Neu"?-1:Number((b.movement.match(/\\d+/)||[0])[0])*(b.movement.startsWith("↑")? -1:1))||b.points-a.points;
+  return b.points-a.points||b.total-a.total||a.name.localeCompare(b.name,"de");
+ });
+ const pageSize=20,pages=Math.max(1,Math.ceil(sorted.length/pageSize));
  tournamentPage=Math.min(tournamentPage,pages-1);
- const shown=filtered.slice(tournamentPage*pageSize,(tournamentPage+1)*pageSize);
- const cards=shown.map(x=>'<details class="tournament-player"><summary class="tournament-player-head"><span class="tournament-player-name">'+x.rank+'. '+esc(x.name)+'</span><span class="tournament-player-total">'+x.points+' Gesamtpunkte<br><span class="muted" style="font-size:12px;font-weight:600">'+x.total+' Bingos · Tagespunkte: '+x.dayPoints+'</span></span></summary><div class="tournament-player-meta"><span class="tournament-chip">Rangbewegung: <strong>'+esc(x.movement)+'</strong></span><span class="tournament-chip">Heute: <strong>'+x.dayBingos+' Bingos</strong></span></div><div class="tournament-player-meta"><span class="tournament-chip">Normal gesamt <strong>'+x.normal+'</strong></span><span class="tournament-chip">Power-up gesamt <strong>'+x.power+'</strong></span><span class="tournament-chip">Blackout gesamt <strong>'+x.blackout+'</strong></span></div><div class="tournament-player-meta">'+(x.days||'<span class="tournament-chip">Noch keine Tagesergebnisse</span>')+'</div></details>').join("");
- $("tournamentList").innerHTML+='<label for="tournamentSearch">Teilnehmer suchen</label><input id="tournamentSearch" type="search" placeholder="Name eingeben …" value="'+esc(tournamentQuery)+'" oninput="tournamentQuery=this.value;tournamentPage=0;renderInternal()"><p class="muted">'+filtered.length+' von '+items.length+' Teilnehmern mit Ergebnissen</p>'+(cards||'<p class="muted">Keine passenden Teilnehmer gefunden.</p>')+'<div class="row between" style="align-items:center;margin-top:12px"><button '+(tournamentPage===0?'disabled':'')+' onclick="tournamentPage--;renderInternal()">Zurück</button><span class="muted">Seite '+(tournamentPage+1)+' von '+pages+'</span><button '+(tournamentPage>=pages-1?'disabled':'')+' onclick="tournamentPage++;renderInternal()">Weiter</button></div>';
- const input=$("tournamentSearch");if(input){input.focus();input.setSelectionRange(input.value.length,input.value.length);}
+ const shown=sorted.slice(tournamentPage*pageSize,(tournamentPage+1)*pageSize);
+ const cards=shown.map(x=>'<details class="tournament-player"><summary class="tournament-player-head"><span class="tournament-player-name">'+x.rank+'. '+esc(x.name)+'</span><span class="tournament-player-total">'+x.points+' Gesamtpunkte<br><span class="muted" style="font-size:12px;font-weight:600">'+x.total+' Bingos · Tagespunkte: '+x.dayPoints+'</span></span></summary><div class="tournament-player-meta"><span class="tournament-chip">Rangbewegung: <strong>'+esc(x.movement)+'</strong></span><span class="tournament-chip">Ausgewählter Tag: <strong>'+x.dayPoints+' Punkte · '+x.dayBingos+' Bingos</strong></span></div><div class="tournament-player-meta"><span class="tournament-chip">Normal: <strong>'+x.normal+' P. · '+x.normalBingos+' Bingos</strong></span><span class="tournament-chip">Power-up: <strong>'+x.power+' P. · '+x.powerBingos+' Bingos</strong></span><span class="tournament-chip">Blackout: <strong>'+x.blackout+' P. · '+x.blackoutBingos+' Bingos</strong></span></div><div class="tournament-player-meta">'+(x.days||'<span class="tournament-chip">Noch keine Tagesergebnisse</span>')+'</div></details>').join("");
+ $("tournamentList").innerHTML='<label for="tournamentSearch">Teilnehmer suchen</label><input id="tournamentSearch" type="search" placeholder="Name oder Familie eingeben …" value="'+esc(tournamentQuery)+'" oninput="tournamentQuery=this.value;tournamentPage=0;renderInternal()"><div class="grid no-print"><div><label for="tournamentSort">Sortieren nach</label><select id="tournamentSort" onchange="tournamentSort=this.value;tournamentPage=0;renderInternal()"><option value="points" '+(tournamentSort==="points"?'selected':'')+'>Gesamtpunkte</option><option value="bingos" '+(tournamentSort==="bingos"?'selected':'')+'>Anzahl Bingos</option><option value="movement" '+(tournamentSort==="movement"?'selected':'')+'>Rangbewegung</option><option value="name" '+(tournamentSort==="name"?'selected':'')+'>Name</option></select></div></div><p class="muted">'+sorted.length+' von '+items.length+' Teilnehmern mit Ergebnissen · 20 pro Seite</p>'+
+ '<div class="tournament-mobile">'+(cards||'<p class="muted">Keine passenden Teilnehmer gefunden.</p>')+'</div>'+
+ '<div class="tournament-desktop"><table><thead><tr><th>Platz</th><th>Teilnehmer</th><th>Bewegung</th><th>Tagespunkte</th><th>Normal</th><th>Power-up</th><th>Blackout</th><th>Bingos</th><th>Gesamtpunkte</th></tr></thead><tbody>'+
+ (shown.map(x=>'<tr><td>'+x.rank+'</td><td>'+esc(x.name)+'</td><td>'+esc(x.movement)+'</td><td>'+x.dayPoints+'</td><td>'+x.normal+' P. / '+x.normalBingos+'</td><td>'+x.power+' P. / '+x.powerBingos+'</td><td>'+x.blackout+' P. / '+x.blackoutBingos+'</td><td>'+x.total+'</td><td><strong>'+x.points+'</strong></td></tr>').join("")||'<tr><td colspan="9">Keine passenden Teilnehmer gefunden.</td></tr>')+
+ '</tbody></table></div><div class="row between" style="align-items:center;margin-top:12px"><button '+(tournamentPage===0?'disabled':'')+' onclick="tournamentPage--;renderInternal()">Zurück</button><span class="muted">Seite '+(tournamentPage+1)+' von '+pages+'</span><button '+(tournamentPage>=pages-1?'disabled':'')+' onclick="tournamentPage++;renderInternal()">Weiter</button></div>';
 }
-
 function statSessions(){
  const fixed=["1. Advent","2. Advent","3. Advent","4. Advent"];
  const fromResults=db.results.map(r=>String(r.session||"Spieltag").trim()).filter(Boolean);
