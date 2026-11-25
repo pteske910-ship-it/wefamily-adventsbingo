@@ -66,7 +66,7 @@ test('100 zufällige vollständige Spielverläufe: Bingo-, Punkte- und Tagesverg
               id: 'r' + results.length, session, round,
               playerId: 'p' + playerIndex, count,
               points: integer(random, 0, 15) * count,
-              bingoNo: integer(random, 1, 100)
+              bingoNo: count === 1 ? integer(random, 1, 100) : null
             });
           }
         }
