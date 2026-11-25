@@ -2,9 +2,6 @@ name: Adventsbingo – 60-Minuten-Browser-Dauerlast
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - test/randomized-simulation
 
 permissions:
   contents: read
