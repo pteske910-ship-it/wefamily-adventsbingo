@@ -63,9 +63,14 @@
 .tournament-desktop table{width:100%;border-collapse:collapse;white-space:nowrap}
 .tournament-desktop th,.tournament-desktop td{padding:9px 7px;border-bottom:1px solid var(--line);text-align:right}
 .tournament-desktop th:nth-child(1),.tournament-desktop td:nth-child(1),.tournament-desktop th:nth-child(2),.tournament-desktop td:nth-child(2){text-align:left}
-.tournament-player{padding:12px 0;border-bottom:1px solid var(--line)}
-.tournament-player:last-child{border-bottom:0}
-.tournament-player-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.tournament-player{border:1px solid var(--line);border-radius:13px;background:#211d35;padding:12px;margin:9px 0;overflow:hidden}
+.tournament-player-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;cursor:pointer;list-style:none;min-height:34px}
+.tournament-player-head::-webkit-details-marker{display:none}
+.tournament-player-head::marker{content:""}
+.tournament-player-head::after{content:"＋";flex:none;color:var(--gold);font-size:20px;font-weight:800;line-height:1;padding:1px 4px;margin-left:4px}
+.tournament-player[open]>.tournament-player-head::after{content:"−"}
+.tournament-player-head:focus-visible{outline:2px solid var(--pink);outline-offset:4px;border-radius:6px}
+.tournament-player[open]>.tournament-player-head{padding-bottom:8px;border-bottom:1px solid var(--line)}
 .tournament-player-name{font-weight:750;min-width:0;overflow-wrap:anywhere}
 .tournament-player-total{text-align:right;white-space:nowrap;color:var(--gold);font-weight:800}
 .rank-movement{display:inline-block;margin-left:5px;padding:2px 6px;border-radius:7px;background:#302746;color:#ffd18a;font-size:12px;font-weight:800;white-space:nowrap}
