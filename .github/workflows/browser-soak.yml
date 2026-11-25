@@ -27,7 +27,7 @@ jobs:
       - name: Echter Browser-Vorabtest (30 Sekunden)
         run: SOAK_DURATION_MS=30000 node --test tests/browser-soak.test.cjs
       - name: 60-Minuten-Dauerlast (nur manuell gestartet)
-        if: github.event_name == 'workflow_dispatch'
+        if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
         run: node --test tests/browser-soak.test.cjs
       - name: Testprotokoll hochladen
         if: always()
