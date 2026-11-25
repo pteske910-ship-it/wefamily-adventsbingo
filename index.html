@@ -422,17 +422,18 @@ function renderInternal(){
    const movement=!previousItems?"—":before===undefined?"NEU":before>now?"↑ "+(before-now):before<now?"↓ "+(now-before):"—";
    return {...x,rank:now,movement};
   });
-  const movementText=x=>x.movement==="NEU"?"Neu dabei":x.movement==="—"?"Keine Veränderung":x.movement;
+  const movementText=x=>!previousItems?"Ausgangsstand":x.movement==="NEU"?"Neu dabei":x.movement==="—"?"Keine Veränderung":x.movement;
   const cards=prepared.map(x=>'<article class="tournament-player"><button type="button" class="tournament-toggle" aria-expanded="false" onclick="toggleRankingCard(this)"><span class="tournament-player-head"><span class="tournament-player-name">'+x.rank+'. '+esc(x.name)+' <span class="rank-movement">'+esc(movementText(x))+'</span></span><span class="tournament-player-total">'+x.points+' Punkte<br><span class="muted" style="font-size:12px;font-weight:600">'+x.total+' Bingos</span></span></span><span class="tournament-toggle-icon" aria-hidden="true">＋</span></button><div class="tournament-player-content" hidden><div class="tournament-player-meta"><span class="tournament-chip">Rangbewegung: <strong>'+esc(movementText(x))+'</strong></span></div><div class="tournament-player-meta"><span class="tournament-chip">Normal: <strong>'+x.modePoints.normal+' P. · '+x.modeBingos.normal+' Bingos</strong></span><span class="tournament-chip">Power-up: <strong>'+x.modePoints.power+' P. · '+x.modeBingos.power+' Bingos</strong></span><span class="tournament-chip">Blackout: <strong>'+x.modePoints.blackout+' P. · '+x.modeBingos.blackout+' Bingos</strong></span></div></div></article>').join("");
   const table=prepared.map(x=>'<tr><td>'+x.rank+'</td><td>'+esc(x.name)+'</td><td><strong>'+esc(movementText(x))+'</strong></td><td>'+x.total+'</td><td>'+x.modeBingos.normal+'</td><td>'+x.modeBingos.power+'</td><td>'+x.modeBingos.blackout+'</td><td><strong>'+x.points+'</strong></td></tr>').join("");
   return '<p class="muted">'+label+' · '+prepared.length+' Teilnehmer mit Ergebnissen'+(previousItems?' · Rangvergleich zum vorherigen Stand':' · Noch kein vorheriger Stand zum Vergleichen')+'</p><div class="tournament-mobile">'+(cards||'<p class="muted">Noch keine Ergebnisse für diese Auswahl.</p>')+'</div><div class="tournament-desktop"><table><thead><tr><th>Platz</th><th>Teilnehmer</th><th>Bewegung</th><th>Bingos</th><th>Normal</th><th>Power-up</th><th>Blackout</th><th>Punkte</th></tr></thead><tbody>'+(table||'<tr><td colspan="8">Noch keine Ergebnisse für diese Auswahl.</td></tr>')+'</tbody></table></div>';
  };
  const previousRoundRows=current>1?tally(selectedDay,current-1):null;
- $("internalRoundList").innerHTML=rankingHTML(roundRows,"Rundenwertung · Runde "+current,previousRoundRows);
- $("internalList").innerHTML=rankingHTML(dayRows,"Tagesgesamtwertung · bis einschließlich Runde "+current,current>1?tally(selectedDay,current-1):null);
  const sessions=statSessions();
  if(!sessions.includes(selectedDay))sessions.push(selectedDay);
  const selectedIndex=sessions.indexOf(selectedDay);
+ const previousDayRows=selectedIndex>0?tally(sessions[selectedIndex-1],current):null;
+ $("internalRoundList").innerHTML=rankingHTML(roundRows,"Rundenwertung · Runde "+current,previousRoundRows);
+ $("internalList").innerHTML=rankingHTML(dayRows,"Tagesgesamtwertung · Runde "+current,previousDayRows);
  const previousDays=sessions.slice(0,selectedIndex);
  const priorMap={},currentMap={};
  db.players.forEach(p=>{
