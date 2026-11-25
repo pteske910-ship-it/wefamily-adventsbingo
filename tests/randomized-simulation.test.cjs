@@ -149,4 +149,17 @@ test('Wertung ist turnierweit global: Spielmodus oder Platzierung', () => {
     'Auch historische Ergebnisse folgen der zentralen Platzierungstabelle');
   assert.equal(pointsForResult({ round: 1, count: 2, points: 12 }), 12,
     'Ältere zusammengefasste Datensätze ohne Bingo-Nummer behalten ihren gespeicherten Punktewert');
+
+  sandbox.db = {
+    players: [{ id: 'p1', name: 'Spieler 1' }, { id: 'p2', name: 'Spieler 2' }],
+    rounds: [{ n: 1, mode: 'Normal' }],
+    scoring: { mode: 'place', placements: [10, 8, 7] },
+    results: [
+      { session: 'Tag 1', round: 1, playerId: 'p1', count: 1, bingoNo: 2, points: 8 },
+      { session: 'Tag 1', round: 1, playerId: 'p2', count: 1, bingoNo: 1, points: 10 }
+    ],
+    roomStats: {}
+  };
+  assert.deepEqual(tally('Tag 1').map(x => x.id), ['p2', 'p1'],
+    'Die Tagesrangliste sortiert nach erreichten Punkten, nicht nach bloßer Bingo-Anzahl');
 });
