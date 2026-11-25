@@ -225,7 +225,7 @@ function loadDB(){
       players:Array.isArray(saved.players)?saved.players.filter(p=>p&&typeof p.name==="string"&&p.id):[],
       rounds:Array.isArray(saved.rounds)&&saved.rounds.length?saved.rounds.map(r=>({...r,pointsPerBingo:Number.isFinite(Number(r.pointsPerBingo))?Number(r.pointsPerBingo):1})):defaultRounds.map(r=>({...r})),
       results:Array.isArray(saved.results)?saved.results.filter(x=>x&&x.id):[],
-      presence:saved.presence&&typeof saved.presence==="object"?saved.presence:{},attendance:saved.attendance&&typeof saved.attendance==="object"?saved.attendance:{},roomStats:saved.roomStats&&typeof saved.roomStats==="object"?saved.roomStats:{},scoring:saved.scoring&&typeof saved.scoring==="object"?saved.scoring:{mode:"mode",normal:2,power:1,blackout:3,placements:[10,8,7,6,5,4,3,2,1,1]}
+      presence:saved.presence&&typeof saved.presence==="object"?saved.presence:{},attendance:saved.attendance&&typeof saved.attendance==="object"?saved.attendance:{},roomStats:saved.roomStats&&typeof saved.roomStats==="object"?saved.roomStats:{},scoring:{mode:"mode",normal:2,power:1,blackout:3,placements:[10,8,7,6,5,4,3,2,1,1],...(saved.scoring&&typeof saved.scoring==="object"?saved.scoring:{})}
     };
   }catch(error){
     console.error("Adventsbingo-Daten konnten nicht geladen werden:",error);
@@ -440,15 +440,15 @@ function renderInternal(targetId="tournamentList"){
   const overviewRows=prepared.map(x=>'<tr><td>'+x.rank+'</td><td>'+esc(x.name)+'</td><td>'+x.total+'</td><td><strong>'+x.points+'</strong></td></tr>').join("");
   const overview=compactOverview?'<div class="round-quick-overview"><table><thead><tr><th>Platz</th><th>Teilnehmer</th><th>Bingos</th><th>Punkte</th></tr></thead><tbody>'+(overviewRows||'<tr><td colspan="4">Noch keine Ergebnisse.</td></tr>')+'</tbody></table></div>':'';
   const table=prepared.map(x=>'<tr><td>'+x.rank+'</td><td>'+esc(x.name)+'</td><td><strong>'+esc(movementText(x))+'</strong></td><td>'+x.total+'</td><td>'+x.modeBingos.normal+'</td><td>'+x.modeBingos.power+'</td><td>'+x.modeBingos.blackout+'</td><td><strong>'+x.points+'</strong></td></tr>').join("");
-  return '<p class="muted">'+label+' · '+prepared.length+' Teilnehmer mit Ergebnissen'+(previousItems?' · Rangvergleich zum vorherigen Stand':'')+'</p>'+overview+'<div class="tournament-mobile">'+(cards||'<p class="muted">Noch keine Ergebnisse für diese Auswahl.</p>')+'</div><div class="tournament-desktop"><table><thead><tr><th>Platz</th><th>Teilnehmer</th><th>Bewegung</th><th>Bingos</th><th>Normal</th><th>Power-up</th><th>Blackout</th><th>Punkte</th></tr></thead><tbody>'+(table||'<tr><td colspan="8">Noch keine Ergebnisse für diese Auswahl.</td></tr>')+'</tbody></table></div>';
+  return '<p class="muted">'+label+' · '+prepared.length+' Teilnehmer mit Ergebnissen'+(previousItems?(initialMovementLabel?' · '+initialMovementLabel:' · Rangvergleich zum vorherigen Stand'):'')+'</p>'+overview+'<div class="tournament-mobile">'+(cards||'<p class="muted">Noch keine Ergebnisse für diese Auswahl.</p>')+'</div><div class="tournament-desktop"><table><thead><tr><th>Platz</th><th>Teilnehmer</th><th>Bewegung</th><th>Bingos</th><th>Normal</th><th>Power-up</th><th>Blackout</th><th>Punkte</th></tr></thead><tbody>'+(table||'<tr><td colspan="8">Noch keine Ergebnisse für diese Auswahl.</td></tr>')+'</tbody></table></div>';
  };
  const previousRoundRows=current>1?tally(selectedDay,current-1):tally(selectedDay,0);
  const sessions=statSessions();
  if(!sessions.includes(selectedDay))sessions.push(selectedDay);
  const selectedIndex=sessions.indexOf(selectedDay);
  const previousDayRows=selectedDay!=="1. Advent"&&selectedIndex>0?tally(sessions[selectedIndex-1],current,true):tally(selectedDay,0);
- $("internalRoundList").innerHTML=rankingHTML(roundRows,"Rundenwertung · Runde "+current,previousRoundRows,"",true);
- $("internalList").innerHTML=rankingHTML(dayRows,"Tagesgesamtwertung · Runde "+current,previousDayRows,"Neu dabei");
+ $("internalRoundList").innerHTML=rankingHTML(roundRows,"Rundenwertung · Runde "+current,previousRoundRows,current===1?"Erster Stand":"",true);
+ $("internalList").innerHTML=rankingHTML(dayRows,"Tagesgesamtwertung · Runde "+current,previousDayRows,selectedIndex===0?"Erster Spieltag":"Vergleich zum vorherigen Spieltag");
  const previousDays=sessions.slice(0,selectedIndex);
  const priorMap={},currentMap={};
  db.players.forEach(p=>{
@@ -672,6 +672,7 @@ function setAdminView(v){
  $("adminStatsView").classList.toggle("hidden",v!=="stats");
  document.querySelectorAll("[data-adminview]").forEach(b=>b.classList.toggle("primary",b.dataset.adminview===v));
  if(v==="stats"){renderStats();setStatsView("overview");}
+ else renderInternal("tournamentList");
 }
 let tournamentPage=0,tournamentQuery="",tournamentSort="points";
 function setStatsView(v){
