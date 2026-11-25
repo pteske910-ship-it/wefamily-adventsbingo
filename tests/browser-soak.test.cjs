@@ -138,9 +138,12 @@ test('60 Minuten Browser-Dauerlast: echte UI, Dateneingabe, Tageswechsel und Ran
           const roundSelect = document.getElementById('resultRound');
           roundSelect.value = String(roundNo);
           roundSelect.dispatchEvent(new Event('change', { bubbles: true }));
-          document.getElementById('playerSearch').value = playerName;
-          fillPlayerOptions();
-          chooseResultPlayer(playerId);
+          const playerSelect = document.getElementById('resultPlayer');
+          if (![...playerSelect.options].some(option => option.value === playerId)) {
+            throw new Error('Teilnehmer fehlt in der sichtbaren Auswahlliste: ' + playerId);
+          }
+          playerSelect.value = playerId;
+          playerSelect.dispatchEvent(new Event('change', { bubbles: true }));
           document.querySelector('#results button[onclick="saveResult()"]').click();
         }, { sessionName: session, roundNo, playerId: player.id, playerName: player.name });
 
