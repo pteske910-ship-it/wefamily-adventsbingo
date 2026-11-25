@@ -58,6 +58,13 @@
 #authGate{position:fixed;inset:0;z-index:40;display:grid;place-items:center;padding:20px;background:radial-gradient(ellipse at top,#302044 0,#100e1b 70%)}#authGate .card{width:min(100%,420px);padding:24px}#authGate h2{margin-top:0}#authMessage{min-height:22px;color:#ffd18a;font-size:13px}#logoutButton{margin-left:10px}
 
 /* Turnierwertung: auf schmalen Displays als Karten statt breiter Tabelle */
+.round-quick-overview{margin:10px 0 14px;overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:#191629}
+.round-quick-overview table{width:100%;border-collapse:collapse;font-size:12px}
+.round-quick-overview th,.round-quick-overview td{padding:8px 7px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+.round-quick-overview th:nth-child(1),.round-quick-overview td:nth-child(1),.round-quick-overview th:nth-child(2),.round-quick-overview td:nth-child(2){text-align:left}
+.round-quick-overview tbody tr:last-child td{border-bottom:0}
+@media(min-width:761px){.round-quick-overview{display:none}}
+
 .tournament-mobile{display:none}
 .tournament-desktop{overflow-x:auto}
 .tournament-desktop table{width:100%;border-collapse:collapse;white-space:nowrap}
@@ -414,7 +421,7 @@ function renderInternal(){
   });
   return out;
  };
- const rankingHTML=(items,label,previousItems=null,initialMovementLabel="Ausgangsstand")=>{
+ const rankingHTML=(items,label,previousItems=null,initialMovementLabel="Ausgangsstand",compactOverview=false)=>{
   const ranked=items.filter(x=>x.points>0||x.total>0);
   const nowRanks=rankMap(ranked),beforeRanks=previousItems?rankMap(previousItems):{};
   const prepared=ranked.map(x=>{
@@ -422,17 +429,19 @@ function renderInternal(){
    const movement=!previousItems?"—":before===undefined?"NEU":before>now?"↑ "+(before-now):before<now?"↓ "+(now-before):"—";
    return {...x,rank:now,movement};
   });
-  const movementText=x=>!previousItems?initialMovementLabel:x.movement==="NEU"?"Neu dabei":x.movement==="—"?"Keine Veränderung":x.movement;
-  const cards=prepared.map(x=>'<article class="tournament-player"><button type="button" class="tournament-toggle" aria-expanded="false" onclick="toggleRankingCard(this)"><span class="tournament-player-head"><span class="tournament-player-name">'+x.rank+'. '+esc(x.name)+' <span class="rank-movement">'+esc(movementText(x))+'</span></span><span class="tournament-player-total">'+x.points+' Punkte<br><span class="muted" style="font-size:12px;font-weight:600">'+x.total+' Bingos</span></span></span><span class="tournament-toggle-icon" aria-hidden="true">＋</span></button><div class="tournament-player-content" hidden><div class="tournament-player-meta"><span class="tournament-chip">Rangbewegung: <strong>'+esc(movementText(x))+'</strong></span></div><div class="tournament-player-meta"><span class="tournament-chip">Normal: <strong>'+x.modePoints.normal+' P. · '+x.modeBingos.normal+' Bingos</strong></span><span class="tournament-chip">Power-up: <strong>'+x.modePoints.power+' P. · '+x.modeBingos.power+' Bingos</strong></span><span class="tournament-chip">Blackout: <strong>'+x.modePoints.blackout+' P. · '+x.modeBingos.blackout+' Bingos</strong></span></div></div></article>').join("");
+  const movementText=x=>!previousItems?"":x.movement==="NEU"?"Neu dabei":x.movement==="—"?"Keine Veränderung":x.movement;
+  const cards=prepared.map(x=>'<article class="tournament-player"><button type="button" class="tournament-toggle" aria-expanded="false" onclick="toggleRankingCard(this)"><span class="tournament-player-head"><span class="tournament-player-name">'+x.rank+'. '+esc(x.name)+(previousItems?' <span class="rank-movement">'+esc(movementText(x))+'</span>':'')+'</span><span class="tournament-player-total">'+x.points+' Punkte<br><span class="muted" style="font-size:12px;font-weight:600">'+x.total+' Bingos</span></span></span><span class="tournament-toggle-icon" aria-hidden="true">＋</span></button><div class="tournament-player-content" hidden>'+(previousItems?'<div class="tournament-player-meta"><span class="tournament-chip">Rangbewegung: <strong>'+esc(movementText(x))+'</strong></span></div>':'')+'<div class="tournament-player-meta"><span class="tournament-chip">Normal: <strong>'+x.modePoints.normal+' P. · '+x.modeBingos.normal+' Bingos</strong></span><span class="tournament-chip">Power-up: <strong>'+x.modePoints.power+' P. · '+x.modeBingos.power+' Bingos</strong></span><span class="tournament-chip">Blackout: <strong>'+x.modePoints.blackout+' P. · '+x.modeBingos.blackout+' Bingos</strong></span></div></div></article>').join("");
+  const overviewRows=prepared.map(x=>'<tr><td>'+x.rank+'</td><td>'+esc(x.name)+'</td><td>'+x.total+'</td><td><strong>'+x.points+'</strong></td></tr>').join("");
+  const overview=compactOverview?'<div class="round-quick-overview"><table><thead><tr><th>Platz</th><th>Teilnehmer</th><th>Bingos</th><th>Punkte</th></tr></thead><tbody>'+(overviewRows||'<tr><td colspan="4">Noch keine Ergebnisse.</td></tr>')+'</tbody></table></div>':'';
   const table=prepared.map(x=>'<tr><td>'+x.rank+'</td><td>'+esc(x.name)+'</td><td><strong>'+esc(movementText(x))+'</strong></td><td>'+x.total+'</td><td>'+x.modeBingos.normal+'</td><td>'+x.modeBingos.power+'</td><td>'+x.modeBingos.blackout+'</td><td><strong>'+x.points+'</strong></td></tr>').join("");
-  return '<p class="muted">'+label+' · '+prepared.length+' Teilnehmer mit Ergebnissen'+(previousItems?' · Rangvergleich zum vorherigen Stand':' · Noch kein vorheriger Stand zum Vergleichen')+'</p><div class="tournament-mobile">'+(cards||'<p class="muted">Noch keine Ergebnisse für diese Auswahl.</p>')+'</div><div class="tournament-desktop"><table><thead><tr><th>Platz</th><th>Teilnehmer</th><th>Bewegung</th><th>Bingos</th><th>Normal</th><th>Power-up</th><th>Blackout</th><th>Punkte</th></tr></thead><tbody>'+(table||'<tr><td colspan="8">Noch keine Ergebnisse für diese Auswahl.</td></tr>')+'</tbody></table></div>';
+  return '<p class="muted">'+label+' · '+prepared.length+' Teilnehmer mit Ergebnissen'+(previousItems?' · Rangvergleich zum vorherigen Stand':'')+'</p>'+overview+'<div class="tournament-mobile">'+(cards||'<p class="muted">Noch keine Ergebnisse für diese Auswahl.</p>')+'</div><div class="tournament-desktop"><table><thead><tr><th>Platz</th><th>Teilnehmer</th><th>Bewegung</th><th>Bingos</th><th>Normal</th><th>Power-up</th><th>Blackout</th><th>Punkte</th></tr></thead><tbody>'+(table||'<tr><td colspan="8">Noch keine Ergebnisse für diese Auswahl.</td></tr>')+'</tbody></table></div>';
  };
  const previousRoundRows=current>1?tally(selectedDay,current-1):null;
  const sessions=statSessions();
  if(!sessions.includes(selectedDay))sessions.push(selectedDay);
  const selectedIndex=sessions.indexOf(selectedDay);
  const previousDayRows=selectedDay!=="1. Advent"&&selectedIndex>0?tally(sessions[selectedIndex-1],current):null;
- $("internalRoundList").innerHTML=rankingHTML(roundRows,"Rundenwertung · Runde "+current,previousRoundRows);
+ $("internalRoundList").innerHTML=rankingHTML(roundRows,"Rundenwertung · Runde "+current,previousRoundRows,"",true);
  $("internalList").innerHTML=rankingHTML(dayRows,"Tagesgesamtwertung · Runde "+current,previousDayRows,"Neu dabei");
  const previousDays=sessions.slice(0,selectedIndex);
  const priorMap={},currentMap={};
