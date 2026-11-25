@@ -1,0 +1,25 @@
+name: Adventsbingo – Zufallssimulation
+
+on:
+  push:
+    branches: [main, 'test/**']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  randomized-simulation:
+    name: 100 zufällige Spielverläufe
+    runs-on: ubuntu-latest
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@v4
+      - name: Node.js einrichten
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Simulation und Prüfungen ausführen
+        run: node --test tests/randomized-simulation.test.cjs
