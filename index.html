@@ -91,7 +91,7 @@ function loadDB(){
     if(!saved||typeof saved!=="object")return emptyDB();
     return {
       players:Array.isArray(saved.players)?saved.players.filter(p=>p&&typeof p.name==="string"&&p.id):[],
-      rounds:Array.isArray(saved.rounds)&&saved.rounds.length?saved.rounds.map(r=>({...r,pointsPerBingo:r.pointsPerBingo===null||r.pointsPerBingo===undefined||r.pointsPerBingo===""?null:(Number.isFinite(Number(r.pointsPerBingo))?Math.max(0,Math.floor(Number(r.pointsPerBingo))):null)})):defaultRounds.map(r=>({...r})),
+      rounds:Array.isArray(saved.rounds)&&saved.rounds.length?saved.rounds.map(r=>({...r,pointsPerBingo:saved.rounds.every(x=>Number(x.pointsPerBingo)===1)?null:(r.pointsPerBingo===null||r.pointsPerBingo===undefined||r.pointsPerBingo===""?null:(Number.isFinite(Number(r.pointsPerBingo))?Math.max(0,Math.floor(Number(r.pointsPerBingo))):null))})):defaultRounds.map(r=>({...r})),
       results:Array.isArray(saved.results)?saved.results.filter(x=>x&&x.id):[],
       presence:saved.presence&&typeof saved.presence==="object"?saved.presence:{},attendance:saved.attendance&&typeof saved.attendance==="object"?saved.attendance:{},roomStats:saved.roomStats&&typeof saved.roomStats==="object"?saved.roomStats:{},scoring:saved.scoring&&typeof saved.scoring==="object"?saved.scoring:{mode:"mode",normal:2,power:1,blackout:3,placements:[10,8,7,6,5,4,3,2,1,1]}
     };
