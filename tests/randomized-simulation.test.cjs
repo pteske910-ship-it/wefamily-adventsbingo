@@ -284,14 +284,14 @@ test('100 Spieltage mit 25–70 Spielern, 12–50 Runden und 30–240 Sekunden j
       day.session + ': Teilnehmerzahl mit Bingo stimmt');
   }
   assert.equal(all.roundDaily.length, 100 * 50, 'Statistik erzeugt die Rundenauswertung für alle Spieltage');
-  for (const day of durations) {
-    for (let roundNo = 1; roundNo <= 50; roundNo++) {
-      const row = all.roundDaily.find(x => x.session === day.session && x.round === roundNo);
-      const expectedTotal = results.filter(r => r.session === day.session && r.round === roundNo)
-        .reduce((sum, r) => sum + r.count, 0);
-      assert.equal(row.total, expectedTotal,
-        day.session + ' Runde ' + roundNo + ': aggregierte Rundenauswertung stimmt');
-    }
+  const expectedRoundTotals = new Map();
+  results.forEach(r => {
+    const key = r.session + '|' + r.round;
+    expectedRoundTotals.set(key, (expectedRoundTotals.get(key) || 0) + r.count);
+  });
+  for (const row of all.roundDaily) {
+    assert.equal(row.total, expectedRoundTotals.get(row.session + '|' + row.round) || 0,
+      row.session + ' Runde ' + row.round + ': aggregierte Rundenauswertung stimmt');
   }
 
   const compared = compareDays(all.daily);
