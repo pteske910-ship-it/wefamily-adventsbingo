@@ -378,14 +378,15 @@ function tally(session,round=null){
  }).sort((a,b)=>b.points-a.points||b.total-a.total||a.name.localeCompare(b.name));
 }
 function renderInternal(){
- const s=$("internalSession").value.trim()||"Spieltag";renderRoomStats();
+ const selectedDay=$("internalSession").value.trim()||"1. Advent";
+ renderRoomStats();
  const sel=$("internalRound");
  if(sel){
   const old=sel.value;sel.innerHTML=db.rounds.map(r=>'<option value="'+r.n+'">Runde '+r.n+'</option>').join("");
   if(db.rounds.some(r=>String(r.n)===old))sel.value=old;
  }
  const current=sel?Number(sel.value||db.rounds[0]?.n||1):1;
- const roundRows=tally(s,current),rows=tally(s);
+ const roundRows=tally(selectedDay,current),rows=tally(selectedDay);
  const rankingHTML=items=>{
   const ranked=items.filter(x=>x.points>0||x.total>0);let previous="",rank=0;
   return ranked.map((x,i)=>{
@@ -395,26 +396,40 @@ function renderInternal(){
  };
  $("internalRoundList").innerHTML=rankingHTML(roundRows);
  $("internalList").innerHTML=rankingHTML(rows);
- const sessions=[...new Set(db.results.map(r=>String(r.session||"Spieltag").trim()).filter(Boolean))];
- const allMap={};
- db.players.forEach(p=>allMap[p.id]={id:p.id,name:(p.name||"?")+(p.family?" ("+p.family+")":""),total:0,points:0,days:{},modePoints:{normal:0,power:0,blackout:0}});
- sessions.forEach(day=>{
+
+ const sessions=statSessions();
+ if(!sessions.includes(selectedDay))sessions.push(selectedDay);
+ const selectedIndex=sessions.indexOf(selectedDay);
+ const previousDays=sessions.slice(0,selectedIndex);
+ const priorMap={},currentMap={};
+ db.players.forEach(p=>{
+  const base={id:p.id,name:(p.name||"?")+(p.family?" ("+p.family+")":""),total:0,points:0,modePoints:{normal:0,power:0,blackout:0}};
+  priorMap[p.id]={...base,modePoints:{...base.modePoints}};
+  currentMap[p.id]={...base,modePoints:{...base.modePoints}};
+ });
+ const addDay=(target,day)=>{
   tally(day).forEach(x=>{
-   const target=allMap[x.id];if(!target)return;
-   target.days[day]=x.points;target.points+=x.points;target.total+=x.total;
-   for(const mode of ["normal","power","blackout"])target.modePoints[mode]+=x.modePoints[mode];
+   const t=target[x.id];if(!t)return;
+   t.points+=x.points;t.total+=x.total;
+   for(const mode of ["normal","power","blackout"])t.modePoints[mode]+=x.modePoints[mode];
   });
+ };
+ previousDays.forEach(day=>addDay(priorMap,day));
+ sessions.slice(0,selectedIndex+1).forEach(day=>addDay(currentMap,day));
+ const order=map=>Object.values(map).filter(x=>x.points>0||x.total>0).sort((a,b)=>b.points-a.points||b.total-a.total||a.name.localeCompare(b.name));
+ const priorOrder=order(priorMap),currentOrder=order(currentMap);
+ const rankMap=items=>{const out={};let previous="",rank=0;items.forEach((x,i)=>{const key=x.points+"|"+x.total;if(key!==previous)rank=i+1;previous=key;out[x.id]=rank});return out};
+ const priorRanks=rankMap(priorOrder),currentRanks=rankMap(currentOrder);
+ const dayMap={};tally(selectedDay).forEach(x=>dayMap[x.id]=x);
+ const ranked=currentOrder.map(x=>{
+  const day=dayMap[x.id]||{points:0,total:0};
+  const before=priorRanks[x.id],now=currentRanks[x.id];
+  const movement=before===undefined?"Neu":before>now?"↑ "+(before-now):before<now?"↓ "+(now-before):"—";
+  const days=sessions.slice(0,selectedIndex+1).filter(dayName=>{const t=tally(dayName).find(v=>v.id===x.id);return t&&(t.points>0||t.total>0)}).map(dayName=>{const t=tally(dayName).find(v=>v.id===x.id);return '<span class="tournament-chip">'+esc(dayName)+': <strong>'+t.points+' P.</strong> · '+t.total+' Bingos</span>'}).join("");
+  return {...x,rank:now,movement,dayPoints:day.points,dayBingos:day.total,days,normal:x.modePoints.normal,power:x.modePoints.power,blackout:x.modePoints.blackout};
  });
- const overall=Object.values(allMap).sort((a,b)=>b.points-a.points||b.total-a.total||a.name.localeCompare(b.name));
- const visible=overall.filter(x=>x.points>0||x.total>0);
- let previous="",rank=0;
- const ranked=visible.map((x,i)=>{
-  const key=x.points+"|"+x.total;if(key!==previous)rank=i+1;previous=key;
-  const days=sessions.filter(day=>(x.days[day]||0)>0).map(day=>'<span class="tournament-chip">'+esc(day)+': <strong>'+x.days[day]+'</strong></span>').join("");
-  return {...x,rank,days,normal:x.modePoints.normal,power:x.modePoints.power,blackout:x.modePoints.blackout};
- });
- $("tournamentList").innerHTML=sessions.length?'<p class="muted">Gesamtpunkte aus allen Spieltagen. Bei gleicher Punktzahl und gleicher Bingo-Anzahl wird derselbe Rang vergeben.</p>':'<p class="muted">Sobald Ergebnisse an mehreren Spieltagen vorliegen, erscheint hier die Turnier-Gesamtwertung.</p>';
- if(sessions.length)renderTournamentList(ranked);
+ $("tournamentList").innerHTML='<label for="tournamentDay">Gesamtwertung bis einschließlich Spieltag</label><select id="tournamentDay" onchange="$(\'internalSession\').value=this.value;renderInternal()">'+sessions.map(day=>'<option value="'+esc(day)+'" '+(day===selectedDay?'selected':'')+'>'+esc(day)+'</option>').join("")+'</select><p class="muted">Die Tagespunkte zählen nur für den ausgewählten Spieltag. Die Gesamtpunkte enthalten diesen und alle vorherigen Spieltage. Fehlende Spieltage werden als keine Teilnahme gewertet.</p>';
+ renderTournamentList(ranked);
 }
 
 function renderAll(){renderPlayers();renderRounds();$("roundCount").value=db.rounds.length;fillSelects();fillRoomRounds();renderResults();updateNextBingoNumber();renderRoomStats();$("statPlayers").textContent=db.players.length;$("statRounds").textContent=db.rounds.length;$("statEntries").textContent=db.results.length}
