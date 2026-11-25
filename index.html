@@ -108,7 +108,7 @@
 <div class="card"><h2>Bingos erfassen</h2><div class="grid"><div><label for="sessionName">Spieltag / Sitzung</label><select id="sessionName" onchange="updateNextBingoNumber();renderRoomStats()"><option value="1. Advent">1. Advent</option><option value="2. Advent">2. Advent</option><option value="3. Advent">3. Advent</option><option value="4. Advent">4. Advent</option></select></div><div><label>Runde</label><select id="resultRound" onchange="updateNextBingoNumber();renderRoomStats()"></select></div><div><label for="playerSearch">Teilnehmer</label><div class="player-autocomplete"><input id="playerSearch" type="search" placeholder="Namen teilweise eingeben, z. B. Sophi …" autocomplete="off" oninput="fillPlayerOptions()" onfocus="fillPlayerOptions()" aria-autocomplete="list" aria-controls="playerSuggestions"><div id="playerSuggestions" class="player-suggestions hidden" role="listbox"></div></div><select id="resultPlayer" class="hidden" aria-hidden="true" tabindex="-1"></select></div><div><label>Nächste Bingo-Nummer</label><div class="input-like" id="nextBingoNumber">Bingo Nr. 1</div><small class="muted">Die Nummer wird automatisch fortlaufend vergeben.</small></div></div><div class="actions"><button class="primary" onclick="saveResult()">Ergebnis speichern</button><button onclick="completeRound()">Runde abschließen &amp; nächste Runde</button></div><p class="muted" id="roundAdvanceHint">Nach Abschluss springt die Auswahl automatisch zur nächsten Runde. Bereits gespeicherte Ergebnisse bleiben erhalten.</p><div class="card" id="roomCard"><h3>Gesamt im Voice-Raum</h3><p class="muted">Optional: Raumgröße für diese Runde erfassen. Der Wert fließt in die Statistiken ein.</p><div class="grid"><div><label>Personen im Voice-Raum zu Beginn dieser Runde</label><input id="roomCount" type="number" min="0" step="1" placeholder="Anzahl Personen (optional)"></div><div class="row" style="align-items:end"><button class="primary" onclick="setRoomCount()">Personenzahl speichern</button></div></div><p class="muted">Trage für die ausgewählte Runde einfach ein, wie viele Personen aktuell im Raum sind.</p><div id="roomStatsView"></div></div><div id="resultList"></div></div>
 </section>
 <section id="internal" class="pane hidden">
-<div class="admin-subnav no-print"><button class="primary" data-adminview="day" onclick="setAdminView('day')">Tageswertung</button><button data-adminview="stats" onclick="setAdminView('stats')">📊 Statistiken</button></div><div id="adminRoomView"><div class="notice">VERTRAULICH – interne Tageswertung. Dies ist in Version 0.1 nur eine ausgeblendete Oberfläche, kein sicherer Zugriffsschutz. Nicht auf einem gemeinsam genutzten Gerät mit Teilnehmern öffnen.</div>
+<div class="admin-subnav no-print"><button class="primary" data-adminview="day" onclick="setAdminView('day')">Auswertung</button><button data-adminview="stats" onclick="setAdminView('stats')">📊 Statistiken</button></div><div id="adminRoomView"><div class="notice">VERTRAULICH – interne Tageswertung. Dies ist in Version 0.1 nur eine ausgeblendete Oberfläche, kein sicherer Zugriffsschutz. Nicht auf einem gemeinsam genutzten Gerät mit Teilnehmern öffnen.</div>
 <div class="card" id="dayCard"><h2>🔒 Interne Tageswertung</h2><label>Spieltag auswerten</label><input id="internalSession" placeholder="z. B. 1. Advent" value="1. Advent"><div class="actions"><button class="primary" onclick="renderInternal()">Auswertung aktualisieren</button></div><div class="admin-subnav no-print" aria-label="Wertungsansicht"><button class="primary" data-dayview="round" onclick="setDayView('round')">Rundenwertung</button><button data-dayview="day" onclick="setDayView('day')">Tageswertung</button><button data-dayview="tournament" onclick="setDayView('tournament')">Turnierwertung</button></div><div id="roundView"><label>Ausgewählte Runde</label><select id="internalRound" onchange="renderInternal()"></select><p class="muted">Nur die Bingos und Punkte dieser einzelnen Runde.</p><div id="internalRoundList"></div></div><div id="dayView" class="hidden"><h3>Tagesgesamtwertung – alle Runden</h3><p class="muted">Summe aller Runden des ausgewählten Spieltags. Die Tageswertung beginnt an jedem Spieltag wieder bei null.</p><div id="internalList"></div></div><div id="tournamentView" class="hidden"><h3>Turnier-Gesamtwertung – bisherige Spieltage</h3><p class="muted">Gesamtpunkte aus allen Spieltagen bis einschließlich des ausgewählten Spieltags. Fehlende Spieltage zählen als Nichtteilnahme und bringen keinen Abzug.</p><div id="tournamentList"></div></div></div>
 
 </div><div id="adminStatsView" class="hidden"><div class="admin-subnav no-print" aria-label="Statistikbereiche"><button class="primary" data-statview="overview" onclick="setStatsView('overview')">📊 Statistiken</button><button data-statview="tournament" onclick="setStatsView('tournament')">🏆 Turnier-Rangliste</button></div><div id="statsOverviewView"><div class="card"><h2>📊 Statistiken &amp; Auswertung</h2><p class="muted">Teilnehmerzahl, Raumbelegung und erzielte Bingos werden getrennt ausgewertet.</p><div class="grid no-print"><div><label>Auswertung</label><select id="statsSession" onchange="renderStats()"><option value="__all">Gesamter Adventszeitraum</option></select></div><div class="row" style="align-items:end"><button class="primary" onclick="exportStatsPDF()">PDF dieser Auswahl</button><button onclick="exportStatsPNG()">PNG dieser Auswahl</button></div></div><div id="statsReport"></div></div></div><div id="statsTournamentView" class="hidden"><div class="card"><h2>🏆 Turnier-Gesamtwertung</h2><p class="muted">Alle Spieltage zusammengefasst. Suche, sortiere und öffne Teilnehmerdetails. Es werden 20 Teilnehmer pro Seite angezeigt.</p><div id="tournamentList"></div></div></div></div></section>
@@ -394,20 +394,31 @@ function renderInternal(){
   if(db.rounds.some(r=>String(r.n)===old))sel.value=old;
  }
  const current=sel?Number(sel.value||db.rounds[0]?.n||1):1;
- const roundRows=tally(selectedDay,current),rows=tally(selectedDay);
- const rankingHTML=(items,label)=>{
-  const ranked=items.filter(x=>x.points>0||x.total>0);let previous="",rank=0;
-  const prepared=ranked.map((x,i)=>{
-   const key=x.points+"|"+x.total;if(key!==previous)rank=i+1;previous=key;
-   return {...x,rank};
+ const roundRows=tally(selectedDay,current);
+ const dayRows=tally(selectedDay);
+ const rankMap=items=>{
+  const out={};let last="",rank=0;
+  items.filter(x=>x.points>0||x.total>0).forEach((x,i)=>{
+   const key=x.points+"|"+x.total;if(key!==last)rank=i+1;last=key;out[x.id]=rank;
   });
-  const cards=prepared.map(x=>'<details class="tournament-player"><summary class="tournament-player-head"><span class="tournament-player-name">'+x.rank+'. '+esc(x.name)+'</span><span class="tournament-player-total">'+x.points+' Punkte<br><span class="muted" style="font-size:12px;font-weight:600">'+x.total+' Bingos</span></span></summary><div class="tournament-player-meta"><span class="tournament-chip">Normal: <strong>'+x.modePoints.normal+' P. · '+x.modeBingos.normal+' Bingos</strong></span><span class="tournament-chip">Power-up: <strong>'+x.modePoints.power+' P. · '+x.modeBingos.power+' Bingos</strong></span><span class="tournament-chip">Blackout: <strong>'+x.modePoints.blackout+' P. · '+x.modeBingos.blackout+' Bingos</strong></span></div></details>').join("");
-  const table=prepared.map(x=>'<tr><td>'+x.rank+'</td><td>'+esc(x.name)+'</td><td>'+x.total+'</td><td>'+x.modeBingos.normal+'</td><td>'+x.modeBingos.power+'</td><td>'+x.modeBingos.blackout+'</td><td><strong>'+x.points+'</strong></td></tr>').join("");
-  return '<p class="muted">'+label+' · '+prepared.length+' Teilnehmer mit Ergebnissen</p><div class="tournament-mobile">'+(cards||'<p class="muted">Noch keine Ergebnisse für diese Auswahl.</p>')+'</div><div class="tournament-desktop"><table><thead><tr><th>Platz</th><th>Teilnehmer</th><th>Bingos</th><th>Normal</th><th>Power-up</th><th>Blackout</th><th>Punkte</th></tr></thead><tbody>'+(table||'<tr><td colspan="7">Noch keine Ergebnisse für diese Auswahl.</td></tr>')+'</tbody></table></div>';
+  return out;
  };
- $("internalRoundList").innerHTML=rankingHTML(roundRows,"Rundenwertung · Runde "+current);
- $("internalList").innerHTML=rankingHTML(rows,"Tagesgesamtwertung · alle Runden");
-
+ const rankingHTML=(items,label,previousItems=null)=>{
+  const ranked=items.filter(x=>x.points>0||x.total>0);
+  const nowRanks=rankMap(ranked),beforeRanks=previousItems?rankMap(previousItems):{};
+  const prepared=ranked.map(x=>{
+   const before=beforeRanks[x.id],now=nowRanks[x.id];
+   const movement=!previousItems?"—":before===undefined?"NEU":before>now?"↑ "+(before-now):before<now?"↓ "+(now-before):"—";
+   return {...x,rank:now,movement};
+  });
+  const movementText=x=>x.movement==="NEU"?"Neu dabei":x.movement==="—"?"Keine Veränderung":x.movement;
+  const cards=prepared.map(x=>'<details class="tournament-player"><summary class="tournament-player-head"><span class="tournament-player-name">'+x.rank+'. '+esc(x.name)+'</span><span class="tournament-player-total">'+x.points+' Punkte<br><span class="muted" style="font-size:12px;font-weight:600">'+x.total+' Bingos</span></span></summary><div class="tournament-player-meta"><span class="tournament-chip">Rangbewegung: <strong>'+esc(movementText(x))+'</strong></span></div><div class="tournament-player-meta"><span class="tournament-chip">Normal: <strong>'+x.modePoints.normal+' P. · '+x.modeBingos.normal+' Bingos</strong></span><span class="tournament-chip">Power-up: <strong>'+x.modePoints.power+' P. · '+x.modeBingos.power+' Bingos</strong></span><span class="tournament-chip">Blackout: <strong>'+x.modePoints.blackout+' P. · '+x.modeBingos.blackout+' Bingos</strong></span></div></details>').join("");
+  const table=prepared.map(x=>'<tr><td>'+x.rank+'</td><td>'+esc(x.name)+'</td><td><strong>'+esc(movementText(x))+'</strong></td><td>'+x.total+'</td><td>'+x.modeBingos.normal+'</td><td>'+x.modeBingos.power+'</td><td>'+x.modeBingos.blackout+'</td><td><strong>'+x.points+'</strong></td></tr>').join("");
+  return '<p class="muted">'+label+' · '+prepared.length+' Teilnehmer mit Ergebnissen'+(previousItems?' · Rangvergleich zum vorherigen Stand':' · Noch kein vorheriger Stand zum Vergleichen')+'</p><div class="tournament-mobile">'+(cards||'<p class="muted">Noch keine Ergebnisse für diese Auswahl.</p>')+'</div><div class="tournament-desktop"><table><thead><tr><th>Platz</th><th>Teilnehmer</th><th>Bewegung</th><th>Bingos</th><th>Normal</th><th>Power-up</th><th>Blackout</th><th>Punkte</th></tr></thead><tbody>'+(table||'<tr><td colspan="8">Noch keine Ergebnisse für diese Auswahl.</td></tr>')+'</tbody></table></div>';
+ };
+ const previousRoundRows=current>1?tally(selectedDay,current-1):null;
+ $("internalRoundList").innerHTML=rankingHTML(roundRows,"Rundenwertung · Runde "+current,previousRoundRows);
+ $("internalList").innerHTML=rankingHTML(dayRows,"Tagesgesamtwertung · alle Runden",null);
  const sessions=statSessions();
  if(!sessions.includes(selectedDay))sessions.push(selectedDay);
  const selectedIndex=sessions.indexOf(selectedDay);
@@ -418,33 +429,39 @@ function renderInternal(){
   priorMap[p.id]={...base,modePoints:{...base.modePoints},modeBingos:{...base.modeBingos}};
   currentMap[p.id]={...base,modePoints:{...base.modePoints},modeBingos:{...base.modeBingos}};
  });
- const addDay=(target,day)=>{
+ const addDay=(target,day,maxRound)=>{
   tally(day).forEach(x=>{
    const t=target[x.id];if(!t)return;
-   t.points+=x.points;t.total+=x.total;
-   for(const mode of ["normal","power","blackout"]){t.modePoints[mode]+=x.modePoints[mode];t.modeBingos[mode]+=x.modeBingos[mode];}
+   const partial=tally(day,maxRound).find(v=>v.id===x.id);
+   if(!partial)return;
+   t.points+=partial.points;t.total+=partial.total;
+   for(const mode of ["normal","power","blackout"]){t.modePoints[mode]+=partial.modePoints[mode];t.modeBingos[mode]+=partial.modeBingos[mode];}
   });
  };
- previousDays.forEach(day=>addDay(priorMap,day));
- sessions.slice(0,selectedIndex+1).forEach(day=>addDay(currentMap,day));
+ previousDays.forEach(day=>addDay(priorMap,day,db.rounds.length));
+ previousDays.forEach(day=>addDay(currentMap,day,db.rounds.length));
+ if(current>1)previousDays.concat([selectedDay]).forEach(day=>addDay(priorMap,day,day===selectedDay?current-1:db.rounds.length));
+ previousDays.concat([selectedDay]).forEach(day=>addDay(currentMap,day,day===selectedDay?current:db.rounds.length));
  const order=map=>Object.values(map).filter(x=>x.points>0||x.total>0).sort((a,b)=>b.points-a.points||b.total-a.total||a.name.localeCompare(b.name));
  const priorOrder=order(priorMap),currentOrder=order(currentMap);
- const rankMap=items=>{const out={};let previous="",rank=0;items.forEach((x,i)=>{const key=x.points+"|"+x.total;if(key!==previous)rank=i+1;previous=key;out[x.id]=rank});return out};
- const priorRanks=rankMap(priorOrder),currentRanks=rankMap(currentOrder);
- const dayMap={};tally(selectedDay).forEach(x=>dayMap[x.id]=x);
+ const rankMapTournament=items=>{const out={};let previous="",rank=0;items.forEach((x,i)=>{const key=x.points+"|"+x.total;if(key!==previous)rank=i+1;previous=key;out[x.id]=rank});return out};
+ const priorRanks=rankMapTournament(priorOrder),currentRanks=rankMapTournament(currentOrder);
+ const dayMap={};tally(selectedDay,current).forEach(x=>dayMap[x.id]=x);
  const ranked=currentOrder.map(x=>{
   const day=dayMap[x.id]||{points:0,total:0};
   const before=priorRanks[x.id],now=currentRanks[x.id];
   const movement=before===undefined?"Neu":before>now?"↑ "+(before-now):before<now?"↓ "+(now-before):"—";
-  const days=sessions.slice(0,selectedIndex+1).filter(dayName=>{const t=tally(dayName).find(v=>v.id===x.id);return t&&(t.points>0||t.total>0)}).map(dayName=>{const t=tally(dayName).find(v=>v.id===x.id);return '<span class="tournament-chip">'+esc(dayName)+': <strong>'+t.points+' P.</strong> · '+t.total+' Bingos</span>'}).join("");
+  const days=sessions.slice(0,selectedIndex+1).map(dayName=>{
+   const t=tally(dayName,dayName===selectedDay?current:db.rounds.length).find(v=>v.id===x.id);
+   return t&&(t.points>0||t.total>0)?'<span class="tournament-chip">'+esc(dayName)+': <strong>'+t.points+' P.</strong> · '+t.total+' Bingos</span>':"";
+  }).join("");
   return {...x,rank:now,movement,dayPoints:day.points,dayBingos:day.total,days,normal:x.modePoints.normal,power:x.modePoints.power,blackout:x.modePoints.blackout,normalBingos:x.modeBingos.normal,powerBingos:x.modeBingos.power,blackoutBingos:x.modeBingos.blackout};
  });
- const tournamentDayControl='<label for="tournamentDay">Gesamtwertung bis einschließlich Spieltag</label><select id="tournamentDay" onchange="$(\'internalSession\').value=this.value;renderInternal()">'+sessions.map(day=>'<option value="'+esc(day)+'" '+(day===selectedDay?'selected':'')+'>'+esc(day)+'</option>').join("")+'</select><p class="muted">Die Tagespunkte zählen nur für den ausgewählten Spieltag. Die Gesamtpunkte enthalten diesen und alle vorherigen Spieltage. Fehlende Spieltage werden als keine Teilnahme gewertet.</p>';
+ const tournamentDayControl='<label for="tournamentDay">Gesamtwertung bis einschließlich Spieltag</label><select id="tournamentDay" onchange="$(\'internalSession\').value=this.value;renderInternal()">'+sessions.map(day=>'<option value="'+esc(day)+'" '+(day===selectedDay?'selected':'')+'>'+esc(day)+'</option>').join("")+'</select><p class="muted">Gesamtpunkte aus allen vorherigen Spieltagen sowie dem ausgewählten Spieltag bis einschließlich Runde '+current+'. Fehlende Spieltage zählen als Nichtteilnahme. Die Rangbewegung vergleicht mit dem Stand vor dieser Runde.</p>';
  $("tournamentList").innerHTML=tournamentDayControl;
  renderTournamentList(ranked);
  setDayView(internalView);
 }
-
 function renderAll(){renderPlayers();renderRounds();$("roundCount").value=db.rounds.length;fillSelects();fillRoomRounds();renderResults();updateNextBingoNumber();renderRoomStats();$("statPlayers").textContent=db.players.length;$("statRounds").textContent=db.rounds.length;$("statEntries").textContent=db.results.length}
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 async function importBackupToCloud(){$("cloudImportStatus").textContent="Cloud-Import ist in dieser lokalen Testfassung deaktiviert.";return;const file=$("cloudImportFile").files[0],title=$("cloudEventTitle").value.trim(),status=$("cloudImportStatus"),btn=$("cloudImportButton");if(!file){status.textContent="Bitte zuerst deine JSON-Sicherung auswählen.";return}if(!title){status.textContent="Bitte einen Veranstaltungsnamen eingeben.";return}btn.disabled=true;status.textContent="Datei wird geprüft …";try{const payload=JSON.parse(await file.text());if(!payload||!Array.isArray(payload.players)||!Array.isArray(payload.rounds)||!Array.isArray(payload.results))throw new Error("Die Datei enthält nicht die erwarteten Teilnehmer-, Runden- und Ergebnislisten.");const canonical=JSON.stringify(payload),digest=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(canonical)),key=[...new Uint8Array(digest)].map(x=>x.toString(16).padStart(2,"0")).join("");status.textContent="Übernahme läuft …";const {data,error}=await supabaseClient.rpc("import_legacy_bingo_event",{p_title:title,p_import_key:key,p_payload:payload});if(error)throw error;const eventId=data;const checks=await Promise.all([supabaseClient.from("event_participants").select("id",{count:"exact",head:true}).eq("event_id",eventId),supabaseClient.from("rounds").select("id",{count:"exact",head:true}).eq("event_id",eventId),supabaseClient.from("bingo_results").select("id",{count:"exact",head:true}).eq("event_id",eventId),supabaseClient.from("room_statistics").select("id",{count:"exact",head:true}).eq("event_id",eventId)]);const failed=checks.find(x=>x.error);if(failed)throw failed.error;const expected=[payload.players.length,payload.rounds.length,payload.results.length,Object.keys(payload.roomStats||{}).length];const actual=checks.map(x=>x.count??0);status.textContent="Import abgeschlossen. Veranstaltung-ID: "+eventId+". Teilnehmer "+actual[0]+"/"+expected[0]+", Runden "+actual[1]+"/"+expected[1]+", Ergebnisse "+actual[2]+"/"+expected[2]+", Raumstatistiken "+actual[3]+"/"+expected[3]+". Bitte diese Werte mit deiner Sicherung vergleichen. Lokale Daten wurden nicht verändert.";if(actual.some((n,i)=>n!==expected[i]))status.textContent+=" ACHTUNG: Die Anzahl stimmt nicht vollständig überein; bitte nicht weiterarbeiten, bevor wir das geprüft haben.";else status.textContent+=" Alle vier Anzahlen stimmen überein.";}catch(err){status.textContent="Import nicht bestätigt: "+(err.message||String(err))+". Die lokale Datei und die lokale Speicherung bleiben unverändert.";}finally{btn.disabled=false}}
