@@ -39,6 +39,8 @@
 @media(max-width:900px){.introLoader{width:92vw;bottom:6.5%;padding:0 5px}.introLoaderTitle{font-size:clamp(18px,5.1vw,27px);gap:10px;margin-bottom:10px}.introLoaderTrack{height:30px;padding:3px}}
 @media print{header,.tabs,.admin-subnav,.no-print,footer{display:none!important}body{background:white;color:#171329}.card{break-inside:avoid;box-shadow:none;background:white;color:#171329;border:1px solid #bbb}.muted{color:#555}}
 .input-like{background:#100e1b;border:1px solid #39334f;border-radius:12px;padding:12px 14px;font-size:1.05rem;color:#f4eaff;min-height:48px;display:flex;align-items:center;font-weight:700}
+
+#authGate{position:fixed;inset:0;z-index:40;display:grid;place-items:center;padding:20px;background:radial-gradient(ellipse at top,#302044 0,#100e1b 70%)}#authGate .card{width:min(100%,420px);padding:24px}#authGate h2{margin-top:0}#authMessage{min-height:22px;color:#ffd18a;font-size:13px}#logoutButton{margin-top:10px}
 </style></head>
 <body>
 <div id="introSplash" aria-label="WeFamily fliegt über den Nordpol">
@@ -48,8 +50,12 @@
   <div class="introLoaderTrack"><div class="introLoaderFill" id="introLoaderFill"></div></div>
  </div>
 </div>
-<header><div class="wrap" style="padding:0"><h1>🎄 WeFamily Adventsbingo</h1><p>Organisations- und Auswertungstest · Version 0.8 · lokal auf diesem Gerät</p></div></header>
-<main class="wrap">
+<section id="authGate"><div class="card"><h2>🔐 WeFamily Adventsbingo</h2>
+<div id="loginView"><p class="muted">Bitte mit deinem WeFamily-Konto anmelden.</p><form id="loginForm"><label for="loginEmail">E-Mail-Adresse</label><input id="loginEmail" type="email" autocomplete="username" required><label for="loginPassword">Passwort</label><input id="loginPassword" type="password" autocomplete="current-password" required><div class="actions"><button class="primary" id="loginButton" type="submit">Anmelden</button><button type="button" id="showRegisterButton">Neues Konto erstellen</button></div></form></div>
+<div id="registerView" class="hidden"><p class="muted">Erstelle dein persönliches WeFamily-Manager-Konto. Der Zugang wird erst nach Freigabe durch den Eigentümer aktiviert.</p><form id="registerForm"><label for="registerName">Anzeigename</label><input id="registerName" type="text" maxlength="80" autocomplete="name" required><label for="registerEmail">E-Mail-Adresse</label><input id="registerEmail" type="email" autocomplete="email" required><label for="registerPassword">Passwort (mindestens 8 Zeichen)</label><input id="registerPassword" type="password" minlength="8" autocomplete="new-password" required><label for="registerPasswordConfirm">Passwort wiederholen</label><input id="registerPasswordConfirm" type="password" minlength="8" autocomplete="new-password" required><div class="actions"><button class="primary" id="registerButton" type="submit">Registrierung absenden</button><button type="button" id="showLoginButton">Zur Anmeldung</button></div></form></div>
+<p id="authMessage" role="status" aria-live="polite"></p></div></section>
+<header class="hidden" id="appHeader"><div class="wrap" style="padding:0"><h1>🎄 WeFamily Adventsbingo</h1><p id="signedInLabel">Angemeldet · lokale Daten auf diesem Gerät</p><button id="logoutButton" class="small" type="button">Abmelden</button></div></header>
+<main class="wrap hidden" id="appMain">
 <div class="notice">Testversion: Daten werden nur in diesem Browser gespeichert. Noch kein gemeinsamer Heidi-Zugang und keine echte Anmeldung. Vor echtem Einsatz bitte Daten exportieren.</div>
 <nav class="tabs" aria-label="Bereiche">
 <button class="tab active" data-tab="home">Übersicht</button><button class="tab" data-tab="players">Teilnehmer</button><button class="tab" data-tab="results">Ergebnisse</button><button class="tab secret" data-tab="internal">🔒 Nur Moderation</button><button class="tab" data-tab="settings">Einstellungen</button>
@@ -78,7 +84,8 @@
 <div class="card"><h2>Turnier-Einstellungen</h2><p class="muted">Lege ein Wertungssystem für das gesamte Turnier fest. Spieltage und Runden bleiben getrennt. Bei festen Punkten gelten die drei zentralen Werte für alle Runden des jeweiligen Spielmodus. Alternativ legst du eine zentrale Punktetabelle und die Anzahl der bepunkteten Plätze fest.</p><div class="row"><div class="field"><label for="roundCount">Anzahl der Runden</label><input id="roundCount" type="number" min="1" max="250" step="1" value="25"></div><button class="primary" onclick="applyRoundCount()">Rundenanzahl übernehmen</button></div><div class="card"><h3>Punktevergabe</h3><label>Wertungssystem</label><select id="scoringMode" onchange="setScoringMode(this.value)"><option value="mode">Feste Punkte je Spielmodus</option><option value="place">Punkte nach Platzierung</option></select><p id="fixedScoringHint" class="muted">Diese drei Werte gelten für alle Spieltage und alle Runden des jeweiligen Spielmodus.</p><div id="modePoints"><div class="grid"><div><label for="normalPoints">Normal · Punkte pro Bingo</label><input id="normalPoints" type="number" min="0" step="1" value="2" onchange="saveModePoints()"></div><div><label for="powerPoints">Power-up · Punkte pro Bingo</label><input id="powerPoints" type="number" min="0" step="1" value="1" onchange="saveModePoints()"></div><div><label for="blackoutPoints">Blackout · Punkte pro Bingo</label><input id="blackoutPoints" type="number" min="0" step="1" value="3" onchange="saveModePoints()"></div></div></div><div id="placePoints" class="hidden"><label>Punkte je Platzierung (Komma-getrennt)</label><input id="placementPoints" inputmode="numeric" value="10,8,7,6,5,4,3,2,1,1" onchange="savePlacementPoints()"><p id="placementCount" class="muted">10 Plätze erhalten Punkte.</p><p class="muted">Jeder Eintrag steht für einen Platz: Der erste Wert gilt für Platz 1, der zweite für Platz 2 usw. Die laufende Bingo-Nummer innerhalb der jeweiligen Runde bestimmt den Platz. Die Anzahl der eingetragenen Werte bestimmt, wie viele Plätze bepunktet werden.</p></div></div><div id="roundList"></div></div>
 <div class="card"><h2>Datensicherung</h2><p class="muted">Exportiere regelmäßig eine Sicherung. Import überschreibt den aktuellen lokalen Datenbestand.</p><div class="actions"><button class="primary" onclick="exportData()">Daten exportieren (JSON)</button><label class="tab" style="display:inline-block">Sicherung importieren<input id="importFile" type="file" accept="application/json" style="display:none" onchange="importData(event)"></label><button class="danger" onclick="resetData()">Alle lokalen Daten löschen</button></div></div>
 </section>
-</main><footer>WeFamily Adventsbingo-Manager · Prototyp 0.1</footer>
+</main><footer class="hidden" id="appFooter">WeFamily Adventsbingo-Manager · Prototyp 0.1</footer>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const $=id=>document.getElementById(id);
 const defaultRounds=Array.from({length:25},(_,i)=>({n:i+1,mode:"Normal",note:""}));
@@ -304,4 +311,49 @@ renderAll();
   requestAnimationFrame(frame);
  };
  Promise.all([sleigh.decode?sleigh.decode().catch(()=>{}):Promise.resolve(),bg.decode?bg.decode().catch(()=>{}):Promise.resolve()]).then(begin);
-})();</script></body></html>
+})();
+
+const SUPABASE_URL="https://xukplcslrfecpqxyhhvn.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY="sb_publishable_2Kex3-Y4TabmOE3QX4NgMw_VAxLJ2nK";
+const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+function showAuthMessage(message){$("authMessage").textContent=message;}
+function showAuthView(view){$("loginView").classList.toggle("hidden",view!=="login");$("registerView").classList.toggle("hidden",view!=="register");showAuthMessage("");}
+function showSignedOut(){ $("authGate").classList.remove("hidden");["appHeader","appMain","appFooter"].forEach(id=>$(id).classList.add("hidden")); }
+async function verifyAndShowSession(user){
+ if(!user){showSignedOut();return;}
+ const {data:profile,error}=await supabaseClient.from("app_users").select("display_name,app_role,account_status").eq("user_id",user.id).maybeSingle();
+ if(error){await supabaseClient.auth.signOut();showSignedOut();showAuthMessage("Kontostatus konnte nicht geprüft werden: "+error.message);return;}
+ if(!profile||profile.account_status!=="active"||!["owner","administrator"].includes(profile.app_role)){
+  await supabaseClient.auth.signOut();showSignedOut();
+  showAuthMessage(!profile?"Für dieses Konto wurde kein Manager-Profil angelegt.":"Deine Registrierung ist noch nicht freigegeben.");
+  return;
+ }
+ $("authGate").classList.add("hidden");
+ ["appHeader","appMain","appFooter"].forEach(id=>$(id).classList.remove("hidden"));
+ $("signedInLabel").textContent="Angemeldet als "+(profile.display_name||user.email||"WeFamily-Konto")+" · "+(profile.app_role==="owner"?"Eigentümer":"Administrator")+" · Daten aktuell lokal auf diesem Gerät";
+}
+$("showRegisterButton").addEventListener("click",()=>showAuthView("register"));
+$("showLoginButton").addEventListener("click",()=>showAuthView("login"));
+$("loginForm").addEventListener("submit",async e=>{
+ e.preventDefault();const btn=$("loginButton");btn.disabled=true;showAuthMessage("Anmeldung läuft …");
+ try{const {error}=await supabaseClient.auth.signInWithPassword({email:$("loginEmail").value.trim(),password:$("loginPassword").value});if(error)throw error;const {data,error:getError}=await supabaseClient.auth.getUser();if(getError)throw getError;await verifyAndShowSession(data.user);}
+ catch(err){showAuthMessage("Anmeldung fehlgeschlagen: "+err.message);}
+ finally{btn.disabled=false;}
+});
+$("registerForm").addEventListener("submit",async e=>{
+ e.preventDefault();const btn=$("registerButton"),email=$("registerEmail").value.trim().toLowerCase(),password=$("registerPassword").value;btn.disabled=true;showAuthMessage("Registrierung wird angelegt …");
+ try{
+  if(password!==$("registerPasswordConfirm").value)throw new Error("Die beiden Passwörter stimmen nicht überein.");
+  if(password.length<8)throw new Error("Das Passwort muss mindestens 8 Zeichen lang sein.");
+  const {data,error}=await supabaseClient.auth.signUp({email,password,options:{data:{display_name:$("registerName").value.trim()}}});if(error)throw error;
+  if(data.session)await supabaseClient.auth.signOut();
+  $("registerForm").reset();
+  showAuthMessage("Registrierung eingegangen. Bitte bestätige gegebenenfalls deine E-Mail-Adresse. Der Eigentümer muss dein Konto freigeben. Erst danach ist die Anmeldung möglich.");
+ }catch(err){showAuthMessage("Registrierung fehlgeschlagen: "+err.message);}
+ finally{btn.disabled=false;}
+});
+$("logoutButton").addEventListener("click",async()=>{const {error}=await supabaseClient.auth.signOut();if(error)showAuthMessage("Abmeldung fehlgeschlagen: "+error.message);else showSignedOut();});
+supabaseClient.auth.onAuthStateChange((event)=>{if(event==="SIGNED_OUT")showSignedOut();});
+(async()=>{try{const {data,error}=await supabaseClient.auth.getSession();if(error)throw error;await verifyAndShowSession(data.session?.user||null);}catch(err){showSignedOut();showAuthMessage("Anmeldung konnte nicht geprüft werden: "+err.message);}})();
+
+</script></body></html>
