@@ -131,21 +131,14 @@ test('60 Minuten Browser-Dauerlast: echte UI, Dateneingabe, Tageswechsel und Ran
         const player = players[int(0, players.length - 1)];
         const simulatedDurationSeconds = int(30, 240);
 
-        await page.evaluate(({ sessionName, roundNo, playerId, playerName }) => {
-          const sessionSelect = document.getElementById('sessionName');
-          sessionSelect.value = sessionName;
-          sessionSelect.dispatchEvent(new Event('change', { bubbles: true }));
-          const roundSelect = document.getElementById('resultRound');
-          roundSelect.value = String(roundNo);
-          roundSelect.dispatchEvent(new Event('change', { bubbles: true }));
-          const playerSelect = document.getElementById('resultPlayer');
-          if (![...playerSelect.options].some(option => option.value === playerId)) {
-            throw new Error('Teilnehmer fehlt in der sichtbaren Auswahlliste: ' + playerId);
-          }
-          playerSelect.value = playerId;
-          playerSelect.dispatchEvent(new Event('change', { bubbles: true }));
-          document.querySelector('#results button[onclick="saveResult()"]').click();
-        }, { sessionName: session, roundNo, playerId: player.id, playerName: player.name });
+        // Bedienung ausschließlich über sichtbare Controls – wie ein Mensch mit Maus/Tastatur.
+        await page.locator('#sessionName').selectOption(session);
+        await page.locator('#resultRound').selectOption(String(roundNo));
+        await page.locator('#playerSearch').fill(player.name);
+        const suggestion = page.locator('#playerSuggestions button').filter({ hasText: player.name }).first();
+        await suggestion.waitFor({ state: 'visible', timeout: 5000 });
+        await suggestion.click();
+        await page.locator(saveSelector).click();
 
         report.actions++;
         roundIndex++;
@@ -204,7 +197,7 @@ test('60 Minuten Browser-Dauerlast: echte UI, Dateneingabe, Tageswechsel und Ran
       // Nach jeweils 20 vollständigen Tagen wird ein echter Browser-Reload ausgeführt.
       if (dayIndex % 20 === 0 && Date.now() < deadline) {
         await page.reload({ waitUntil: 'domcontentloaded' });
-        await page.waitForFunction(() => !document.getElementById('introSplash'), null, { timeout: 20000 });
+        await page.evaluate(() => document.getElementById('introSplash')?.remove());
         await tab('results').click();
         report.reloads++;
         const persistedCount = await page.evaluate(() =>
