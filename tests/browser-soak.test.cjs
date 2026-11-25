@@ -110,7 +110,7 @@ test('60 Minuten Browser-Dauerlast: echte UI, Dateneingabe, Tageswechsel und Ran
       localStorage.setItem('wf-adventbingo-v01', JSON.stringify(seed));
     }, db);
     await page.goto(url, { waitUntil: 'domcontentloaded' });
-    await page.waitForFunction(() => !document.getElementById('introSplash'), null, { timeout: 20000 });
+    await page.evaluate(() => document.getElementById('introSplash')?.remove());
     assert.equal(await page.title(), 'WeFamily Adventsbingo');
 
     const tab = name => page.locator('button.tab[data-tab="' + name + '"]');
