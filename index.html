@@ -56,6 +56,23 @@
 @media(max-width:560px){.round-group>summary{align-items:flex-start;flex-direction:column;gap:4px}.round-group>summary small{text-align:left}}
 
 #authGate{position:fixed;inset:0;z-index:40;display:grid;place-items:center;padding:20px;background:radial-gradient(ellipse at top,#302044 0,#100e1b 70%)}#authGate .card{width:min(100%,420px);padding:24px}#authGate h2{margin-top:0}#authMessage{min-height:22px;color:#ffd18a;font-size:13px}#logoutButton{margin-left:10px}
+
+/* Turnierwertung: auf schmalen Displays als Karten statt breiter Tabelle */
+.tournament-mobile{display:none}
+.tournament-desktop{overflow-x:auto}
+.tournament-desktop table{width:100%;border-collapse:collapse;white-space:nowrap}
+.tournament-desktop th,.tournament-desktop td{padding:9px 7px;border-bottom:1px solid var(--line);text-align:right}
+.tournament-desktop th:nth-child(1),.tournament-desktop td:nth-child(1),.tournament-desktop th:nth-child(2),.tournament-desktop td:nth-child(2){text-align:left}
+.tournament-player{padding:12px 0;border-bottom:1px solid var(--line)}
+.tournament-player:last-child{border-bottom:0}
+.tournament-player-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.tournament-player-name{font-weight:750;min-width:0;overflow-wrap:anywhere}
+.tournament-player-total{text-align:right;white-space:nowrap;color:var(--gold);font-weight:800}
+.tournament-player-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.tournament-chip{font-size:12px;padding:5px 8px;border-radius:8px;background:#292342;color:#e7def8}
+.tournament-chip strong{color:#fff}
+@media(max-width:600px){.tournament-desktop{display:none}.tournament-mobile{display:block}.tournament-player-total{font-size:16px}}
+
 </style></head>
 <body>
 <div id="introSplash" aria-label="WeFamily fliegt über den Nordpol">
@@ -399,9 +416,15 @@ function renderInternal(){
    '<td style="text-align:right"><strong>'+x.points+'</strong></td><td style="text-align:right">'+x.total+'</td></tr>';
  }).join("");
  const headers=sessions.map(day=>'<th style="text-align:right">'+esc(day)+'</th>').join("");
+ const mobileCards=visible.map((x,i)=>{
+  const key=x.points+"|"+x.total;if(key!==previous)rank=i+1;previous=key;
+  const days=sessions.filter(day=>(x.days[day]||0)>0).map(day=>'<span class="tournament-chip">'+esc(day)+': <strong>'+x.days[day]+'</strong></span>').join("");
+  return '<div class="tournament-player"><div class="tournament-player-head"><div class="tournament-player-name">'+rank+'. '+esc(x.name)+'</div><div class="tournament-player-total">'+x.points+' Punkte<br><span class="muted" style="font-size:12px;font-weight:600">'+x.total+' Bingos</span></div></div><div class="tournament-player-meta">'+(days||'<span class="tournament-chip">Keine Tagespunkte</span>')+'</div><div class="tournament-player-meta"><span class="tournament-chip">Normal <strong>'+x.modePoints.normal+'</strong></span><span class="tournament-chip">Power-up <strong>'+x.modePoints.power+'</strong></span><span class="tournament-chip">Blackout <strong>'+x.modePoints.blackout+'</strong></span></div></div>';
+ }).join("");
  $("tournamentList").innerHTML=sessions.length?
-  '<p class="muted">Gesamtpunkte aus allen Spieltagen. Die Modus-Spalten zeigen, woher die Punkte stammen. Bei gleicher Punktzahl und gleicher Bingo-Anzahl wird derselbe Rang vergeben.</p>'+
-  '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;white-space:nowrap"><thead><tr><th>Platz</th><th>Teilnehmer</th>'+headers+'<th style="text-align:right">Normal</th><th style="text-align:right">Power-up</th><th style="text-align:right">Blackout</th><th style="text-align:right">Gesamtpunkte</th><th style="text-align:right">Bingos</th></tr></thead><tbody>'+body+'</tbody></table></div>':
+  '<p class="muted">Gesamtpunkte aus allen Spieltagen. Auf dem Handy kompakt als Teilnehmerkarten, auf größeren Bildschirmen als Tabelle. Bei gleicher Punktzahl und gleicher Bingo-Anzahl wird derselbe Rang vergeben.</p>'+
+  '<div class="tournament-desktop"><table><thead><tr><th>Platz</th><th>Teilnehmer</th>'+headers+'<th>Normal</th><th>Power-up</th><th>Blackout</th><th>Gesamtpunkte</th><th>Bingos</th></tr></thead><tbody>'+body+'</tbody></table></div>'+
+  '<div class="tournament-mobile">'+mobileCards+'</div>':
   '<p class="muted">Sobald Ergebnisse an mehreren Spieltagen vorliegen, erscheint hier die Turnier-Gesamtwertung.</p>';
 }
 
