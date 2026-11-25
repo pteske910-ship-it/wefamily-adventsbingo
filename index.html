@@ -109,9 +109,9 @@
 </section>
 <section id="internal" class="pane hidden">
 <div class="admin-subnav no-print"><button class="primary" data-adminview="day" onclick="setAdminView('day')">Tageswertung</button><button data-adminview="stats" onclick="setAdminView('stats')">📊 Statistiken</button></div><div id="adminRoomView"><div class="notice">VERTRAULICH – interne Tageswertung. Dies ist in Version 0.1 nur eine ausgeblendete Oberfläche, kein sicherer Zugriffsschutz. Nicht auf einem gemeinsam genutzten Gerät mit Teilnehmern öffnen.</div>
-<div class="card" id="dayCard"><h2>🔒 Interne Tageswertung</h2><label>Spieltag auswerten</label><input id="internalSession" placeholder="z. B. 1. Advent" value="1. Advent"><div class="actions"><button class="primary" onclick="renderInternal()">Tageswertung berechnen</button></div><label>Rundenwertung</label><select id="internalRound" onchange="renderInternal()"></select><div id="internalRoundList"></div><h3>Tagesgesamtwertung – alle Runden</h3><div id="internalList"></div><h3>Turnier-Gesamtwertung – alle Spieltage</h3><div id="tournamentList"></div></div>
+<div class="card" id="dayCard"><h2>🔒 Interne Tageswertung</h2><label>Spieltag auswerten</label><input id="internalSession" placeholder="z. B. 1. Advent" value="1. Advent"><div class="actions"><button class="primary" onclick="renderInternal()">Tageswertung berechnen</button></div><label>Rundenwertung</label><select id="internalRound" onchange="renderInternal()"></select><div id="internalRoundList"></div><h3>Tagesgesamtwertung – alle Runden</h3><div id="internalList"></div></div>
 
-</div><div id="adminStatsView" class="hidden"><div class="card"><h2>📊 Statistiken &amp; Auswertung</h2><p class="muted">Teilnehmerzahl, Raumbelegung und erzielte Bingos werden getrennt ausgewertet.</p><div class="grid no-print"><div><label>Auswertung</label><select id="statsSession" onchange="renderStats()"><option value="__all">Gesamter Adventszeitraum</option></select></div><div class="row" style="align-items:end"><button class="primary" onclick="exportStatsPDF()">PDF dieser Auswahl</button><button onclick="exportStatsPNG()">PNG dieser Auswahl</button></div></div><div id="statsReport"></div></div></div></section>
+</div><div id="adminStatsView" class="hidden"><div class="admin-subnav no-print" aria-label="Statistikbereiche"><button class="primary" data-statview="overview" onclick="setStatsView('overview')">📊 Statistiken</button><button data-statview="tournament" onclick="setStatsView('tournament')">🏆 Turnier-Rangliste</button></div><div id="statsOverviewView"><div class="card"><h2>📊 Statistiken &amp; Auswertung</h2><p class="muted">Teilnehmerzahl, Raumbelegung und erzielte Bingos werden getrennt ausgewertet.</p><div class="grid no-print"><div><label>Auswertung</label><select id="statsSession" onchange="renderStats()"><option value="__all">Gesamter Adventszeitraum</option></select></div><div class="row" style="align-items:end"><button class="primary" onclick="exportStatsPDF()">PDF dieser Auswahl</button><button onclick="exportStatsPNG()">PNG dieser Auswahl</button></div></div><div id="statsReport"></div></div></div><div id="statsTournamentView" class="hidden"><div class="card"><h2>🏆 Turnier-Gesamtwertung</h2><p class="muted">Alle Spieltage zusammengefasst. Suche, sortiere und öffne Teilnehmerdetails. Es werden 20 Teilnehmer pro Seite angezeigt.</p><div id="tournamentList"></div></div></div></div></section>
 <section id="settings" class="pane hidden">
 <div class="card"><h2>Turnier-Einstellungen</h2><p class="muted">Lege die Anzahl der Runden fest und ordne jeder Runde einen Bingo-Modus zu. Die Punktevergabe wird einmal für das gesamte Turnier festgelegt und unterscheidet sich je nach Bingo-Modus.</p><div class="row"><div class="field"><label for="roundCount">Anzahl der Runden</label><input id="roundCount" type="number" min="1" max="250" step="1" value="25"></div><button class="primary" onclick="applyRoundCount()">Rundenanzahl übernehmen</button></div><div class="card"><h3>Punktevergabe</h3><label>Wertungssystem für das gesamte Turnier</label><select id="scoringMode" onchange="setScoringMode(this.value)"><option value="mode">Feste Punkte je Bingo-Spielmodus</option><option value="place">Punkte nach Platzierung</option></select><div id="modePoints" class="grid"><div><label>Normales Bingo · Punkte pro Bingo</label><input id="normalPoints" type="number" min="0" step="1" value="2" onchange="saveModePoints()"></div><div><label>Power-up · Punkte pro Bingo</label><input id="powerPoints" type="number" min="0" step="1" value="1" onchange="saveModePoints()"></div><div><label>Blackout · Punkte pro Bingo</label><input id="blackoutPoints" type="number" min="0" step="1" value="3" onchange="saveModePoints()"></div></div><div id="placePoints" class="hidden"><div class="grid"><div><label>Normales Bingo · Punkte je Platzierung</label><input id="placementPoints" value="10,8,7,6,5,4,3,2,1,1" onchange="savePlacementPoints()"></div><div><label>Power-up · Punkte je Platzierung</label><input id="placementPointsPower" value="10,8,7,6,5,4,3,2,1,1" onchange="savePlacementPoints()"></div><div><label>Blackout · Punkte je Platzierung</label><input id="placementPointsBlackout" value="10,8,7,6,5,4,3,2,1,1" onchange="savePlacementPoints()"></div></div><p class="muted">Kommagetrennte Werte: erster Platz, zweiter Platz usw. Nicht aufgeführte Plätze erhalten 0 Punkte.</p></div></div><div id="roundList"></div></div>
 <div class="card"><h2>🔎 Doppelte Teilnehmer prüfen</h2><p class="muted">Zeigt die beiden bestätigten Namenspaare und zählt je Eintrag die gespeicherten Ergebnisdatensätze sowie Bingos. Es wird nichts verändert.</p><div class="actions"><button class="primary" id="duplicatePreviewButton" type="button">Dubletten-Vorschau erstellen</button></div><div id="duplicatePreviewStatus" class="muted" role="status">Noch nicht geprüft.</div><div id="duplicatePreview"></div></div>
@@ -408,25 +408,13 @@ function renderInternal(){
  const overall=Object.values(allMap).sort((a,b)=>b.points-a.points||b.total-a.total||a.name.localeCompare(b.name));
  const visible=overall.filter(x=>x.points>0||x.total>0);
  let previous="",rank=0;
- const body=visible.map((x,i)=>{
+ const ranked=visible.map((x,i)=>{
   const key=x.points+"|"+x.total;if(key!==previous)rank=i+1;previous=key;
-  return '<tr><td>'+rank+'.</td><td>'+esc(x.name)+'</td>'+
-   sessions.map(day=>'<td style="text-align:right">'+(x.days[day]||0)+'</td>').join("")+
-   '<td style="text-align:right">'+x.modePoints.normal+'</td><td style="text-align:right">'+x.modePoints.power+'</td><td style="text-align:right">'+x.modePoints.blackout+'</td>'+
-   '<td style="text-align:right"><strong>'+x.points+'</strong></td><td style="text-align:right">'+x.total+'</td></tr>';
- }).join("");
- const headers=sessions.map(day=>'<th style="text-align:right">'+esc(day)+'</th>').join("");
- let mobilePrevious="",mobileRank=0;
- const mobileCards=visible.map((x,i)=>{
-  const key=x.points+"|"+x.total;if(key!==mobilePrevious)mobileRank=i+1;mobilePrevious=key;
   const days=sessions.filter(day=>(x.days[day]||0)>0).map(day=>'<span class="tournament-chip">'+esc(day)+': <strong>'+x.days[day]+'</strong></span>').join("");
-  return '<div class="tournament-player"><div class="tournament-player-head"><div class="tournament-player-name">'+mobileRank+'. '+esc(x.name)+'</div><div class="tournament-player-total">'+x.points+' Punkte<br><span class="muted" style="font-size:12px;font-weight:600">'+x.total+' Bingos</span></div></div><div class="tournament-player-meta">'+(days||'<span class="tournament-chip">Keine Tagespunkte</span>')+'</div><div class="tournament-player-meta"><span class="tournament-chip">Normal <strong>'+x.modePoints.normal+'</strong></span><span class="tournament-chip">Power-up <strong>'+x.modePoints.power+'</strong></span><span class="tournament-chip">Blackout <strong>'+x.modePoints.blackout+'</strong></span></div></div>';
- }).join("");
- $("tournamentList").innerHTML=sessions.length?
-  '<p class="muted">Gesamtpunkte aus allen Spieltagen. Auf dem Handy kompakt als Teilnehmerkarten, auf größeren Bildschirmen als Tabelle. Bei gleicher Punktzahl und gleicher Bingo-Anzahl wird derselbe Rang vergeben.</p>'+
-  '<div class="tournament-desktop"><table><thead><tr><th>Platz</th><th>Teilnehmer</th>'+headers+'<th>Normal</th><th>Power-up</th><th>Blackout</th><th>Gesamtpunkte</th><th>Bingos</th></tr></thead><tbody>'+body+'</tbody></table></div>'+
-  '<div class="tournament-mobile">'+mobileCards+'</div>':
-  '<p class="muted">Sobald Ergebnisse an mehreren Spieltagen vorliegen, erscheint hier die Turnier-Gesamtwertung.</p>';
+  return {...x,rank,days,normal:x.modePoints.normal,power:x.modePoints.power,blackout:x.modePoints.blackout};
+ });
+ $("tournamentList").innerHTML=sessions.length?'<p class="muted">Gesamtpunkte aus allen Spieltagen. Bei gleicher Punktzahl und gleicher Bingo-Anzahl wird derselbe Rang vergeben.</p>':'<p class="muted">Sobald Ergebnisse an mehreren Spieltagen vorliegen, erscheint hier die Turnier-Gesamtwertung.</p>';
+ if(sessions.length)renderTournamentList(ranked);
 }
 
 function renderAll(){renderPlayers();renderRounds();$("roundCount").value=db.rounds.length;fillSelects();fillRoomRounds();renderResults();updateNextBingoNumber();renderRoomStats();$("statPlayers").textContent=db.players.length;$("statRounds").textContent=db.rounds.length;$("statEntries").textContent=db.results.length}
@@ -606,7 +594,24 @@ function setAdminView(v){
  $("adminRoomView").classList.toggle("hidden",v==="stats");
  $("adminStatsView").classList.toggle("hidden",v!=="stats");
  document.querySelectorAll("[data-adminview]").forEach(b=>b.classList.toggle("primary",b.dataset.adminview===v));
- if(v==="stats")renderStats();
+ if(v==="stats"){renderStats();renderInternal();setStatsView("overview");}
+}
+let tournamentPage=0,tournamentQuery="";
+function setStatsView(v){
+ $("statsOverviewView").classList.toggle("hidden",v!=="overview");
+ $("statsTournamentView").classList.toggle("hidden",v!=="tournament");
+ document.querySelectorAll("[data-statview]").forEach(b=>b.classList.toggle("primary",b.dataset.statview===v));
+ if(v==="tournament")renderInternal();
+}
+function renderTournamentList(items){
+ const q=tournamentQuery.trim().toLocaleLowerCase("de");
+ const filtered=items.filter(x=>!q||x.name.toLocaleLowerCase("de").includes(q));
+ const pageSize=20,pages=Math.max(1,Math.ceil(filtered.length/pageSize));
+ tournamentPage=Math.min(tournamentPage,pages-1);
+ const shown=filtered.slice(tournamentPage*pageSize,(tournamentPage+1)*pageSize);
+ const cards=shown.map(x=>'<details class="tournament-player"><summary class="tournament-player-head"><span class="tournament-player-name">'+x.rank+'. '+esc(x.name)+'</span><span class="tournament-player-total">'+x.points+' Punkte<br><span class="muted" style="font-size:12px;font-weight:600">'+x.total+' Bingos</span></span></summary><div class="tournament-player-meta">'+(x.days||'<span class="tournament-chip">Keine Tagespunkte</span>')+'</div><div class="tournament-player-meta"><span class="tournament-chip">Normal <strong>'+x.normal+'</strong></span><span class="tournament-chip">Power-up <strong>'+x.power+'</strong></span><span class="tournament-chip">Blackout <strong>'+x.blackout+'</strong></span></div></details>').join("");
+ $("tournamentList").innerHTML='<label for="tournamentSearch">Teilnehmer suchen</label><input id="tournamentSearch" type="search" placeholder="Name eingeben …" value="'+esc(tournamentQuery)+'" oninput="tournamentQuery=this.value;tournamentPage=0;renderInternal()"><p class="muted">'+filtered.length+' von '+items.length+' Teilnehmern mit Ergebnissen</p>'+(cards||'<p class="muted">Keine passenden Teilnehmer gefunden.</p>')+'<div class="row between" style="align-items:center;margin-top:12px"><button '+(tournamentPage===0?'disabled':'')+' onclick="tournamentPage--;renderInternal()">Zurück</button><span class="muted">Seite '+(tournamentPage+1)+' von '+pages+'</span><button '+(tournamentPage>=pages-1?'disabled':'')+' onclick="tournamentPage++;renderInternal()">Weiter</button></div>';
+ const input=$("tournamentSearch");if(input){input.focus();input.setSelectionRange(input.value.length,input.value.length);}
 }
 function statSessions(){
  const fixed=["1. Advent","2. Advent","3. Advent","4. Advent"];
