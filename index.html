@@ -395,7 +395,7 @@ function renderInternal(){
  }
  const current=sel?Number(sel.value||db.rounds[0]?.n||1):1;
  const roundRows=tally(selectedDay,current);
- const dayRows=tally(selectedDay);
+ const dayRows=tally(selectedDay,current);
  const rankMap=items=>{
   const out={};let last="",rank=0;
   items.filter(x=>x.points>0||x.total>0).forEach((x,i)=>{
@@ -418,7 +418,7 @@ function renderInternal(){
  };
  const previousRoundRows=current>1?tally(selectedDay,current-1):null;
  $("internalRoundList").innerHTML=rankingHTML(roundRows,"Rundenwertung · Runde "+current,previousRoundRows);
- $("internalList").innerHTML=rankingHTML(dayRows,"Tagesgesamtwertung · alle Runden",null);
+ $("internalList").innerHTML=rankingHTML(dayRows,"Tagesgesamtwertung · bis einschließlich Runde "+current,current>1?tally(selectedDay,current-1):null);
  const sessions=statSessions();
  if(!sessions.includes(selectedDay))sessions.push(selectedDay);
  const selectedIndex=sessions.indexOf(selectedDay);
