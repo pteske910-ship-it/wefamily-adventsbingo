@@ -130,6 +130,14 @@ test('Wertung bleibt turnierweit einheitlich und berücksichtigt Rundeneinstellu
   assert.equal(resolveBingoPoints(round, 2, scoring), 7, 'Bingo Nr. 2 erhält den Wert für Platz 2');
   assert.equal(resolveBingoPoints(round, 3, scoring), 5, 'Bingo Nr. 3 erhält den Wert für Platz 3');
   assert.equal(resolveBingoPoints(round, 5, scoring), 0, 'Nicht konfigurierte Platzierungen erhalten 0 Punkte');
+  assert.equal(resolveBingoPoints({ n: 2, mode: 'Normal', pointsPerBingo: null }, 1, { mode: 'mode', normal: 2, power: 3, blackout: 9 }), 2,
+    'Ohne Rundenausnahme gelten die zentralen Punkte für Normal');
+  assert.equal(resolveBingoPoints({ n: 3, mode: 'Power-up', pointsPerBingo: null }, 1, { mode: 'mode', normal: 2, power: 3, blackout: 9 }), 3,
+    'Ohne Rundenausnahme gelten die zentralen Punkte für Power-up');
+  assert.equal(resolveBingoPoints({ n: 4, mode: 'Blackout', pointsPerBingo: null }, 1, { mode: 'mode', normal: 2, power: 3, blackout: 9 }), 9,
+    'Ohne Rundenausnahme gelten die zentralen Punkte für Blackout');
+  assert.equal(resolveBingoPoints({ n: 5, mode: 'Normal', pointsPerBingo: 6 }, 1, { mode: 'mode', normal: 2, power: 3, blackout: 9 }), 6,
+    'Ein eigener Rundenwert überschreibt den globalen Moduswert');
   assert.equal(resolveBingoPoints(round, 1, { mode: 'place', placements: [10, 8, 7] }), 10,
     'Eine andere Liga kann eine andere Platzierungstabelle verwenden');
 });
