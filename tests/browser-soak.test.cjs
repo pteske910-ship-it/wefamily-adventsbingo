@@ -112,7 +112,11 @@ test('60 Minuten Browser-Dauerlast: echte UI, Dateneingabe, Tageswechsel und Ran
       }
     }, db);
     await page.goto(url, { waitUntil: 'domcontentloaded' });
-    await page.locator('#introSplash').waitFor({ state: 'detached', timeout: 20000 });
+    await page.locator('#sessionName').waitFor({ state: 'attached', timeout: 5000 });
+    await page.waitForTimeout(2000);
+    // Die Intro-Animation darf den Test nicht blockieren; Fehler vor dem Entfernen erfassen.
+    await page.evaluate(() => document.getElementById('introSplash')?.remove());
+    assert.deepEqual(pageErrors, [], 'Keine JavaScript-Fehler beim initialen Rendern: ' + pageErrors.join(' | '));
     assert.equal(await page.title(), 'WeFamily Adventsbingo');
 
     const tab = name => page.locator('button.tab[data-tab="' + name + '"]');
@@ -202,7 +206,8 @@ test('60 Minuten Browser-Dauerlast: echte UI, Dateneingabe, Tageswechsel und Ran
       // Nach jeweils 20 vollständigen Tagen wird ein echter Browser-Reload ausgeführt.
       if (dayIndex % 20 === 0 && Date.now() < deadline) {
         await page.reload({ waitUntil: 'domcontentloaded' });
-        await page.locator('#introSplash').waitFor({ state: 'detached', timeout: 20000 });
+        await page.locator('#sessionName').waitFor({ state: 'attached', timeout: 5000 });
+        await page.evaluate(() => document.getElementById('introSplash')?.remove());
         await tab('results').click();
         await page.locator('#results').waitFor({ state: 'visible', timeout: 5000 });
         report.reloads++;
