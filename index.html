@@ -71,7 +71,7 @@
 .tournament-player-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
 .tournament-chip{font-size:12px;padding:5px 8px;border-radius:8px;background:#292342;color:#e7def8}
 .tournament-chip strong{color:#fff}
-@media(max-width:600px){.tournament-desktop{display:none}.tournament-mobile{display:block}.tournament-player-total{font-size:16px}}
+@media(max-width:760px){.tournament-desktop{display:none}.tournament-mobile{display:block}.tournament-player-total{font-size:16px}}
 
 </style></head>
 <body>
@@ -416,10 +416,11 @@ function renderInternal(){
    '<td style="text-align:right"><strong>'+x.points+'</strong></td><td style="text-align:right">'+x.total+'</td></tr>';
  }).join("");
  const headers=sessions.map(day=>'<th style="text-align:right">'+esc(day)+'</th>').join("");
+ let mobilePrevious="",mobileRank=0;
  const mobileCards=visible.map((x,i)=>{
-  const key=x.points+"|"+x.total;if(key!==previous)rank=i+1;previous=key;
+  const key=x.points+"|"+x.total;if(key!==mobilePrevious)mobileRank=i+1;mobilePrevious=key;
   const days=sessions.filter(day=>(x.days[day]||0)>0).map(day=>'<span class="tournament-chip">'+esc(day)+': <strong>'+x.days[day]+'</strong></span>').join("");
-  return '<div class="tournament-player"><div class="tournament-player-head"><div class="tournament-player-name">'+rank+'. '+esc(x.name)+'</div><div class="tournament-player-total">'+x.points+' Punkte<br><span class="muted" style="font-size:12px;font-weight:600">'+x.total+' Bingos</span></div></div><div class="tournament-player-meta">'+(days||'<span class="tournament-chip">Keine Tagespunkte</span>')+'</div><div class="tournament-player-meta"><span class="tournament-chip">Normal <strong>'+x.modePoints.normal+'</strong></span><span class="tournament-chip">Power-up <strong>'+x.modePoints.power+'</strong></span><span class="tournament-chip">Blackout <strong>'+x.modePoints.blackout+'</strong></span></div></div>';
+  return '<div class="tournament-player"><div class="tournament-player-head"><div class="tournament-player-name">'+mobileRank+'. '+esc(x.name)+'</div><div class="tournament-player-total">'+x.points+' Punkte<br><span class="muted" style="font-size:12px;font-weight:600">'+x.total+' Bingos</span></div></div><div class="tournament-player-meta">'+(days||'<span class="tournament-chip">Keine Tagespunkte</span>')+'</div><div class="tournament-player-meta"><span class="tournament-chip">Normal <strong>'+x.modePoints.normal+'</strong></span><span class="tournament-chip">Power-up <strong>'+x.modePoints.power+'</strong></span><span class="tournament-chip">Blackout <strong>'+x.modePoints.blackout+'</strong></span></div></div>';
  }).join("");
  $("tournamentList").innerHTML=sessions.length?
   '<p class="muted">Gesamtpunkte aus allen Spieltagen. Auf dem Handy kompakt als Teilnehmerkarten, auf größeren Bildschirmen als Tabelle. Bei gleicher Punktzahl und gleicher Bingo-Anzahl wird derselbe Rang vergeben.</p>'+
