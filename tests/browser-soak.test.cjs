@@ -131,19 +131,18 @@ test('60 Minuten Browser-Dauerlast: echte UI, Dateneingabe, Tageswechsel und Ran
         const player = players[int(0, players.length - 1)];
         const simulatedDurationSeconds = int(30, 240);
 
-        await page.evaluate(({ sessionName, roundNo, playerId }) => {
+        await page.evaluate(({ sessionName, roundNo, playerId, playerName }) => {
           const sessionSelect = document.getElementById('sessionName');
           sessionSelect.value = sessionName;
           sessionSelect.dispatchEvent(new Event('change', { bubbles: true }));
           const roundSelect = document.getElementById('resultRound');
           roundSelect.value = String(roundNo);
           roundSelect.dispatchEvent(new Event('change', { bubbles: true }));
-          const player = db.players.find(item => item.id === playerId);
-          document.getElementById('playerSearch').value = player.name;
+          document.getElementById('playerSearch').value = playerName;
           fillPlayerOptions();
           chooseResultPlayer(playerId);
           document.querySelector('#results button[onclick="saveResult()"]').click();
-        }, { sessionName: session, roundNo, playerId: player.id });
+        }, { sessionName: session, roundNo, playerId: player.id, playerName: player.name });
 
         report.actions++;
         roundIndex++;
