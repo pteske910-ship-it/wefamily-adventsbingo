@@ -201,11 +201,11 @@ test('100 Spieltage mit 25–70 Spielern, 12–50 Runden und 30–240 Sekunden j
       const winners = new Set();
       const winnerCount = integer(random, 1, Math.min(15, playerCount));
       while (winners.size < winnerCount) winners.add(integer(random, 0, playerCount - 1));
+      let bingoNo = 0;
 
       for (const playerIndex of winners) {
         const player = activePlayers[playerIndex];
-        const bingoNo = results.filter(r => r.session === session && r.round === roundNo)
-          .reduce((n, r) => n + 1, 1);
+        bingoNo++;
         const round = rounds[roundNo - 1];
         const points = resolveBingoPoints(round, bingoNo, {
           mode: 'mode', normal: 2, power: 4, blackout: 7
