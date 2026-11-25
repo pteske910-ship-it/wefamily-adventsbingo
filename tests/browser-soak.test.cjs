@@ -9,7 +9,7 @@ const DURATION_MS = 60 * 60 * 1000;
 const ROOT = path.resolve(__dirname, '..');
 
 function makeSeed() {
-  let state = 0x60FAMILY;
+  let state = 0x60FA11;
   const random = () => {
     state = (state * 1664525 + 1013904223) >>> 0;
     return state / 0x100000000;
@@ -109,11 +109,6 @@ test('60 Minuten Browser-Dauerlast: echte UI, Dateneingabe, Tageswechsel und Ran
     assert.equal(await page.title(), 'WeFamily Adventsbingo');
 
     const tab = name => page.locator('button.tab[data-tab="' + name + '"]');
-    const goResults = async () => {
-      await tab('results').click();
-      await page.locator('#saveResult').count().catch(() => {});
-    };
-
     await tab('results').click();
     const saveSelector = '#results button[onclick="saveResult()"]';
     assert.equal(await page.locator(saveSelector).count(), 1, 'Speichern-Schaltfläche ist sichtbar');
