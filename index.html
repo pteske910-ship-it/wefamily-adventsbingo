@@ -236,7 +236,7 @@ function statData(session){
   const k=s+"|"+rd.n,map=roundPlayers[k]||{},rs=resultsBySessionRound.get(k)||[];
   return {round:rd.n,total:roundTotals[k]||0,ranking:Object.entries(map).map(([id,n])=>({id,total:n,p:playerById.get(id)})).sort((a,b)=>b.total-a.total)};
  })]));
- return {sessions,selected,results,players,ids,counts,ranking,rounds,distribution,daily,roundDaily,personal,roundRankings,bingoPlayerIds,roomPeriodValues,roomPeriodAverage};
+ return {sessions,selected,results,players,ids,counts,ranking,rounds,distribution,daily,roundDaily,personal,total,roundRankings,bingoPlayerIds,roomPeriodValues,roomPeriodAverage};
 }
 function compareDays(days){
  return days.map((day,i)=>{
