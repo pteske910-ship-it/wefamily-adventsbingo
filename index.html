@@ -387,15 +387,18 @@ function renderInternal(){
  }
  const current=sel?Number(sel.value||db.rounds[0]?.n||1):1;
  const roundRows=tally(selectedDay,current),rows=tally(selectedDay);
- const rankingHTML=items=>{
+ const rankingHTML=(items,label)=>{
   const ranked=items.filter(x=>x.points>0||x.total>0);let previous="",rank=0;
-  return ranked.map((x,i)=>{
+  const prepared=ranked.map((x,i)=>{
    const key=x.points+"|"+x.total;if(key!==previous)rank=i+1;previous=key;
-   return '<div class="item row between"><span><strong>'+rank+'. '+esc(x.name)+'</strong></span><span class="score">'+x.points+' Punkte · '+x.total+' Bingos</span></div>';
-  }).join("")||'<p class="muted">Noch keine Ergebnisse für diese Auswahl.</p>';
+   return {...x,rank};
+  });
+  const cards=prepared.map(x=>'<details class="tournament-player"><summary class="tournament-player-head"><span class="tournament-player-name">'+x.rank+'. '+esc(x.name)+'</span><span class="tournament-player-total">'+x.points+' Punkte<br><span class="muted" style="font-size:12px;font-weight:600">'+x.total+' Bingos</span></span></summary><div class="tournament-player-meta"><span class="tournament-chip">Normal: <strong>'+x.modePoints.normal+' P. · '+x.modeBingos.normal+' Bingos</strong></span><span class="tournament-chip">Power-up: <strong>'+x.modePoints.power+' P. · '+x.modeBingos.power+' Bingos</strong></span><span class="tournament-chip">Blackout: <strong>'+x.modePoints.blackout+' P. · '+x.modeBingos.blackout+' Bingos</strong></span></div></details>').join("");
+  const table=prepared.map(x=>'<tr><td>'+x.rank+'</td><td>'+esc(x.name)+'</td><td>'+x.total+'</td><td>'+x.modeBingos.normal+'</td><td>'+x.modeBingos.power+'</td><td>'+x.modeBingos.blackout+'</td><td><strong>'+x.points+'</strong></td></tr>').join("");
+  return '<p class="muted">'+label+' · '+prepared.length+' Teilnehmer mit Ergebnissen</p><div class="tournament-mobile">'+(cards||'<p class="muted">Noch keine Ergebnisse für diese Auswahl.</p>')+'</div><div class="tournament-desktop"><table><thead><tr><th>Platz</th><th>Teilnehmer</th><th>Bingos</th><th>Normal</th><th>Power-up</th><th>Blackout</th><th>Punkte</th></tr></thead><tbody>'+(table||'<tr><td colspan="7">Noch keine Ergebnisse für diese Auswahl.</td></tr>')+'</tbody></table></div>';
  };
- $("internalRoundList").innerHTML=rankingHTML(roundRows);
- $("internalList").innerHTML=rankingHTML(rows);
+ $("internalRoundList").innerHTML=rankingHTML(roundRows,"Rundenwertung · Runde "+current);
+ $("internalList").innerHTML=rankingHTML(rows,"Tagesgesamtwertung · alle Runden");
 
  const sessions=statSessions();
  if(!sessions.includes(selectedDay))sessions.push(selectedDay);
