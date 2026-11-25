@@ -82,6 +82,7 @@
 </div><div id="adminStatsView" class="hidden"><div class="card"><h2>📊 Statistiken &amp; Auswertung</h2><p class="muted">Teilnehmerzahl, Raumbelegung und erzielte Bingos werden getrennt ausgewertet.</p><div class="grid no-print"><div><label>Auswertung</label><select id="statsSession" onchange="renderStats()"><option value="__all">Gesamter Adventszeitraum</option></select></div><div class="row" style="align-items:end"><button class="primary" onclick="exportStatsPDF()">PDF dieser Auswahl</button><button onclick="exportStatsPNG()">PNG dieser Auswahl</button></div></div><div id="statsReport"></div></div></div></section>
 <section id="settings" class="pane hidden">
 <div class="card"><h2>Turnier-Einstellungen</h2><p class="muted">Lege ein Wertungssystem für das gesamte Turnier fest. Spieltage und Runden bleiben getrennt. Bei festen Punkten gelten die drei zentralen Werte für alle Runden des jeweiligen Spielmodus. Alternativ legst du eine zentrale Punktetabelle und die Anzahl der bepunkteten Plätze fest.</p><div class="row"><div class="field"><label for="roundCount">Anzahl der Runden</label><input id="roundCount" type="number" min="1" max="250" step="1" value="25"></div><button class="primary" onclick="applyRoundCount()">Rundenanzahl übernehmen</button></div><div class="card"><h3>Punktevergabe</h3><label>Wertungssystem</label><select id="scoringMode" onchange="setScoringMode(this.value)"><option value="mode">Feste Punkte je Spielmodus</option><option value="place">Punkte nach Platzierung</option></select><p id="fixedScoringHint" class="muted">Diese drei Werte gelten für alle Spieltage und alle Runden des jeweiligen Spielmodus.</p><div id="modePoints"><div class="grid"><div><label for="normalPoints">Normal · Punkte pro Bingo</label><input id="normalPoints" type="number" min="0" step="1" value="2" onchange="saveModePoints()"></div><div><label for="powerPoints">Power-up · Punkte pro Bingo</label><input id="powerPoints" type="number" min="0" step="1" value="1" onchange="saveModePoints()"></div><div><label for="blackoutPoints">Blackout · Punkte pro Bingo</label><input id="blackoutPoints" type="number" min="0" step="1" value="3" onchange="saveModePoints()"></div></div></div><div id="placePoints" class="hidden"><label>Punkte je Platzierung (Komma-getrennt)</label><input id="placementPoints" inputmode="numeric" value="10,8,7,6,5,4,3,2,1,1" onchange="savePlacementPoints()"><p id="placementCount" class="muted">10 Plätze erhalten Punkte.</p><p class="muted">Jeder Eintrag steht für einen Platz: Der erste Wert gilt für Platz 1, der zweite für Platz 2 usw. Die laufende Bingo-Nummer innerhalb der jeweiligen Runde bestimmt den Platz. Die Anzahl der eingetragenen Werte bestimmt, wie viele Plätze bepunktet werden.</p></div></div><div id="roundList"></div></div>
+<div class="card hidden" id="registrationAdminCard"><h2>👥 Kontoanfragen</h2><p class="muted">Nur der Eigentümer kann neue Registrierungen freigeben oder ablehnen.</p><div class="actions"><button class="primary" id="refreshRegistrationsButton" type="button">Anfragen aktualisieren</button></div><p id="registrationAdminStatus" class="muted" role="status">Noch nicht geladen.</p><div id="registrationRequests"></div></div>
 <div class="card"><h2>Datensicherung</h2><p class="muted">Exportiere regelmäßig eine Sicherung. Import überschreibt den aktuellen lokalen Datenbestand.</p><div class="actions"><button class="primary" onclick="exportData()">Daten exportieren (JSON)</button><label class="tab" style="display:inline-block">Sicherung importieren<input id="importFile" type="file" accept="application/json" style="display:none" onchange="importData(event)"></label><button class="danger" onclick="resetData()">Alle lokalen Daten löschen</button></div></div>
 </section>
 </main><footer class="hidden" id="appFooter">WeFamily Adventsbingo-Manager · Prototyp 0.1</footer>
@@ -331,6 +332,7 @@ async function verifyAndShowSession(user){
  $("authGate").classList.add("hidden");
  ["appHeader","appMain","appFooter"].forEach(id=>$(id).classList.remove("hidden"));
  $("signedInLabel").textContent="Angemeldet als "+(profile.display_name||user.email||"WeFamily-Konto")+" · "+(profile.app_role==="owner"?"Eigentümer":"Administrator")+" · Daten aktuell lokal auf diesem Gerät";
+ const adminCard=$("registrationAdminCard");if(adminCard){const isOwner=profile.app_role==="owner";adminCard.classList.toggle("hidden",!isOwner);if(isOwner)loadPendingRegistrations();}
 }
 $("showRegisterButton").addEventListener("click",()=>showAuthView("register"));
 $("showLoginButton").addEventListener("click",()=>showAuthView("login"));
@@ -353,6 +355,44 @@ $("registerForm").addEventListener("submit",async e=>{
  finally{btn.disabled=false;}
 });
 $("logoutButton").addEventListener("click",async()=>{const {error}=await supabaseClient.auth.signOut();if(error)showAuthMessage("Abmeldung fehlgeschlagen: "+error.message);else showSignedOut();});
+
+async function loadPendingRegistrations(){
+ const card=$("registrationAdminCard");if(!card||card.classList.contains("hidden"))return;
+ $("registrationAdminStatus").textContent="Registrierungen werden geladen …";
+ const {data,error}=await supabaseClient.from("app_users").select("user_id,email,display_name,created_at,account_status,app_role").in("account_status",["pending","rejected"]).order("created_at",{ascending:true});
+ if(error){$("registrationAdminStatus").textContent="Anfragen konnten nicht geladen werden: "+error.message;return;}
+ const target=$("registrationRequests");target.replaceChildren();
+ const pending=(data||[]).filter(row=>row.account_status==="pending");
+ $("registrationAdminStatus").textContent=pending.length+" offene Registrierung(en).";
+ if(!data?.length){$("registrationAdminStatus").textContent="Keine offenen oder abgelehnten Registrierungen.";return;}
+ for(const row of data){
+  const item=document.createElement("div");item.className="item";
+  const heading=document.createElement("strong");heading.textContent=row.display_name||"Ohne Anzeigenamen";
+  const detail=document.createElement("p");detail.className="muted";detail.textContent=(row.email||"Keine E-Mail hinterlegt")+" · "+new Date(row.created_at).toLocaleString("de-DE")+" · Status: "+row.account_status;
+  item.append(heading,detail);
+  const actions=document.createElement("div");actions.className="actions";
+  if(row.account_status==="pending"){
+   const approve=document.createElement("button");approve.className="primary";approve.textContent="Freigeben als Administrator";approve.addEventListener("click",()=>updateRegistration(row.user_id,"active"));
+   const reject=document.createElement("button");reject.className="danger";reject.textContent="Ablehnen";reject.addEventListener("click",()=>updateRegistration(row.user_id,"rejected"));
+   actions.append(approve,reject);
+  }else{
+   const restore=document.createElement("button");restore.textContent="Wieder freigeben lassen";restore.addEventListener("click",()=>updateRegistration(row.user_id,"pending"));actions.append(restore);
+  }
+  item.append(actions);target.append(item);
+ }
+}
+async function updateRegistration(userId,status){
+ const label=status==="active"?"freigeben":status==="rejected"?"ablehnen":"zurücksetzen";
+ if(!confirm("Registrierung wirklich "+label+"?"))return;
+ const {data:me,error:meError}=await supabaseClient.auth.getUser();if(meError||!me.user){alert("Sitzung abgelaufen. Bitte erneut anmelden.");return;}
+ const {data:owner,error:ownerError}=await supabaseClient.from("app_users").select("app_role,account_status").eq("user_id",me.user.id).maybeSingle();
+ if(ownerError||owner?.app_role!=="owner"||owner?.account_status!=="active"){alert("Nur der aktive Eigentümer darf Registrierungen verwalten.");return;}
+ const {error}=await supabaseClient.from("app_users").update({account_status:status,app_role:"administrator"}).eq("user_id",userId);
+ if(error){alert("Änderung fehlgeschlagen: "+error.message);return;}
+ await loadPendingRegistrations();
+}
+$("refreshRegistrationsButton").addEventListener("click",loadPendingRegistrations);
+
 supabaseClient.auth.onAuthStateChange((event)=>{if(event==="SIGNED_OUT")showSignedOut();});
 (async()=>{try{const {data,error}=await supabaseClient.auth.getSession();if(error)throw error;await verifyAndShowSession(data.session?.user||null);}catch(err){showSignedOut();showAuthMessage("Anmeldung konnte nicht geprüft werden: "+err.message);}})();
 
