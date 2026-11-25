@@ -157,11 +157,11 @@ alter table public.audit_log enable row level security;
 
 -- App role records are visible to the owner only. Role changes are owner-only.
 drop policy if exists app_users_owner_select on public.app_users;
-create policy app_users_owner_select on public.app_users
-for select to authenticated using (public.app_is_owner());
 drop policy if exists app_users_self_select on public.app_users;
-create policy app_users_self_select on public.app_users
-for select to authenticated using (user_id = (select auth.uid()));
+drop policy if exists app_users_select on public.app_users;
+create policy app_users_select on public.app_users
+for select to authenticated
+using (public.app_is_owner() or user_id = (select auth.uid()));
 
 drop policy if exists app_users_owner_update on public.app_users;
 create policy app_users_owner_update on public.app_users
