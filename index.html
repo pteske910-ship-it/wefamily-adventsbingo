@@ -276,38 +276,133 @@ function renderRounds(){
  $("roundCount").value=db.rounds.length;
 }
 function confirmScoringChange(){if(!db.results.length)return true;return confirm("Die Wertung wird geändert. Sollen alle bereits gespeicherten Bingos anhand der neuen Einstellungen neu berechnet werden?")}
-function recalculateStoredPoints(){const groups={};db.results.forEach(r=>{const key=String(r.session||"Spieltag").trim()+"|"+Number(r.round||0);(groups[key]||(groups[key]=[])).push(r)});Object.values(groups).forEach(items=>{items.sort((a,b)=>Number(a.bingoNo||0)-Number(b.bingoNo||0));items.forEach((r,index)=>{const round=db.rounds.find(x=>Number(x.n)===Number(r.round)),mode=round?.mode==="Blackout"?"blackout":round?.mode==="Power-up"?"power":"normal";let points;if(db.scoring.mode==="place"){const schedule=db.scoring.placementsByMode?.[mode]||db.scoring.placements||[10,8,7,6,5,4,3,2,1,1],place=Number(r.bingoNo)>0?Number(r.bingoNo):index+1;points=Math.max(0,Number(schedule[place-1])||0)}else points=Math.max(0,Number(db.scoring[mode]??0));r.mode=mode;r.scoringMode=db.scoring.mode;r.points=points})})}
+function scoringModeKey(roundNo,result=null){
+ const round=db.rounds.find(x=>Number(x.n)===Number(roundNo));
+ const raw=result?.mode||round?.mode||"Normal";
+ return raw==="Blackout"||raw==="blackout"?"blackout":raw==="Power-up"||raw==="power"?"power":"normal";
+}
+function pointsForBingo(modeKey,firstPlace,count=1){
+ const n=Math.max(1,Math.floor(Number(count)||1));
+ if(db.scoring?.mode!=="place")return Math.max(0,Number(db.scoring?.[modeKey]??0))*n;
+ const schedule=db.scoring?.placementsByMode?.[modeKey]||db.scoring?.placements||[10,8,7,6,5,4,3,2,1,1];
+ let total=0;
+ for(let i=0;i<n;i++)total+=Math.max(0,Number(schedule[firstPlace+i-1])||0);
+ return total;
+}
+function recalculateStoredPoints(){
+ const groups={};
+ db.results.forEach((r,index)=>{
+  const key=String(r.session||"Spieltag").trim()+"|"+Number(r.round||0);
+  (groups[key]||(groups[key]=[])).push({r,index});
+ });
+ Object.values(groups).forEach(entries=>{
+  entries.sort((a,b)=>{
+   const ap=Number(a.r.bingoNo),bp=Number(b.r.bingoNo),av=Number.isFinite(ap)&&ap>0?ap:Number.POSITIVE_INFINITY,bv=Number.isFinite(bp)&&bp>0?bp:Number.POSITIVE_INFINITY;
+   return av-bv||a.index-b.index;
+  });
+  let nextPlace=1;
+  entries.forEach(({r})=>{
+   const count=Math.max(1,Math.floor(Number(r.count)||1)),savedPlace=Number(r.bingoNo);
+   const place=Number.isInteger(savedPlace)&&savedPlace>0?savedPlace:nextPlace;
+   const modeKey=scoringModeKey(r.round,r);
+   r.mode=modeKey;
+   r.scoringMode=db.scoring.mode==="place"?"place":"mode";
+   r.points=pointsForBingo(modeKey,place,count);
+   nextPlace=Math.max(nextPlace,place+count);
+  });
+ });
+}
 function setScoringMode(v){if(!["mode","place"].includes(v)||v===db.scoring.mode)return;if(!confirmScoringChange()){renderRounds();return}db.scoring.mode=v;recalculateStoredPoints();persist()}
-function saveModePoints(){if(!confirmScoringChange()){renderRounds();return}db.scoring.normal=Math.max(0,Number($("normalPoints").value)||0);db.scoring.power=Math.max(0,Number($("powerPoints").value)||0);db.scoring.blackout=Math.max(0,Number($("blackoutPoints").value)||0);recalculateStoredPoints();persist()}
-function savePlacementPoints(){const fields={normal:"placementPoints",power:"placementPointsPower",blackout:"placementPointsBlackout"},parsed={};for(const [mode,id] of Object.entries(fields)){const raw=$(id).value.trim(),values=raw.split(",").map(x=>Number(x.trim()));if(!raw||values.some(x=>!Number.isFinite(x)||x<0)){alert("Bitte für alle drei Bingo-Modi gültige, nichtnegative Punktwerte eingeben.");renderRounds();return}}if(!confirmScoringChange()){renderRounds();return}for(const [mode,id] of Object.entries(fields))parsed[mode]=$(id).value.split(",").map(x=>Number(x.trim()));db.scoring.placementsByMode=parsed;db.scoring.placements=parsed.normal;recalculateStoredPoints();persist()}
+function saveModePoints(){
+ const values={normal:$("normalPoints").value,power:$("powerPoints").value,blackout:$("blackoutPoints").value};
+ if(Object.values(values).some(v=>v.trim()===""||!/^\\d+$/.test(v.trim()))){alert("Bitte für alle drei Bingo-Modi ganze, nichtnegative Punktzahlen eingeben.");renderRounds();return}
+ if(!confirmScoringChange()){renderRounds();return}
+ db.scoring.normal=Number(values.normal);db.scoring.power=Number(values.power);db.scoring.blackout=Number(values.blackout);
+ recalculateStoredPoints();persist();
+}
+function savePlacementPoints(){
+ const fields={normal:"placementPoints",power:"placementPointsPower",blackout:"placementPointsBlackout"},parsed={};
+ for(const [mode,id] of Object.entries(fields)){
+  const raw=$(id).value.trim(),parts=raw.split(",");
+  if(!raw||parts.some(x=>!/^\\d+$/.test(x.trim()))){alert("Bitte für alle drei Bingo-Modi ganze, nichtnegative Punktwerte eingeben, z. B. 10,8,5,3,1.");renderRounds();return}
+  parsed[mode]=parts.map(x=>Number(x.trim()));
+ }
+ if(!confirmScoringChange()){renderRounds();return}
+ db.scoring.placementsByMode=parsed;db.scoring.placements=parsed.normal;
+ recalculateStoredPoints();persist();
+}
 function setRound(n,k,v){let r=db.rounds.find(x=>x.n===n);if(!r)return;if(k==="mode"&&db.results.some(x=>Number(x.round)===Number(n))&&!confirm("Der Bingo-Modus dieser Runde wird geändert. Die Punkte aller gespeicherten Ergebnisse dieser Runde werden neu berechnet. Fortfahren?")){renderRounds();return}r[k]=k==="pointsPerBingo"?Math.max(0,Math.floor(Number(v)||0)):v;if(k==="mode")recalculateStoredPoints();persist()}
 function applyRoundCount(){let n=Number($("roundCount").value);if(!Number.isInteger(n)||n<1||n>250)return alert("Bitte eine ganze Rundenzahl zwischen 1 und 250 eingeben.");let maxUsed=Math.max(0,...db.results.map(x=>Number(x.round)||0),...Object.values(db.roomStats||{}).map(x=>Number(x.round)||0));if(n<maxUsed)return alert("Die Rundenzahl kann nicht reduziert werden, weil bereits Daten bis Runde "+maxUsed+" gespeichert sind.");let old=db.rounds.slice();db.rounds=Array.from({length:n},(_,i)=>old[i]?{...old[i],n:i+1}:{n:i+1,mode:"Normal",pointsPerBingo:1,note:""});persist();alert(n+" Runden sind eingerichtet.")}
 function fillPlayerOptions(){const select=$("resultPlayer"),input=$("playerSearch"),list=$("playerSuggestions");if(!select||!input||!list)return;const q=input.value.trim().toLocaleLowerCase("de");const matches=db.players.filter(p=>(p.name+" "+(p.family||"")).toLocaleLowerCase("de").includes(q)).slice(0,30);select.innerHTML=matches.map(p=>'<option value="'+p.id+'">'+esc(p.name)+(p.family?" ("+esc(p.family)+")":"")+'</option>').join("")||'<option value="">Keine Treffer</option>';if(!matches.some(p=>p.id===select.value)&&matches.length)select.value=matches[0].id;list.innerHTML=matches.length?matches.map(p=>'<button type="button" class="player-suggestion" role="option" onclick="chooseResultPlayer(\''+p.id+'\')">'+esc(p.name)+(p.family?" ("+esc(p.family)+")":"")+'</button>').join(""):'<div class="player-no-match">Keine passenden Teilnehmer gefunden.</div>';list.classList.remove("hidden")}function chooseResultPlayer(id){const p=db.players.find(x=>x.id===id);if(!p)return;$("resultPlayer").value=id;$("playerSearch").value=p.name;$("playerSuggestions").classList.add("hidden")}function fillSelects(){let oldRound=$("resultRound").value,oldPlayer=$("resultPlayer").value,oldSession=$("sessionName").value;const fixed=["1. Advent","2. Advent","3. Advent","4. Advent"];const extras=[...new Set([...db.results.map(r=>String(r.session||"").trim()),...Object.keys(db.roomStats||{}).map(k=>k.split("|")[0].trim())])].filter(s=>s&&!fixed.includes(s));$("sessionName").innerHTML=[...fixed,...extras].map(s=>'<option value="'+esc(s)+'">'+esc(s)+'</option>').join("");$("sessionName").value=[...fixed,...extras].includes(oldSession)?oldSession:"1. Advent";$("resultRound").innerHTML=db.rounds.map(r=>'<option value="'+r.n+'">Runde '+r.n+' – '+esc(r.mode||"Normal")+(Number(r.pointsPerBingo)>0?" · "+r.pointsPerBingo+" P./Bingo":"")+'</option>').join("");if(oldRound&&db.rounds.some(r=>String(r.n)===oldRound))$("resultRound").value=oldRound;fillPlayerOptions();if(oldPlayer&&db.players.some(p=>p.id===oldPlayer)&&[...$("resultPlayer").options].some(o=>o.value===oldPlayer))$("resultPlayer").value=oldPlayer}
 function nextBingoNumber(){const session=($("sessionName").value.trim()||"Spieltag").trim(),round=Number($("resultRound").value);return db.results.filter(r=>String(r.session||"Spieltag").trim()===session&&Number(r.round)===round).reduce((sum,r)=>sum+Math.max(0,Number(r.count)||0),0)+1}
 function updateNextBingoNumber(){const el=$("nextBingoNumber");if(el)el.textContent="Bingo Nr. "+nextBingoNumber()}
-function saveResult(){if(!db.players.length)return alert("Lege zuerst Teilnehmer an.");let pid=$("resultPlayer").value;if(!pid)return alert("Bitte Teilnehmer auswählen.");let session=$("sessionName").value.trim()||"Spieltag",roundNo=Number($("resultRound").value),bingoNo=nextBingoNumber(),round=db.rounds.find(r=>r.n===roundNo),sc=db.scoring||{},mode=round?.mode==="Blackout"?"blackout":round?.mode==="Power-up"?"power":"normal",points;if(sc.mode==="place"){const schedule=sc.placementsByMode?.[mode]||sc.placements||[10,8,7,6,5,4,3,2,1,1];points=Math.max(0,Number(schedule[bingoNo-1])||0)}else{points=Math.max(0,Number(sc[mode]??0))}db.results.push({id:crypto.randomUUID(),session,round:roundNo,playerId:pid,count:1,bingoNo,mode,scoringMode:sc.mode==="place"?"place":"mode",points});persist();updateNextBingoNumber();}
+function saveResult(){
+ if(!db.players.length)return alert("Lege zuerst Teilnehmer an.");
+ const pid=$("resultPlayer").value;if(!pid)return alert("Bitte Teilnehmer auswählen.");
+ const session=$("sessionName").value.trim()||"Spieltag",roundNo=Number($("resultRound").value),bingoNo=nextBingoNumber();
+ const mode=scoringModeKey(roundNo),points=pointsForBingo(mode,bingoNo,1);
+ db.results.push({id:crypto.randomUUID(),session,round:roundNo,playerId:pid,count:1,bingoNo,mode,scoringMode:db.scoring?.mode==="place"?"place":"mode",points});
+ persist();updateNextBingoNumber();
+}
 function completeRound(){let current=Number($("resultRound").value);let next=db.rounds.find(r=>r.n>current);if(!next){alert("Das war die letzte angelegte Runde.");return}if(!confirm("Runde "+current+" abschließen und mit Runde "+next.n+" fortfahren? Bereits gespeicherte Ergebnisse bleiben erhalten."))return;$("resultRound").value=String(next.n);updateNextBingoNumber();$("resultPlayer").selectedIndex=0;alert("Weiter geht’s mit Runde "+next.n+".");}
 function renderResults(){const ordered=db.results.slice().sort((a,b)=>String(a.session).localeCompare(String(b.session))||Number(a.round)-Number(b.round)||Number(a.bingoNo||0)-Number(b.bingoNo||0));$("resultList").innerHTML=ordered.map(x=>{let p=db.players.find(p=>p.id===x.playerId),label=x.bingoNo?"Bingo Nr. "+x.bingoNo:(Number(x.count)>1?x.count+" Bingos (Altbestand)":"Bingo");return '<div class="item row between"><span><strong>'+esc(p?.name||"Gelöschter Teilnehmer")+(p?.family?" ("+esc(p.family)+")":"")+'</strong><br><small class="muted">'+esc(x.session)+' · Runde '+x.round+' · '+label+'</small></span><button class="small danger" onclick="delResult(\''+x.id+'\')">×</button></div>'}).join("")||'<p class="muted">Noch keine Ergebnisse erfasst.</p>'}
 function delResult(id){db.results=db.results.filter(x=>x.id!==id);persist()}
 function tally(session,round=null){
- let map={};db.players.forEach(p=>map[p.id]={bingos:0,points:0});
- db.results.filter(r=>String(r.session||"Spieltag").trim()===String(session||"Spieltag").trim()&&(round===null||Number(r.round)===Number(round))).forEach(r=>{if(map[r.playerId]){map[r.playerId].bingos+=Math.max(0,Number(r.count)||0);map[r.playerId].points+=Number(r.points)||0}});
- return Object.entries(map).map(([id,v])=>{let p=db.players.find(p=>p.id===id);return {id,total:v.bingos,points:v.points,name:(p?.name||"?")+(p?.family?" ("+p.family+")":"")}}).sort((a,b)=>b.points-a.points||b.total-a.total||a.name.localeCompare(b.name))
+ const map={};
+ db.players.forEach(p=>map[p.id]={bingos:0,points:0,modePoints:{normal:0,power:0,blackout:0},modeBingos:{normal:0,power:0,blackout:0}});
+ db.results.filter(r=>String(r.session||"Spieltag").trim()===String(session||"Spieltag").trim()&&(round===null||Number(r.round)===Number(round))).forEach(r=>{
+  const v=map[r.playerId];if(!v)return;
+  const count=Math.max(0,Number(r.count)||0),points=Number(r.points)||0,modeKey=scoringModeKey(r.round,r);
+  v.bingos+=count;v.points+=points;v.modePoints[modeKey]+=points;v.modeBingos[modeKey]+=count;
+ });
+ return Object.entries(map).map(([id,v])=>{
+  const p=db.players.find(p=>p.id===id);
+  return {id,total:v.bingos,points:v.points,modePoints:v.modePoints,modeBingos:v.modeBingos,name:(p?.name||"?")+(p?.family?" ("+p.family+")":"")};
+ }).sort((a,b)=>b.points-a.points||b.total-a.total||a.name.localeCompare(b.name));
 }
 function renderInternal(){
- let s=$("internalSession").value.trim()||"Spieltag";renderRoomStats();
- const sel=$("internalRound");if(sel){const old=sel.value;sel.innerHTML=db.rounds.map(r=>'<option value="'+r.n+'">Runde '+r.n+'</option>').join("");if(db.rounds.some(r=>String(r.n)===old))sel.value=old}
+ const s=$("internalSession").value.trim()||"Spieltag";renderRoomStats();
+ const sel=$("internalRound");
+ if(sel){
+  const old=sel.value;sel.innerHTML=db.rounds.map(r=>'<option value="'+r.n+'">Runde '+r.n+'</option>').join("");
+  if(db.rounds.some(r=>String(r.n)===old))sel.value=old;
+ }
  const current=sel?Number(sel.value||db.rounds[0]?.n||1):1;
  const roundRows=tally(s,current),rows=tally(s);
- const rankingHTML=(items,showBingos=true)=>items.filter(x=>x.points>0||x.total>0).map((x,i)=>'<div class="item row between"><span><strong>'+(i+1)+'. '+esc(x.name)+'</strong></span><span class="score">'+x.points+' Punkte'+(showBingos?' · '+x.total+' Bingos':'')+'</span></div>').join("")||'<p class="muted">Noch keine Ergebnisse für diese Auswahl.</p>';
+ const rankingHTML=items=>{
+  const ranked=items.filter(x=>x.points>0||x.total>0);let previous="",rank=0;
+  return ranked.map((x,i)=>{
+   const key=x.points+"|"+x.total;if(key!==previous)rank=i+1;previous=key;
+   return '<div class="item row between"><span><strong>'+rank+'. '+esc(x.name)+'</strong></span><span class="score">'+x.points+' Punkte · '+x.total+' Bingos</span></div>';
+  }).join("")||'<p class="muted">Noch keine Ergebnisse für diese Auswahl.</p>';
+ };
  $("internalRoundList").innerHTML=rankingHTML(roundRows);
  $("internalList").innerHTML=rankingHTML(rows);
  const sessions=[...new Set(db.results.map(r=>String(r.session||"Spieltag").trim()).filter(Boolean))];
- const allMap={};db.players.forEach(p=>allMap[p.id]={id:p.id,name:(p.name||"?")+(p.family?" ("+p.family+")":""),total:0,points:0,days:{}});
- sessions.forEach(day=>{const dayRows=tally(day);dayRows.forEach(x=>{if(allMap[x.id]){allMap[x.id].days[day]=x.points;allMap[x.id].points+=x.points;allMap[x.id].total+=x.total}})});
+ const allMap={};
+ db.players.forEach(p=>allMap[p.id]={id:p.id,name:(p.name||"?")+(p.family?" ("+p.family+")":""),total:0,points:0,days:{},modePoints:{normal:0,power:0,blackout:0}});
+ sessions.forEach(day=>{
+  tally(day).forEach(x=>{
+   const target=allMap[x.id];if(!target)return;
+   target.days[day]=x.points;target.points+=x.points;target.total+=x.total;
+   for(const mode of ["normal","power","blackout"])target.modePoints[mode]+=x.modePoints[mode];
+  });
+ });
  const overall=Object.values(allMap).sort((a,b)=>b.points-a.points||b.total-a.total||a.name.localeCompare(b.name));
- const headers=sessions.map(day=>'<th>'+esc(day)+'</th>').join("");
- $("tournamentList").innerHTML=sessions.length?'<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><thead><tr><th>Platz</th><th>Teilnehmer</th>'+headers+'<th>Gesamtpunkte</th><th>Bingos</th></tr></thead><tbody>'+overall.filter(x=>x.points>0||x.total>0).map((x,i)=>'<tr><td>'+(i+1)+'.</td><td>'+esc(x.name)+'</td>'+sessions.map(day=>'<td>'+(x.days[day]||0)+'</td>').join("")+'<td><strong>'+x.points+'</strong></td><td>'+x.total+'</td></tr>').join("")+'</tbody></table></div>':'<p class="muted">Sobald Ergebnisse an mehreren Spieltagen vorliegen, erscheint hier die Turnier-Gesamtwertung.</p>';
+ const visible=overall.filter(x=>x.points>0||x.total>0);
+ let previous="",rank=0;
+ const body=visible.map((x,i)=>{
+  const key=x.points+"|"+x.total;if(key!==previous)rank=i+1;previous=key;
+  return '<tr><td>'+rank+'.</td><td>'+esc(x.name)+'</td>'+
+   sessions.map(day=>'<td style="text-align:right">'+(x.days[day]||0)+'</td>').join("")+
+   '<td style="text-align:right">'+x.modePoints.normal+'</td><td style="text-align:right">'+x.modePoints.power+'</td><td style="text-align:right">'+x.modePoints.blackout+'</td>'+
+   '<td style="text-align:right"><strong>'+x.points+'</strong></td><td style="text-align:right">'+x.total+'</td></tr>';
+ }).join("");
+ const headers=sessions.map(day=>'<th style="text-align:right">'+esc(day)+'</th>').join("");
+ $("tournamentList").innerHTML=sessions.length?
+  '<p class="muted">Gesamtpunkte aus allen Spieltagen. Die Modus-Spalten zeigen, woher die Punkte stammen. Bei gleicher Punktzahl und gleicher Bingo-Anzahl wird derselbe Rang vergeben.</p>'+
+  '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;white-space:nowrap"><thead><tr><th>Platz</th><th>Teilnehmer</th>'+headers+'<th style="text-align:right">Normal</th><th style="text-align:right">Power-up</th><th style="text-align:right">Blackout</th><th style="text-align:right">Gesamtpunkte</th><th style="text-align:right">Bingos</th></tr></thead><tbody>'+body+'</tbody></table></div>':
+  '<p class="muted">Sobald Ergebnisse an mehreren Spieltagen vorliegen, erscheint hier die Turnier-Gesamtwertung.</p>';
 }
 
 function renderAll(){renderPlayers();renderRounds();$("roundCount").value=db.rounds.length;fillSelects();fillRoomRounds();renderResults();updateNextBingoNumber();renderRoomStats();$("statPlayers").textContent=db.players.length;$("statRounds").textContent=db.rounds.length;$("statEntries").textContent=db.results.length}
@@ -477,8 +572,11 @@ $("enableCloudEditButton").addEventListener("click",()=>{
 $("cloudImportButton").addEventListener("click",importBackupToCloud);$("cloudImportFile").addEventListener("change",()=>{$("cloudImportStatus").textContent=$("cloudImportFile").files[0]?.name||"Noch keine Datei ausgewählt.";});
 function exportData(){let a=document.createElement("a"),u=URL.createObjectURL(new Blob([JSON.stringify(db,null,2)],{type:"application/json"}));a.href=u;a.download="wefamily-adventsbingo-sicherung.json";a.click();URL.revokeObjectURL(u)}
 function importData(e){let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let d=JSON.parse(r.result);if(!Array.isArray(d.players)||!Array.isArray(d.rounds)||!Array.isArray(d.results))throw Error();db=d;persist();alert("Sicherung importiert.")}catch{alert("Datei ist keine gültige Sicherung.")}};r.readAsText(f)}
-function resetData(){if(confirm("Wirklich alle lokalen Teilnehmer und Ergebnisse löschen?")){localStorage.removeItem("wf-adventbingo-v01");db={players:[],rounds:defaultRounds,results:[],presence:{}};persist()}}
-
+function resetData(){
+ if(!confirm("Wirklich alle lokalen Daten löschen? Teilnehmer, Ergebnisse, Raumstatistiken und Turnier-Einstellungen werden auf den Ausgangszustand zurückgesetzt."))return;
+ db=emptyDB();
+ persist();
+}
 
 function setAdminView(v){
  $("adminRoomView").classList.toggle("hidden",v==="stats");
