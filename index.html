@@ -315,7 +315,7 @@ function recalculateStoredPoints(){
 function setScoringMode(v){if(!["mode","place"].includes(v)||v===db.scoring.mode)return;if(!confirmScoringChange()){renderRounds();return}db.scoring.mode=v;recalculateStoredPoints();persist()}
 function saveModePoints(){
  const values={normal:$("normalPoints").value,power:$("powerPoints").value,blackout:$("blackoutPoints").value};
- if(Object.values(values).some(v=>v.trim()===""||!/^\\d+$/.test(v.trim()))){alert("Bitte für alle drei Bingo-Modi ganze, nichtnegative Punktzahlen eingeben.");renderRounds();return}
+ if(Object.values(values).some(v=>v.trim()===""||!/^\d+$/.test(v.trim()))){alert("Bitte für alle drei Bingo-Modi ganze, nichtnegative Punktzahlen eingeben.");renderRounds();return}
  if(!confirmScoringChange()){renderRounds();return}
  db.scoring.normal=Number(values.normal);db.scoring.power=Number(values.power);db.scoring.blackout=Number(values.blackout);
  recalculateStoredPoints();persist();
@@ -324,7 +324,7 @@ function savePlacementPoints(){
  const fields={normal:"placementPoints",power:"placementPointsPower",blackout:"placementPointsBlackout"},parsed={};
  for(const [mode,id] of Object.entries(fields)){
   const raw=$(id).value.trim(),parts=raw.split(",");
-  if(!raw||parts.some(x=>!/^\\d+$/.test(x.trim()))){alert("Bitte für alle drei Bingo-Modi ganze, nichtnegative Punktwerte eingeben, z. B. 10,8,5,3,1.");renderRounds();return}
+  if(!raw||parts.some(x=>!/^\d+$/.test(x.trim()))){alert("Bitte für alle drei Bingo-Modi ganze, nichtnegative Punktwerte eingeben, z. B. 10,8,5,3,1.");renderRounds();return}
   parsed[mode]=parts.map(x=>Number(x.trim()));
  }
  if(!confirmScoringChange()){renderRounds();return}
