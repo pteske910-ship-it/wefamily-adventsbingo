@@ -15,9 +15,10 @@ function makeSeed() {
     return state / 0x100000000;
   };
   const int = (min, max) => min + Math.floor(random() * (max - min + 1));
+  const initialNames = ["Nami","🔥Viktor","itslaylla👻","MoMo¹⁶¹","Mommy","CHARLY ✨🥖","PASCAL","Hubii","King","David","Christoph","Jenny","ARRO-FISCHER","ELFI_ÖMMEL","QUEEN♡p","FABIⓎ","Tanja","Ⓨ Dark","Santa Clause","Petra","Santas Wife","Rene","JONNY💀","Rover","Klein Marie","Daniel","Ⓨ Fanni","LovelyWoman","GARY","Carsten","Gus","Eis. de","JOSI","NICII ☀️","Shadow ☯","Soulgard","Unknown","Itacki"];
   const players = Array.from({ length: 70 }, (_, i) => ({
     id: 'soak-player-' + String(i + 1).padStart(2, '0'),
-    name: 'Dauerlast Teilnehmer ' + String(i + 1).padStart(2, '0'),
+    name: initialNames[i] || 'Dauerlast Teilnehmer ' + String(i + 1).padStart(2, '0'),
     family: ''
   }));
   const modes = ['Normal', 'Power-up', 'Blackout'];
@@ -97,6 +98,10 @@ test('60 Minuten Browser-Dauerlast: echte UI, Dateneingabe, Tageswechsel und Ran
     rankingChecks: 0,
     reloads: 0,
     samples: [],
+    simulatedDurationCount: 0,
+    simulatedDurationTotalSeconds: 0,
+    simulatedDurationMinSeconds: 240,
+    simulatedDurationMaxSeconds: 30,
     errors: pageErrors
   };
 
@@ -142,7 +147,10 @@ test('60 Minuten Browser-Dauerlast: echte UI, Dateneingabe, Tageswechsel und Ran
 
         report.actions++;
         roundIndex++;
-        report.lastSimulatedRoundDurationSeconds = simulatedDurationSeconds;
+        report.simulatedDurationCount++;
+        report.simulatedDurationTotalSeconds += simulatedDurationSeconds;
+        report.simulatedDurationMinSeconds = Math.min(report.simulatedDurationMinSeconds, simulatedDurationSeconds);
+        report.simulatedDurationMaxSeconds = Math.max(report.simulatedDurationMaxSeconds, simulatedDurationSeconds);
 
         if (roundIndex % 25 === 0) {
           const snapshot = await page.evaluate(() => {
@@ -166,8 +174,8 @@ test('60 Minuten Browser-Dauerlast: echte UI, Dateneingabe, Tageswechsel und Ran
       await page.locator('#internalSession').fill(session);
       await page.locator('#internalRoomView button[onclick="renderInternal()"]').click();
       await page.locator('button[data-adminview="stats"]').click();
-      await page.locator('#statsSession').selectOption('__all');
-      await page.locator('#statsSession').dispatchEvent('change');
+      const statsSelection = dayIndex % 10 === 0 ? '__all' : session;
+      await page.locator('#statsSession').selectOption(statsSelection);
       const statsText = await page.locator('#statsReport').innerText();
       assert.match(statsText, /Bingos gesamt/i, 'Gesamtstatistik wird im Browser gerendert');
       report.rankingChecks++;
@@ -205,6 +213,8 @@ test('60 Minuten Browser-Dauerlast: echte UI, Dateneingabe, Tageswechsel und Ran
 
     report.elapsedMs = Date.now() - started;
     report.finishedAt = new Date().toISOString();
+    report.simulatedDurationAverageSeconds = report.simulatedDurationCount
+      ? report.simulatedDurationTotalSeconds / report.simulatedDurationCount : 0;
     report.finalResultCount = await page.evaluate(() =>
       JSON.parse(localStorage.getItem('wf-adventbingo-v01') || '{}').results?.length || 0);
     report.errors = pageErrors.slice();
@@ -212,6 +222,8 @@ test('60 Minuten Browser-Dauerlast: echte UI, Dateneingabe, Tageswechsel und Ran
     assert.ok(report.actions > 0, 'Es wurden Bingo-Ergebnisse über die echte UI gespeichert');
     assert.ok(report.completedDays > 0, 'Es wurden Spieltage durchlaufen');
     assert.ok(report.rankingChecks > 0, 'Tages- und Gesamtwertungen wurden wiederholt gerendert');
+    assert.ok(report.simulatedDurationMinSeconds >= 30 && report.simulatedDurationMaxSeconds <= 240,
+      'Simulierte Rundendauern liegen zwischen 30 und 240 Sekunden');
     assert.equal(report.finalResultCount, report.actions, 'Alle Aktionen liegen dauerhaft im Browser-Speicher');
     assert.deepEqual(pageErrors, [], 'Keine Browser-JavaScript- oder Konsolenfehler');
 
