@@ -1,42 +1,173 @@
 <!doctype html>
-<html lang="de">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>WeFamily – E-Mail-Adresse bestätigen</title>
-  </head>
-  <body style="margin:0;padding:0;background:#100e1b;font-family:Arial,Helvetica,sans-serif;color:#f6f0ff;">
-    <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">
-      Bestätige deine E-Mail-Adresse, damit wir deinen WeFamily-Spielmanager-Zugang einrichten können.
-    </div>
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#100e1b;padding:32px 12px;">
-      <tr><td align="center">
-        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:560px;background:#211a32;border:1px solid #403454;border-radius:18px;overflow:hidden;">
-          <tr><td style="padding:30px 32px 18px;text-align:center;background:linear-gradient(135deg,#39234f,#211a32);">
-            <div style="font-size:34px;line-height:1;">🎄</div>
-            <div style="margin-top:12px;font-size:23px;font-weight:700;letter-spacing:.2px;color:#ffffff;">WeFamily Spielmanager</div>
-            <div style="margin-top:7px;font-size:13px;color:#d8c9eb;">Gemeinsam spielen. Gemeinsam organisieren.</div>
-          </td></tr>
-          <tr><td style="padding:30px 32px 34px;">
-            <h1 style="margin:0 0 16px;font-size:23px;line-height:1.3;color:#ffffff;">Bitte bestätige deine E-Mail-Adresse</h1>
-            <p style="margin:0 0 14px;font-size:15px;line-height:1.65;color:#e8e0f2;">Schön, dass du beim WeFamily-Spielmanager dabei sein möchtest.</p>
-            <p style="margin:0 0 24px;font-size:15px;line-height:1.65;color:#e8e0f2;">Mit einem Klick bestätigst du, dass diese E-Mail-Adresse dir gehört. Anschließend muss dein Zugang noch vom Eigentümer des Spielmanagers freigegeben werden.</p>
-            <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto 24px;">
-              <tr><td align="center" bgcolor="#a879df" style="border-radius:10px;">
-                <a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:15px 26px;color:#1b1228;text-decoration:none;font-size:15px;font-weight:700;border-radius:10px;">E-Mail-Adresse bestätigen</a>
-              </td></tr>
-            </table>
-            <p style="margin:0 0 12px;font-size:13px;line-height:1.6;color:#c9bdd8;">Wenn der Button nicht funktioniert, kopiere diesen Link in deinen Browser:</p>
-            <p style="margin:0 0 24px;word-break:break-all;font-size:12px;line-height:1.6;"><a href="{{ .ConfirmationURL }}" style="color:#d4aaff;">{{ .ConfirmationURL }}</a></p>
-            <div style="height:1px;background:#403454;margin:22px 0;"></div>
-            <p style="margin:0;font-size:12px;line-height:1.6;color:#b9acc9;">Falls du dich nicht beim WeFamily-Spielmanager registriert hast, kannst du diese E-Mail ignorieren. Es wird kein Zugang für dich freigeschaltet.</p>
-          </td></tr>
-          <tr><td style="padding:18px 32px;text-align:center;background:#191426;color:#a99bb9;font-size:11px;line-height:1.6;">
-            WeFamily Spielmanager<br>
-            <a href="{{ .SiteURL }}" style="color:#c9a3ec;text-decoration:none;">Zum Spielmanager</a>
-          </td></tr>
+<html lang="de" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="x-apple-disable-message-reformatting">
+  <title>WeFamily – E-Mail bestätigen</title>
+  <style>
+    html, body { margin:0 !important; padding:0 !important; width:100% !important; background:#06132d; }
+    table { border-spacing:0; border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; }
+    img { border:0; outline:none; text-decoration:none; -ms-interpolation-mode:bicubic; }
+    a { text-decoration:none; }
+    @media screen and (max-width:620px) {
+      .email-wrap { width:100% !important; }
+      .outer-pad { padding:16px 8px !important; }
+      .inner-pad { padding-left:20px !important; padding-right:20px !important; }
+      .logo { width:260px !important; max-width:88% !important; }
+      .welcome-line { font-size:23px !important; line-height:29px !important; }
+      .family-line { font-size:48px !important; line-height:52px !important; }
+      .main-card { border-radius:18px !important; }
+      .copy { font-size:16px !important; line-height:25px !important; }
+      .cta { display:block !important; padding:17px 12px !important; font-size:18px !important; }
+      .footer-mascot { width:130px !important; }
+      .footer-copy { font-size:24px !important; line-height:30px !important; }
+    }
+  </style>
+</head>
+<body style="margin:0; padding:0; background-color:#06132d;">
+  <!-- Vorschautext -->
+  <div style="display:none; max-height:0; overflow:hidden; opacity:0; color:transparent; mso-hide:all;">
+    Nur noch ein Klick: Bestätige deine E-Mail-Adresse und aktiviere deinen WeFamily-Spielmanager-Account.
+  </div>
+
+  <table role="presentation" width="100%" bgcolor="#06132d" style="width:100%; background:#06132d;">
+    <tr>
+      <td align="center" class="outer-pad" style="padding:26px 12px 32px;">
+        <table role="presentation" width="600" class="email-wrap" style="width:600px; max-width:600px;">
+
+          <!-- obere Comic-Akzente -->
+          <tr>
+            <td align="center" style="padding:0 12px 8px;">
+              <table role="presentation" width="100%">
+                <tr>
+                  <td align="left" style="color:#ff43c6; font-family:Arial,sans-serif; font-size:27px; line-height:30px; font-weight:bold;">◢ ✦</td>
+                  <td align="right" style="color:#00dfff; font-family:Arial,sans-serif; font-size:27px; line-height:30px; font-weight:bold;">✦ ◣</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Familienlogo: Bild muss öffentlich per HTTPS erreichbar sein -->
+          <tr>
+            <td align="center" style="padding:0 18px 10px;">
+              <img class="logo" src="https://xukplcslrfecpqxyhhvn.supabase.co/storage/v1/object/public/wefamily-email-assets/wefamily-logo.jpg" width="340" alt="WeFamily – Familienlogo mit Pinguin-Maskottchen" style="display:block; width:340px; max-width:90%; height:auto;">
+            </td>
+          </tr>
+
+          <!-- Headline / Comic-Banner -->
+          <tr>
+            <td align="center" style="padding:0 8px 24px;">
+              <table role="presentation" width="100%">
+                <tr>
+                  <td align="center" bgcolor="#00cfee" style="padding:3px; background:#00cfee; transform:skew(-3deg);">
+                    <table role="presentation" width="100%">
+                      <tr>
+                        <td align="center" bgcolor="#092044" style="padding:10px 8px 8px; background:#092044;">
+                          <div class="welcome-line" style="font-family:Arial,Helvetica,sans-serif; color:#ffffff; font-size:27px; line-height:34px; font-weight:900; font-style:italic; letter-spacing:1px; text-transform:uppercase;">HEY, WILLKOMMEN IN DER</div>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td align="center" style="padding-top:4px;">
+                    <div class="family-line" style="font-family:Arial,Helvetica,sans-serif; color:#ffd21c; font-size:62px; line-height:66px; font-weight:900; font-style:italic; letter-spacing:-2px; text-transform:uppercase; text-shadow:3px 4px 0 #e95b00;">FAMILY!</div>
+                    <div style="font-family:Arial,sans-serif; color:#ff9b00; font-size:20px; line-height:24px; letter-spacing:8px;">✦ ━━━━━━━━━ ✦</div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Hauptkarte -->
+          <tr>
+            <td class="inner-pad" style="padding:0 24px;">
+              <table role="presentation" width="100%" class="main-card" bgcolor="#0d2145" style="width:100%; background:#0d2145; border:2px solid #00dfff; border-bottom:4px solid #a52bff; border-radius:22px;">
+                <tr>
+                  <td style="padding:28px 28px 25px;">
+                    <!-- kleine Comic-Symbole -->
+                    <table role="presentation" width="100%">
+                      <tr>
+                        <td align="left" style="font-family:Arial,sans-serif; color:#ffd21c; font-size:23px; line-height:25px;">✦ ✧</td>
+                        <td align="right" style="font-family:Arial,sans-serif; color:#ff8a00; font-size:23px; line-height:25px;">✧ ✦</td>
+                      </tr>
+                    </table>
+                    <p style="margin:10px 0 18px; color:#ffffff; font-family:Arial,Helvetica,sans-serif; font-size:26px; line-height:33px; font-weight:900;">{{ if .Data.display_name }}Hallo <span style="color:#00dfff;">{{ .Data.display_name }}</span>!{{ else }}Hallo!{{ end }}</p>
+                    <p class="copy" style="margin:0 0 14px; color:#f2f6ff; font-family:Arial,Helvetica,sans-serif; font-size:17px; line-height:27px;">Schön, dass du dich beim WeFamily-Spielmanager registriert hast!</p>
+                    <p class="copy" style="margin:0 0 25px; color:#f2f6ff; font-family:Arial,Helvetica,sans-serif; font-size:17px; line-height:27px;">Um deinen Account zu aktivieren und die Registrierung abzuschließen, bestätige bitte jetzt deine E-Mail-Adresse.</p>
+
+                    <!-- Echter anklickbarer CTA-Link; Supabase ersetzt die URL -->
+                    <table role="presentation" align="center" style="margin:0 auto 22px;">
+                      <tr>
+                        <td align="center" bgcolor="#ffad00" style="background:#ffad00; border:3px solid #ffe45c; border-radius:36px; box-shadow:0 0 18px #ff9b00;">
+                          <a class="cta" href="{{ .ConfirmationURL }}" target="_blank" role="button" style="display:inline-block; padding:19px 30px; color:#07152f; font-family:Arial,Helvetica,sans-serif; font-size:21px; line-height:26px; font-weight:900; text-align:center; text-decoration:none; text-transform:uppercase; border-radius:36px;">✉ &nbsp; ACCOUNT JETZT BESTÄTIGEN</a>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <!-- Gaming-Icons als echte Text-/Unicode-Elemente -->
+                    <table role="presentation" width="100%" style="margin:4px 0 18px;">
+                      <tr>
+                        <td align="center" style="font-family:Arial,sans-serif; font-size:27px; line-height:32px; color:#00dfff;">🎮</td>
+                        <td align="center" style="font-family:Arial,sans-serif; font-size:27px; line-height:32px; color:#ffd21c;">🏆</td>
+                        <td align="center" style="font-family:Arial,sans-serif; font-size:27px; line-height:32px; color:#00dfff;">🎲</td>
+                        <td align="center" style="font-family:Arial,sans-serif; font-size:27px; line-height:32px; color:#00dfff;">💎</td>
+                        <td align="center" style="font-family:Arial,sans-serif; font-size:27px; line-height:32px; color:#ff43c6;">🪙</td>
+                      </tr>
+                    </table>
+                    <div style="height:1px; background:#28527d; font-size:1px; line-height:1px;">&nbsp;</div>
+                    <p style="margin:15px 0 0; color:#dce8ff; font-family:Arial,Helvetica,sans-serif; font-size:13px; line-height:20px; text-align:center;">Der Bestätigungslink ist aus Sicherheitsgründen nur begrenzte Zeit gültig.</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer mit zusätzlichem Maskottchenbild und Comic-Banner -->
+          <tr>
+            <td style="padding:24px 12px 0;">
+              <table role="presentation" width="100%">
+                <tr>
+                  <td width="34%" valign="bottom" align="left" style="width:34%;">
+                    <img class="footer-mascot" src="https://xukplcslrfecpqxyhhvn.supabase.co/storage/v1/object/public/wefamily-email-assets/wefamily-mascot-footer.jpg" width="165" alt="WeFamily-Pinguin-Maskottchen" style="display:block; width:165px; max-width:100%; height:auto;">
+                  </td>
+                  <td width="66%" valign="middle" align="center" style="width:66%;">
+                    <table role="presentation" width="100%">
+                      <tr>
+                        <td align="center" bgcolor="#00dfff" style="padding:4px; background:#00dfff;">
+                          <table role="presentation" width="100%">
+                            <tr>
+                              <td align="center" bgcolor="#092044" style="padding:14px 8px; background:#092044;">
+                                <div class="footer-copy" style="font-family:Arial,Helvetica,sans-serif; color:#ffffff; font-size:25px; line-height:32px; font-weight:900; font-style:italic;">WIR SEHEN UNS<br>IM SPIEL!</div>
+                                <div style="font-family:Arial,sans-serif; color:#ffd21c; font-size:19px; line-height:24px;">⚡ ✦ ⚡</div>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer-Hinweise -->
+          <tr>
+            <td align="center" style="padding:20px 20px 0;">
+              <p style="margin:0 0 9px; color:#9eafd0; font-family:Arial,Helvetica,sans-serif; font-size:12px; line-height:19px;">Diese E-Mail wurde automatisch vom WeFamily-Spielmanager versendet.</p>
+              <p style="margin:0 0 9px; color:#9eafd0; font-family:Arial,Helvetica,sans-serif; font-size:12px; line-height:19px;">Falls du dich nicht selbst registriert hast, kannst du diese Nachricht ignorieren.</p>
+              <p style="margin:0; color:#7186ad; font-family:Arial,Helvetica,sans-serif; font-size:11px; line-height:17px;">&copy; WeFamily – Gemeinsam spielen. Gemeinsam gewinnen.</p>
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="padding:16px 10px 0; color:#00dfff; font-family:Arial,sans-serif; font-size:20px; line-height:24px; letter-spacing:8px;">✦ ━━━━━━━━━ ✦</td>
+          </tr>
         </table>
-      </td></tr>
-    </table>
-  </body>
+      </td>
+    </tr>
+  </table>
+</body>
 </html>
