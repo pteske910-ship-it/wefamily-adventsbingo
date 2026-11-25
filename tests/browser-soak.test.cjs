@@ -172,7 +172,7 @@ test('60 Minuten Browser-Dauerlast: echte UI, Dateneingabe, Tageswechsel und Ran
       // Tatsächliche Navigation durch die Bereiche und Neuberechnung der Tages- und Gesamtwertung.
       await tab('internal').click();
       await page.locator('#internalSession').fill(session);
-      await page.locator('#internalRoomView button[onclick="renderInternal()"]').click();
+      await page.locator('#adminRoomView button[onclick="renderInternal()"]').click();
       await page.locator('button[data-adminview="stats"]').click();
       const statsSelection = dayIndex % 10 === 0 ? '__all' : session;
       await page.locator('#statsSession').selectOption(statsSelection);
