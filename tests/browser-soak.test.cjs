@@ -107,7 +107,9 @@ test('60 Minuten Browser-Dauerlast: echte UI, Dateneingabe, Tageswechsel und Ran
 
   try {
     await page.addInitScript(seed => {
-      localStorage.setItem('wf-adventbingo-v01', JSON.stringify(seed));
+      if (!localStorage.getItem('wf-adventbingo-v01')) {
+        localStorage.setItem('wf-adventbingo-v01', JSON.stringify(seed));
+      }
     }, db);
     await page.goto(url, { waitUntil: 'domcontentloaded' });
     await page.evaluate(() => document.getElementById('introSplash')?.remove());
