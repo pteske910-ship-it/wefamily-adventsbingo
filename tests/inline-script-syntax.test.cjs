@@ -6,7 +6,7 @@ const vm = require('node:vm');
 
 test('Inline-JavaScript der Webapp ist syntaktisch gültig', () => {
   const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
-  const scripts = [...html.matchAll(/<script(?:\\s[^>]*)?>([\\s\\S]*?)<\\/script>/g)]
+  const scripts = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)]
     .map(match => match[1])
     .filter(source => source.trim());
   assert.equal(scripts.length, 1, 'Es wird genau ein Inline-App-Script erwartet');
