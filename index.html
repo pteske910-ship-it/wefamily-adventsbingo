@@ -331,5 +331,5 @@ renderAll();
   }
   requestAnimationFrame(frame);
  };
- Promise.all([sleigh.decode?sleigh.decode().catch(()=>{}):Promise.resolve(),bg.decode?bg.decode().catch(()=>{}):Promise.resolve()]).then(begin);
+ Promise.race([Promise.all([sleigh.decode?sleigh.decode().catch(()=>{}):Promise.resolve(),bg.decode?bg.decode().catch(()=>{}):Promise.resolve()]),new Promise(resolve=>setTimeout(resolve,1500))]).then(begin);
 })();</script></body></html>
