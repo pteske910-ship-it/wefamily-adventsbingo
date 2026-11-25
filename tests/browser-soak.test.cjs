@@ -5,7 +5,7 @@ const path = require('node:path');
 const http = require('node:http');
 const { chromium } = require('playwright');
 
-const DURATION_MS = 60 * 60 * 1000;
+const DURATION_MS = Number(process.env.SOAK_DURATION_MS || 60 * 60 * 1000);
 const ROOT = path.resolve(__dirname, '..');
 
 function makeSeed() {
@@ -112,11 +112,14 @@ test('60 Minuten Browser-Dauerlast: echte UI, Dateneingabe, Tageswechsel und Ran
       }
     }, db);
     await page.goto(url, { waitUntil: 'domcontentloaded' });
-    await page.evaluate(() => document.getElementById('introSplash')?.remove());
+    await page.locator('#introSplash').waitFor({ state: 'detached', timeout: 20000 });
     assert.equal(await page.title(), 'WeFamily Adventsbingo');
 
     const tab = name => page.locator('button.tab[data-tab="' + name + '"]');
     await tab('results').click();
+    await page.locator('#results').waitFor({ state: 'visible', timeout: 5000 });
+    assert.equal(await tab('results').getAttribute('class').then(v => v.includes('active')), true,
+      'Ergebnis-Tab wird durch echten Klick aktiviert');
     const saveSelector = '#results button[onclick="saveResult()"]';
     assert.equal(await page.locator(saveSelector).count(), 1, 'Speichern-Schaltfläche ist sichtbar');
 
@@ -199,8 +202,9 @@ test('60 Minuten Browser-Dauerlast: echte UI, Dateneingabe, Tageswechsel und Ran
       // Nach jeweils 20 vollständigen Tagen wird ein echter Browser-Reload ausgeführt.
       if (dayIndex % 20 === 0 && Date.now() < deadline) {
         await page.reload({ waitUntil: 'domcontentloaded' });
-        await page.evaluate(() => document.getElementById('introSplash')?.remove());
+        await page.locator('#introSplash').waitFor({ state: 'detached', timeout: 20000 });
         await tab('results').click();
+        await page.locator('#results').waitFor({ state: 'visible', timeout: 5000 });
         report.reloads++;
         const persistedCount = await page.evaluate(() =>
           JSON.parse(localStorage.getItem('wf-adventbingo-v01') || '{}').results?.length || 0);
