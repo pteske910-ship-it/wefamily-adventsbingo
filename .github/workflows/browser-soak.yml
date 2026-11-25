@@ -1,0 +1,34 @@
+name: Adventsbingo – 60-Minuten-Browser-Dauerlast
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-soak:
+    name: 60 Minuten echte Browser-Dauerlast
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@v4
+      - name: Node.js einrichten
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Playwright installieren
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: 60-Minuten-Dauerlast starten
+        run: node --test tests/browser-soak.test.cjs
+      - name: Testprotokoll hochladen
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: adventsbingo-browser-soak-report
+          path: artifacts/browser-soak-report.json
+          if-no-files-found: warn
+          retention-days: 30
