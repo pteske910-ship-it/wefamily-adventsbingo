@@ -28,11 +28,11 @@ function extractFunction(name) {
   throw new Error('Funktion nicht vollständig: ' + name);
 }
 
-const functions = ['statSessions', 'tally', 'statData', 'compareDays'].map(extractFunction);
+const functions = ['statSessions', 'tally', 'statData', 'compareDays', 'resolveBingoPoints'].map(extractFunction);
 const sandbox = { db: null, Object, Number, String, Math, Set };
 vm.createContext(sandbox);
-vm.runInContext(functions.join('\n') + '\nthis.api={statSessions,tally,statData,compareDays};', sandbox);
-const { statSessions, tally, statData, compareDays } = sandbox.api;
+vm.runInContext(functions.join('\n') + '\nthis.api={statSessions,tally,statData,compareDays,resolveBingoPoints};', sandbox);
+const { statSessions, tally, statData, compareDays, resolveBingoPoints } = sandbox.api;
 
 function rng(seed) {
   let x = seed >>> 0;
@@ -115,4 +115,21 @@ test('100 zufällige vollständige Spielverläufe: Bingo-, Punkte- und Tagesverg
       assert.equal(compared[i].newcomers, [...current].filter(id => !previous.has(id)).length, scenario + ': Neu dabei ' + compared[i].session);
     }
   }
+});
+
+
+test('Wertung bleibt turnierweit einheitlich und berücksichtigt Rundeneinstellung oder Platzierung', () => {
+  const round = { n: 1, mode: 'Blackout', pointsPerBingo: 4 };
+  assert.equal(resolveBingoPoints(round, 1, { mode: 'mode', normal: 2, power: 3, blackout: 9 }), 4,
+    'Im festen System zählt der frei konfigurierte Rundenwert, nicht der Spielmodus');
+  assert.equal(resolveBingoPoints({ ...round, mode: 'Normal', pointsPerBingo: 8 }, 2, { mode: 'mode' }), 8,
+    'Jede Runde kann einen eigenen festen Punktewert haben');
+  const placements = [8, 7, 5, 3];
+  const scoring = { mode: 'place', placements };
+  assert.equal(resolveBingoPoints(round, 1, scoring), 8, 'Bingo Nr. 1 erhält den Wert für Platz 1');
+  assert.equal(resolveBingoPoints(round, 2, scoring), 7, 'Bingo Nr. 2 erhält den Wert für Platz 2');
+  assert.equal(resolveBingoPoints(round, 3, scoring), 5, 'Bingo Nr. 3 erhält den Wert für Platz 3');
+  assert.equal(resolveBingoPoints(round, 5, scoring), 0, 'Nicht konfigurierte Platzierungen erhalten 0 Punkte');
+  assert.equal(resolveBingoPoints(round, 1, { mode: 'place', placements: [10, 8, 7] }), 10,
+    'Eine andere Liga kann eine andere Platzierungstabelle verwenden');
 });
