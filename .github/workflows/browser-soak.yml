@@ -1,6 +1,8 @@
-name: Adventsbingo – 60-Minuten-Browser-Dauerlast
+name: Adventsbingo – Browser-Vorabtest und 60-Minuten-Dauerlast
 
 on:
+  push:
+    branches: ['test/**']
   workflow_dispatch:
 
 permissions:
@@ -8,7 +10,7 @@ permissions:
 
 jobs:
   browser-soak:
-    name: 60 Minuten echte Browser-Dauerlast
+    name: Browser-Funktionsprüfung
     runs-on: ubuntu-latest
     timeout-minutes: 70
     steps:
@@ -22,9 +24,10 @@ jobs:
         run: |
           npm install --no-save playwright
           npx playwright install --with-deps chromium
-      - name: Kurzer vollständiger Browser-Vorabtest (30 Sekunden)
+      - name: Echter Browser-Vorabtest (30 Sekunden)
         run: SOAK_DURATION_MS=30000 node --test tests/browser-soak.test.cjs
-      - name: 60-Minuten-Dauerlast starten
+      - name: 60-Minuten-Dauerlast (nur manuell gestartet)
+        if: github.event_name == 'workflow_dispatch'
         run: node --test tests/browser-soak.test.cjs
       - name: Testprotokoll hochladen
         if: always()
