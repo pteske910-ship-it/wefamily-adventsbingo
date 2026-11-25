@@ -109,7 +109,7 @@
 </section>
 <section id="internal" class="pane hidden">
 <div class="admin-subnav no-print"><button class="primary" data-adminview="day" onclick="setAdminView('day')">Tageswertung</button><button data-adminview="stats" onclick="setAdminView('stats')">📊 Statistiken</button></div><div id="adminRoomView"><div class="notice">VERTRAULICH – interne Tageswertung. Dies ist in Version 0.1 nur eine ausgeblendete Oberfläche, kein sicherer Zugriffsschutz. Nicht auf einem gemeinsam genutzten Gerät mit Teilnehmern öffnen.</div>
-<div class="card" id="dayCard"><h2>🔒 Interne Tageswertung</h2><label>Spieltag auswerten</label><input id="internalSession" placeholder="z. B. 1. Advent" value="1. Advent"><div class="actions"><button class="primary" onclick="renderInternal()">Tageswertung berechnen</button></div><label>Rundenwertung</label><select id="internalRound" onchange="renderInternal()"></select><div id="internalRoundList"></div><h3>Tagesgesamtwertung – alle Runden</h3><div id="internalList"></div></div>
+<div class="card" id="dayCard"><h2>🔒 Interne Tageswertung</h2><label>Spieltag auswerten</label><input id="internalSession" placeholder="z. B. 1. Advent" value="1. Advent"><div class="actions"><button class="primary" onclick="renderInternal()">Auswertung aktualisieren</button></div><div class="admin-subnav no-print" aria-label="Wertungsansicht"><button class="primary" data-dayview="round" onclick="setDayView('round')">Rundenwertung</button><button data-dayview="day" onclick="setDayView('day')">Tageswertung</button><button data-dayview="tournament" onclick="setDayView('tournament')">Turnierwertung</button></div><div id="roundView"><label>Ausgewählte Runde</label><select id="internalRound" onchange="renderInternal()"></select><p class="muted">Nur die Bingos und Punkte dieser einzelnen Runde.</p><div id="internalRoundList"></div></div><div id="dayView" class="hidden"><h3>Tagesgesamtwertung – alle Runden</h3><p class="muted">Summe aller Runden des ausgewählten Spieltags. Die Tageswertung beginnt an jedem Spieltag wieder bei null.</p><div id="internalList"></div></div><div id="tournamentView" class="hidden"><h3>Turnier-Gesamtwertung – bisherige Spieltage</h3><p class="muted">Gesamtpunkte aus allen Spieltagen bis einschließlich des ausgewählten Spieltags. Fehlende Spieltage zählen als Nichtteilnahme und bringen keinen Abzug.</p><div id="tournamentList"></div></div></div>
 
 </div><div id="adminStatsView" class="hidden"><div class="admin-subnav no-print" aria-label="Statistikbereiche"><button class="primary" data-statview="overview" onclick="setStatsView('overview')">📊 Statistiken</button><button data-statview="tournament" onclick="setStatsView('tournament')">🏆 Turnier-Rangliste</button></div><div id="statsOverviewView"><div class="card"><h2>📊 Statistiken &amp; Auswertung</h2><p class="muted">Teilnehmerzahl, Raumbelegung und erzielte Bingos werden getrennt ausgewertet.</p><div class="grid no-print"><div><label>Auswertung</label><select id="statsSession" onchange="renderStats()"><option value="__all">Gesamter Adventszeitraum</option></select></div><div class="row" style="align-items:end"><button class="primary" onclick="exportStatsPDF()">PDF dieser Auswahl</button><button onclick="exportStatsPNG()">PNG dieser Auswahl</button></div></div><div id="statsReport"></div></div></div><div id="statsTournamentView" class="hidden"><div class="card"><h2>🏆 Turnier-Gesamtwertung</h2><p class="muted">Alle Spieltage zusammengefasst. Suche, sortiere und öffne Teilnehmerdetails. Es werden 20 Teilnehmer pro Seite angezeigt.</p><div id="tournamentList"></div></div></div></div></section>
 <section id="settings" class="pane hidden">
@@ -377,6 +377,14 @@ function tally(session,round=null){
   return {id,total:v.bingos,points:v.points,modePoints:v.modePoints,modeBingos:v.modeBingos,name:(p?.name||"?")+(p?.family?" ("+p.family+")":"")};
  }).sort((a,b)=>b.points-a.points||b.total-a.total||a.name.localeCompare(b.name));
 }
+let internalView="round";
+function setDayView(view){
+ internalView=view;
+ $("roundView").classList.toggle("hidden",view!=="round");
+ $("dayView").classList.toggle("hidden",view!=="day");
+ $("tournamentView").classList.toggle("hidden",view!=="tournament");
+ document.querySelectorAll("[data-dayview]").forEach(b=>b.classList.toggle("primary",b.dataset.dayview===view));
+}
 function renderInternal(){
  const selectedDay=$("internalSession").value.trim()||"1. Advent";
  renderRoomStats();
@@ -431,8 +439,10 @@ function renderInternal(){
   const days=sessions.slice(0,selectedIndex+1).filter(dayName=>{const t=tally(dayName).find(v=>v.id===x.id);return t&&(t.points>0||t.total>0)}).map(dayName=>{const t=tally(dayName).find(v=>v.id===x.id);return '<span class="tournament-chip">'+esc(dayName)+': <strong>'+t.points+' P.</strong> · '+t.total+' Bingos</span>'}).join("");
   return {...x,rank:now,movement,dayPoints:day.points,dayBingos:day.total,days,normal:x.modePoints.normal,power:x.modePoints.power,blackout:x.modePoints.blackout,normalBingos:x.modeBingos.normal,powerBingos:x.modeBingos.power,blackoutBingos:x.modeBingos.blackout};
  });
- $("tournamentList").innerHTML='<label for="tournamentDay">Gesamtwertung bis einschließlich Spieltag</label><select id="tournamentDay" onchange="$(\'internalSession\').value=this.value;renderInternal()">'+sessions.map(day=>'<option value="'+esc(day)+'" '+(day===selectedDay?'selected':'')+'>'+esc(day)+'</option>').join("")+'</select><p class="muted">Die Tagespunkte zählen nur für den ausgewählten Spieltag. Die Gesamtpunkte enthalten diesen und alle vorherigen Spieltage. Fehlende Spieltage werden als keine Teilnahme gewertet.</p>';
+ const tournamentDayControl='<label for="tournamentDay">Gesamtwertung bis einschließlich Spieltag</label><select id="tournamentDay" onchange="$(\'internalSession\').value=this.value;renderInternal()">'+sessions.map(day=>'<option value="'+esc(day)+'" '+(day===selectedDay?'selected':'')+'>'+esc(day)+'</option>').join("")+'</select><p class="muted">Die Tagespunkte zählen nur für den ausgewählten Spieltag. Die Gesamtpunkte enthalten diesen und alle vorherigen Spieltage. Fehlende Spieltage werden als keine Teilnahme gewertet.</p>';
+ $("tournamentList").innerHTML=tournamentDayControl;
  renderTournamentList(ranked);
+ setDayView(internalView);
 }
 
 function renderAll(){renderPlayers();renderRounds();$("roundCount").value=db.rounds.length;fillSelects();fillRoomRounds();renderResults();updateNextBingoNumber();renderRoomStats();$("statPlayers").textContent=db.players.length;$("statRounds").textContent=db.rounds.length;$("statEntries").textContent=db.results.length}
