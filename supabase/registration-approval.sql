@@ -90,6 +90,14 @@ create trigger on_auth_user_email_updated_app_profile
   for each row execute function public.handle_auth_user_email_update();
 
 -- The owner may approve/reject accounts. A user may only read their own profile.
+-- Use one SELECT policy to avoid duplicate permissive policy evaluation.
+drop policy if exists app_users_owner_select on public.app_users;
+drop policy if exists app_users_self_select on public.app_users;
+drop policy if exists app_users_select on public.app_users;
+create policy app_users_select on public.app_users
+for select to authenticated
+using (public.app_is_owner() or user_id = (select auth.uid()));
+
 -- Recreate the owner update policy so it remains explicitly owner-only.
 drop policy if exists app_users_owner_update on public.app_users;
 create policy app_users_owner_update on public.app_users
