@@ -177,36 +177,64 @@ function statSessions(){
 }
 function statData(session){
  const sessions=statSessions(),selected=session==="__all"?sessions:[session];
- const results=db.results.filter(r=>selected.includes(String(r.session||"Spieltag").trim()));
- const players=db.players.slice(),ids=players.map(p=>p.id),counts={};ids.forEach(id=>counts[id]=0);
- results.forEach(r=>{if(Object.prototype.hasOwnProperty.call(counts,r.playerId))counts[r.playerId]+=Math.max(0,Number(r.count)||0)});
- const ranking=Object.entries(counts).map(([id,total])=>({id,total,p:players.find(p=>p.id===id)})).sort((a,b)=>b.total-a.total||(a.p?.name||"").localeCompare(b.p?.name||""));
- const rounds={};results.forEach(r=>{const k="Runde "+r.round;rounds[k]=(rounds[k]||0)+(Number(r.count)||0)});
+ const selectedSet=new Set(selected);
+ const results=db.results.filter(r=>selectedSet.has(String(r.session||"Spieltag").trim()));
+ const players=db.players.slice(),ids=players.map(p=>p.id),playerById=new Map(players.map(p=>[p.id,p]));
+ const counts={};ids.forEach(id=>counts[id]=0);
+ const resultsBySession=new Map(selected.map(s=>[s,[]]));
+ const resultsBySessionRound=new Map();
+ const personalStats=new Map(players.map(p=>[p.id,{total:0,byDay:{},byRound:{}}]));
+ const rounds={};
+ const roundTotals={};
+ const roundPlayers={};
+ const dailyBingoIds=new Map(selected.map(s=>[s,new Set()]));
+ results.forEach(r=>{
+  const s=String(r.session||"Spieltag").trim(),roundNo=Number(r.round),count=Number(r.count)||0;
+  const sessionRows=resultsBySession.get(s);
+  if(sessionRows)sessionRows.push(r);
+  const roundKey=s+"|"+roundNo;
+  if(!resultsBySessionRound.has(roundKey))resultsBySessionRound.set(roundKey,[]);
+  resultsBySessionRound.get(roundKey).push(r);
+  if(Object.prototype.hasOwnProperty.call(counts,r.playerId))counts[r.playerId]+=Math.max(0,count);
+  const roundLabel="Runde "+r.round;
+  rounds[roundLabel]=(rounds[roundLabel]||0)+count;
+  roundTotals[roundKey]=(roundTotals[roundKey]||0)+count;
+  if(!roundPlayers[roundKey])roundPlayers[roundKey]={};
+  roundPlayers[roundKey][r.playerId]=(roundPlayers[roundKey][r.playerId]||0)+count;
+  const bingoIds=dailyBingoIds.get(s);
+  if(bingoIds&&count>0)bingoIds.add(r.playerId);
+  const personal=personalStats.get(r.playerId);
+  if(personal){
+   personal.total+=count;
+   personal.byDay[r.session]=(personal.byDay[r.session]||0)+count;
+   const k=String(r.session)+" · Runde "+r.round;
+   personal.byRound[k]=(personal.byRound[k]||0)+count;
+  }
+ });
+ const ranking=Object.entries(counts).map(([id,total])=>({id,total,p:playerById.get(id)})).sort((a,b)=>b.total-a.total||(a.p?.name||"").localeCompare(b.p?.name||""));
  const distribution={"1":0,"2":0,"3–4":0,"5+":0};
  ids.filter(id=>(counts[id]||0)>0).forEach(id=>{const n=counts[id];distribution[n===1?"1":n===2?"2":n<=4?"3–4":"5+"]++});
  const daily=selected.map(s=>{
-  const rs=results.filter(r=>String(r.session||"Spieltag").trim()===s),bingoPlayers=new Set(rs.filter(r=>(Number(r.count)||0)>0).map(r=>r.playerId));
+  const rs=resultsBySession.get(s)||[],bingoPlayers=dailyBingoIds.get(s)||new Set();
   const roomRecords=db.rounds.map(rd=>db.roomStats?.[s+"|"+rd.n]).filter(Boolean),roomValues=roomRecords.map(x=>Number(x.current??x.peak??x.start)).filter(Number.isFinite);
   return {session:s,total:rs.reduce((a,r)=>a+(Number(r.count)||0),0),participants:bingoPlayers.size,bingoPlayers,roomCount:roomValues.length?roomValues.reduce((a,b)=>a+b,0)/roomValues.length:null,results:rs};
  });
  const roundDaily=selected.flatMap(s=>db.rounds.map(rd=>{
-  const rs=results.filter(r=>String(r.session||"Spieltag").trim()===s&&Number(r.round)===rd.n),room=db.roomStats?.[s+"|"+rd.n]||null;
-  return {session:s,round:rd.n,total:rs.reduce((a,r)=>a+(Number(r.count)||0),0),roomCount:room?Number(room.current??room.peak??room.start):null};
+  const rs=resultsBySessionRound.get(s+"|"+rd.n)||[],room=db.roomStats?.[s+"|"+rd.n]||null;
+  return {session:s,round:rd.n,total:roundTotals[s+"|"+rd.n]||0,roomCount:room?Number(room.current??room.peak??room.start):null};
  }));
  const personal=players.map(p=>{
-  const own=results.filter(r=>r.playerId===p.id),byDay={},byRound={};
-  own.forEach(r=>byDay[r.session]=(byDay[r.session]||0)+(Number(r.count)||0));
-  own.forEach(r=>{const k=String(r.session)+" · Runde "+r.round;byRound[k]=(byRound[k]||0)+(Number(r.count)||0)});
+  const own=personalStats.get(p.id),byDay=own.byDay,byRound=own.byRound;
   const bestDay=Object.entries(byDay).sort((a,b)=>b[1]-a[1])[0]||null,bestRound=Object.entries(byRound).sort((a,b)=>b[1]-a[1])[0]||null;
-  return {id:p.id,name:p.name+(p.family?" ("+p.family+")":""),total:own.reduce((a,r)=>a+(Number(r.count)||0),0),bestDay,bestRound};
+  return {id:p.id,name:p.name+(p.family?" ("+p.family+")":""),total:own.total,bestDay,bestRound};
  }).sort((a,b)=>b.total-a.total);
  const roomPeriodRecords=selected.flatMap(s=>db.rounds.map(rd=>db.roomStats?.[s+"|"+rd.n]).filter(Boolean));
  const roomPeriodValues=roomPeriodRecords.map(x=>Number(x.current??x.peak??x.start)).filter(Number.isFinite);
  const roomPeriodAverage=roomPeriodValues.length?roomPeriodValues.reduce((a,b)=>a+b,0)/roomPeriodValues.length:null;
  const total=results.reduce((a,r)=>a+(Number(r.count)||0),0),bingoPlayerIds=[...new Set(results.filter(r=>(Number(r.count)||0)>0).map(r=>r.playerId))];
  const roundRankings=Object.fromEntries(selected.map(s=>[s,db.rounds.map(rd=>{
-  const rs=results.filter(r=>String(r.session||"Spieltag").trim()===s&&Number(r.round)===rd.n),map={};rs.forEach(r=>map[r.playerId]=(map[r.playerId]||0)+(Number(r.count)||0));
-  return {round:rd.n,total:rs.reduce((a,r)=>a+(Number(r.count)||0),0),ranking:Object.entries(map).map(([id,n])=>({id,total:n,p:players.find(p=>p.id===id)})).sort((a,b)=>b.total-a.total)};
+  const k=s+"|"+rd.n,map=roundPlayers[k]||{},rs=resultsBySessionRound.get(k)||[];
+  return {round:rd.n,total:roundTotals[k]||0,ranking:Object.entries(map).map(([id,n])=>({id,total:n,p:playerById.get(id)})).sort((a,b)=>b.total-a.total)};
  })]));
  return {sessions,selected,results,players,ids,counts,ranking,rounds,distribution,daily,roundDaily,personal,total,roundRankings,bingoPlayerIds,roomPeriodValues,roomPeriodAverage};
 }

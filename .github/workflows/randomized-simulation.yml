@@ -21,5 +21,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Browser-Dauerlast-Test auf Syntax prüfen
+        run: node --check tests/browser-soak.test.cjs
       - name: Simulation und Prüfungen ausführen
         run: node --test tests/randomized-simulation.test.cjs

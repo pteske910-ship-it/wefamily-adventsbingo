@@ -163,3 +163,147 @@ test('Wertung ist turnierweit global: Spielmodus oder Platzierung', () => {
   assert.deepEqual(tally('Tag 1').map(x => x.id), ['p2', 'p1'],
     'Die Tagesrangliste sortiert nach erreichten Punkten, nicht nach bloßer Bingo-Anzahl');
 });
+
+
+test('100 Spieltage mit 25–70 Spielern, 12–50 Runden und 30–240 Sekunden je Runde', () => {
+  const random = rng(0xB1A60 + 20261125);
+  const modes = ['Normal', 'Power-up', 'Blackout'];
+  const players = Array.from({ length: 70 }, (_, i) => ({
+    id: 'load-p' + i, name: 'Teilnehmer ' + String(i + 1).padStart(2, '0'), family: ''
+  }));
+  const rounds = Array.from({ length: 50 }, (_, i) => ({
+    n: i + 1,
+    mode: modes[integer(random, 0, modes.length - 1)]
+  }));
+  const sessions = [];
+  const results = [];
+  const durations = [];
+  const dayExpected = new Map();
+  let bingoId = 0;
+
+  for (let day = 1; day <= 100; day++) {
+    const session = day <= 4
+      ? day + '. Advent'
+      : 'Spieltag ' + String(day).padStart(3, '0');
+    const playerCount = integer(random, 25, 70);
+    const roundCount = integer(random, 12, 50);
+    sessions.push(session);
+    const activePlayers = players.slice(0, playerCount);
+    const expected = new Map(activePlayers.map(p => [p.id, { total: 0, points: 0 }]));
+    const durationRows = [];
+
+    for (let roundNo = 1; roundNo <= roundCount; roundNo++) {
+      const durationSeconds = integer(random, 30, 240);
+      durationRows.push({ round: roundNo, seconds: durationSeconds });
+      assert.ok(durationSeconds >= 30 && durationSeconds <= 240,
+        session + ' Runde ' + roundNo + ': Rundendauer außerhalb 30–240 Sekunden');
+
+      const winners = new Set();
+      const winnerCount = integer(random, 1, Math.min(15, playerCount));
+      while (winners.size < winnerCount) winners.add(integer(random, 0, playerCount - 1));
+      let bingoNo = 0;
+
+      for (const playerIndex of winners) {
+        const player = activePlayers[playerIndex];
+        bingoNo++;
+        const round = rounds[roundNo - 1];
+        const points = resolveBingoPoints(round, bingoNo, {
+          mode: 'mode', normal: 2, power: 4, blackout: 7
+        });
+        results.push({
+          id: 'load-r' + (++bingoId), session, round: roundNo,
+          playerId: player.id, count: 1, bingoNo, points
+        });
+        const row = expected.get(player.id);
+        row.total++;
+        row.points += points;
+      }
+    }
+
+    durations.push({ session, playerCount, roundCount, rounds: durationRows,
+      totalSeconds: durationRows.reduce((sum, r) => sum + r.seconds, 0) });
+    dayExpected.set(session, expected);
+  }
+
+  sandbox.db = {
+    players,
+    rounds,
+    results,
+    roomStats: {},
+    scoring: { mode: 'mode', normal: 2, power: 4, blackout: 7 }
+  };
+
+  assert.deepEqual([...statSessions()], sessions, 'Alle 100 Spieltage werden in richtiger Reihenfolge erkannt');
+  assert.equal(durations.length, 100, 'Es wurden exakt 100 Spieltage simuliert');
+  assert.ok(durations.every(d => d.playerCount >= 25 && d.playerCount <= 70),
+    'Jeder Spieltag hat 25–70 Spieler');
+  assert.ok(durations.every(d => d.roundCount >= 12 && d.roundCount <= 50),
+    'Jeder Spieltag hat 12–50 Runden');
+  assert.ok(durations.every(d => d.rounds.length === d.roundCount),
+    'Jede Runde besitzt eine eigene simulierte Dauer');
+  assert.ok(durations.every(d => d.totalSeconds >= d.roundCount * 30 && d.totalSeconds <= d.roundCount * 240),
+    'Die aufsummierte Spieldauer liegt innerhalb der Rundengrenzen');
+
+  for (const day of durations) {
+    const actual = tally(day.session);
+    const expected = dayExpected.get(day.session);
+    assert.equal(actual.length, 70, day.session + ': globale Teilnehmerliste bleibt vollständig');
+    for (const row of actual) {
+      const e = expected.get(row.id) || { total: 0, points: 0 };
+      assert.equal(row.total, e.total, day.session + ': Bingo-Gesamtzahl ' + row.id);
+      assert.equal(row.points, e.points, day.session + ': Punktegesamtzahl ' + row.id);
+    }
+    const dayResults = results.filter(r => r.session === day.session);
+    assert.equal(dayResults.length, dayResults.reduce((sum, r) => sum + r.count, 0),
+      day.session + ': jedes gespeicherte Ergebnis entspricht genau einem Bingo');
+    for (let roundNo = 1; roundNo <= day.roundCount; roundNo++) {
+      const roundResults = dayResults.filter(r => r.round === roundNo);
+      assert.ok(roundResults.length >= 1 && roundResults.length <= 15,
+        day.session + ' Runde ' + roundNo + ': simulierte Bingo-Anzahl');
+      assert.deepEqual(roundResults.map(r => r.bingoNo),
+        roundResults.map((r, i) => i + 1),
+        day.session + ' Runde ' + roundNo + ': Bingo-Nummern laufen lückenlos');
+    }
+    const sampledRounds = [...new Set([1, Math.ceil(day.roundCount / 2), day.roundCount])];
+    for (const roundNo of sampledRounds) {
+      const roundResults = dayResults.filter(r => r.round === roundNo);
+      const roundTally = tally(day.session, roundNo);
+      assert.equal(roundTally.reduce((sum, r) => sum + r.total, 0), roundResults.length,
+        day.session + ' Runde ' + roundNo + ': Rundensumme stimmt');
+    }
+  }
+
+  const all = statData('__all');
+  assert.equal(all.daily.length, 100, 'Statistik enthält genau 100 Spieltage');
+  assert.equal(all.total, results.length, 'Gesamtstatistik zählt alle simulierten Bingos');
+  for (const day of all.daily) {
+    const expected = dayExpected.get(day.session);
+    assert.equal(day.total, [...expected.values()].reduce((sum, x) => sum + x.total, 0),
+      day.session + ': Tagesstatistik stimmt');
+    assert.equal(day.participants, [...expected.values()].filter(x => x.total > 0).length,
+      day.session + ': Teilnehmerzahl mit Bingo stimmt');
+  }
+  assert.equal(all.roundDaily.length, 100 * 50, 'Statistik erzeugt die Rundenauswertung für alle Spieltage');
+  const expectedRoundTotals = new Map();
+  results.forEach(r => {
+    const key = r.session + '|' + r.round;
+    expectedRoundTotals.set(key, (expectedRoundTotals.get(key) || 0) + r.count);
+  });
+  for (const row of all.roundDaily) {
+    assert.equal(row.total, expectedRoundTotals.get(row.session + '|' + row.round) || 0,
+      row.session + ' Runde ' + row.round + ': aggregierte Rundenauswertung stimmt');
+  }
+
+  const compared = compareDays(all.daily);
+  assert.equal(compared.length, 100, 'Vergleich enthält 100 Tage');
+  assert.equal(compared[0].returning, null, 'Tag 1 ist die Grundtabelle ohne Vergleich');
+  assert.equal(compared[0].newcomers, null, 'Tag 1 markiert niemanden als neu dabei');
+  for (let i = 1; i < compared.length; i++) {
+    const prior = all.daily[i - 1].bingoPlayers;
+    const current = all.daily[i].bingoPlayers;
+    assert.equal(compared[i].returning, [...current].filter(id => prior.has(id)).length,
+      compared[i].session + ': Wiederkehrer korrekt');
+    assert.equal(compared[i].newcomers, [...current].filter(id => !prior.has(id)).length,
+      compared[i].session + ': Neu-dabei-Zahl korrekt');
+  }
+});
