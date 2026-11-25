@@ -196,16 +196,19 @@ function statData(session){
  })]));
  return {sessions,selected,results,players,ids,counts,ranking,rounds,distribution,daily,roundDaily,personal,total,roundRankings,bingoPlayerIds,roomPeriodValues,roomPeriodAverage};
 }
+function compareDays(days){
+ return days.map((day,i)=>{
+  if(i===0)return {...day,returning:null,newcomers:null};
+  const prior=days[i-1].bingoPlayers,current=day.bingoPlayers;
+  return {...day,returning:[...current].filter(id=>prior.has(id)).length,newcomers:[...current].filter(id=>!prior.has(id)).length};
+ });
+}
 function renderStats(){
  const select=$("statsSession"),old=select.value||"__all",sessions=statSessions();
  select.innerHTML='<option value="__all">Gesamter Adventszeitraum</option>'+sessions.map(s=>'<option value="'+esc(s)+'">'+esc(s)+'</option>').join("");
  select.value=[...sessions,"__all"].includes(old)?old:"__all";
  const d=statData(select.value),days=d.daily;
- const returningByDay=days.map((day,i)=>{
-  if(i===0)return {...day,returning:null,newcomers:day.participants};
-  const prior=days[i-1].bingoPlayers,current=day.bingoPlayers;
-  return {...day,returning:[...current].filter(id=>prior.has(id)).length,newcomers:[...current].filter(id=>!prior.has(id)).length};
- });
+ const returningByDay=compareDays(days);
  const best=d.ranking.find(x=>x.total>0),maxRound=Object.entries(d.rounds).sort((a,b)=>b[1]-a[1])[0],active=d.bingoPlayerIds.length;
  const barRows=d.roundDaily.filter(x=>x.total>0).map(x=>({label:x.session+" · R"+x.round,value:x.total})),maxBar=Math.max(1,...barRows.map(x=>x.value));
  const bars=barRows.map(x=>'<div class="chartbar"><span class="barlabel">'+esc(x.label)+'</span><div class="track"><div class="fill" style="width:'+(x.value/maxBar*100)+'%"></div></div><b>'+x.value+'</b></div>').join("")||'<p class="muted">Noch keine Runden-Bingos erfasst.</p>';
@@ -213,7 +216,7 @@ function renderStats(){
  const distribution=Object.entries(d.distribution),sumDist=distribution.reduce((a,x)=>a+x[1],0),colors=["#6e54ad","#8c65c8","#ad78d4","#d18cc4","#e8b56d"];
  let acc=0;const stops=distribution.map((x,i)=>{const from=acc;acc+=sumDist?x[1]/sumDist*100:0;return colors[i]+" "+from+"% "+acc+"%"}).join(",");
  const donut='<div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap"><div style="width:150px;height:150px;border-radius:50%;background:conic-gradient('+(sumDist?stops:"#393246 0% 100%")+');position:relative;flex:none"><div style="position:absolute;inset:32px;border-radius:50%;background:var(--panel);display:grid;place-items:center;text-align:center;font-weight:800">'+sumDist+'<small style="font-weight:400">Personen</small></div></div><div>'+distribution.map((x,i)=>'<div class="item"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'+colors[i]+'"></span> '+x[0]+' Bingos: <strong>'+x[1]+'</strong></div>').join("")+'</div></div>';
- const dayRows=returningByDay.map(x=>'<div class="item"><div class="row between"><strong>'+esc(x.session)+'</strong><strong>'+(x.roomCount===null?"Raumgröße nicht erfasst":"Ø "+x.roomCount.toFixed(1)+" Personen im Raum")+'</strong></div><p class="muted">Bingo-Spieler: '+x.participants+' · Bingos: '+x.total+'</p>'+(x.returning===null?'<p class="muted">Erster erfasster Spieltag · '+x.newcomers+' Bingo-Spieler</p>':'<p class="muted">Bingo-Spieler mit Ergebnissen an beiden Tagen: '+x.returning+' · Bingo-Spieler mit erstem Ergebnis an diesem Tag: '+x.newcomers+'</p>')+'</div>').join("");
+ const dayRows=returningByDay.map(x=>'<div class="item"><div class="row between"><strong>'+esc(x.session)+'</strong><strong>'+(x.roomCount===null?"Raumgröße nicht erfasst":"Ø "+x.roomCount.toFixed(1)+" Personen im Raum")+'</strong></div><p class="muted">Bingo-Spieler: '+x.participants+' · Bingos: '+x.total+'</p>'+(x.returning===null?'<p class="muted">Grundtabelle · '+x.participants+' Bingo-Spieler</p>':'<p class="muted">Bingo-Spieler mit Ergebnissen an beiden Tagen: '+x.returning+' · Neu dabei: '+x.newcomers+'</p>')+'</div>').join("");
  const records=d.personal.filter(x=>x.total>0).slice(0,5),issues=[];
  if(!d.results.length)issues.push("Für die Auswahl liegen noch keine Bingo-Ergebnisse vor.");
  const missing=d.results.filter(r=>!d.players.some(p=>p.id===r.playerId)).length;if(missing)issues.push(missing+" Ergebnis(se) ohne zugeordneten Teilnehmer.");
