@@ -139,7 +139,7 @@ function showAuthMessage(message){$("authMessage").textContent=message;}
 function showAuthView(view){$("loginView").classList.toggle("hidden",view!=="login");$("registerView").classList.toggle("hidden",view!=="register");showAuthMessage("");}
 $("showRegisterButton").addEventListener("click",()=>showAuthView("register"));
 $("showLoginButton").addEventListener("click",()=>showAuthView("login"));
-function showSignedInUI(user,role){$("authGate").classList.add("hidden");["appHeader","appMain","appFooter"].forEach(id=>$(id).classList.remove("hidden"));const requestsCard=$("registrationAdminCard");if(requestsCard){const owner=role==="owner";requestsCard.classList.toggle("hidden",!owner);requestsCard.hidden=!owner;requestsCard.style.display=owner?"":"none";} $("appHeader").querySelector("p").textContent="Angemeldet als "+(user.email||"WeFamily-Konto")+" · Rolle: "+role;}
+function showSignedInUI(user,role){$("authGate").classList.add("hidden");["appHeader","appMain","appFooter"].forEach(id=>$(id).classList.remove("hidden"));const requestsCard=$("registrationAdminCard");if(requestsCard){const owner=role==="owner";requestsCard.classList.toggle("hidden",!owner);requestsCard.hidden=!owner;requestsCard.style.display=owner?"":"none";} const localCopy=(()=>{try{return JSON.parse(localStorage.getItem("wf-adventbingo-cloud-test-meta")||"null")}catch{return null}})();$("appHeader").querySelector("p").textContent="Angemeldet als "+(user.email||"WeFamily-Konto")+" · "+(localCopy?"Lokale Testkopie · "+(localCopy.title||"Cloud-Bestand")+" (nicht mit Cloud synchronisiert)":"Rolle: "+role);if(localCopy){const notice=$("appMain").querySelector(".notice");if(notice)notice.textContent="Lokale Testkopie wiederhergestellt: "+localCopy.title+". Änderungen bleiben in diesem Browser und werden nicht in Supabase übertragen.";const status=$("cloudLoadStatus");if(status)status.textContent="Gespeicherte lokale Testkopie vorhanden. Der Cloud-Ausgangsstand kann über „Importierten Bestand laden“ erneut geladen werden.";}}
 async function verifyAndShowSession(user){
  if(!user){$("authGate").classList.remove("hidden");["appHeader","appMain","appFooter"].forEach(id=>$(id).classList.add("hidden"));return;}
  const {data:profile,error}=await supabaseClient.from("app_users").select("display_name,app_role,account_status").eq("user_id",user.id).maybeSingle();
@@ -464,6 +464,10 @@ async function loadImportedCloudEvent(){
   cloudVersion=eventResult.data.updated_at;
   cloudBaseline=JSON.parse(JSON.stringify(db));
   cloudEditable=false;cloudComparePassed=false;
+  // Persist the read-only Cloud snapshot as a local test copy. This keeps it available
+  // after browser refresh without writing anything back to the shared Supabase event.
+  localStorage.setItem("wf-adventbingo-v01",JSON.stringify(db));
+  localStorage.setItem("wf-adventbingo-cloud-test-meta",JSON.stringify({title:eventResult.data.title,loadedAt:new Date().toISOString(),eventId:IMPORTED_EVENT_ID}));
   $("enableCloudEditButton").disabled=true;
   $("cloudWriteTestButton").disabled=true;
   $("cloudCompareButton").disabled=false;
