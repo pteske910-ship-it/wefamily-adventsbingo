@@ -389,8 +389,12 @@ async function verifyAndShowSession(user){
   return;
  }
  isOwnerSession=profile.app_role==="owner";
- const {data:memberPermission,error:permissionError}=await supabaseClient.rpc("app_can_manage_members");
- canManageMembers=!permissionError&&memberPermission===true;
+ if(isOwnerSession)canManageMembers=true;
+ else{
+  const {data:currentUser}=await supabaseClient.auth.getUser();
+  const {data:memberGrant,error:permissionError}=await supabaseClient.from("member_management_access").select("admin_user_id").eq("admin_user_id",currentUser.user?.id||"").maybeSingle();
+  canManageMembers=!permissionError&&!!memberGrant;
+ }
  document.querySelector('.tab[data-tab="members"]').classList.toggle("hidden",!canManageMembers);
  $("members").classList.add("hidden");
  $("authGate").classList.add("hidden");
