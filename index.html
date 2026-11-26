@@ -824,7 +824,7 @@ function renderStats(){
  const d=statData(select.value),days=d.daily;
  const returningByDay=days.map((day,i)=>{
   if(i===0)return {...day,returning:null,newcomers:day.participants};
-  const prior=days[i-1].bingoPlayers,current=day.bingoPlayers;
+  const prior=new Set(days.slice(0,i).flatMap(previous=>[...previous.bingoPlayers])),current=day.bingoPlayers;
   return {...day,returning:[...current].filter(id=>prior.has(id)).length,newcomers:[...current].filter(id=>!prior.has(id)).length};
  });
  const best=d.ranking.find(x=>x.total>0),maxRound=Object.entries(d.rounds).sort((a,b)=>b[1]-a[1])[0],active=d.bingoPlayerIds.length;
