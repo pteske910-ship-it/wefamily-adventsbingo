@@ -58,7 +58,7 @@
 <main class="wrap hidden" id="appMain">
 <div class="notice">Die Anmeldung ist bereits mit deinem WeFamily-Konto geschützt. Spielstände werden in dieser Integrationsstufe noch lokal in diesem Browser gespeichert. Vor Änderungen bitte regelmäßig exportieren.</div>
 <nav class="tabs" aria-label="Bereiche">
-<button class="tab active" data-tab="home">Übersicht</button><button class="tab" data-tab="members">Mitglieder</button><button class="tab" data-tab="players">Teilnehmer</button><button class="tab" data-tab="results">Ergebnisse</button><button class="tab secret" data-tab="internal">🔒 Nur Moderation</button><button class="tab" data-tab="settings">Einstellungen</button>
+<button class="tab active" data-tab="home">Übersicht</button><button class="tab hidden" data-tab="members">Mitglieder</button><button class="tab" data-tab="players">Teilnehmer</button><button class="tab" data-tab="results">Ergebnisse</button><button class="tab secret" data-tab="internal">🔒 Nur Moderation</button><button class="tab" data-tab="settings">Einstellungen</button>
 </nav>
 <section id="home" class="pane">
 <div class="grid">
@@ -69,7 +69,7 @@
 <div class="card"><h2>Aktueller Stand</h2><p class="muted">Teilnehmer hinzufügen, danach pro Runde die erzielten Bingos erfassen. Die interne Tageswertung ist separat und nicht für Teilnehmer gedacht.</p><div class="actions"><button class="primary" onclick="showTab('players')">+ Teilnehmer hinzufügen</button><button onclick="showTab('results')">Bingos erfassen</button></div></div>
 <div class="card"><h3>Spielregeln im Manager</h3><ul><li>Maximal zwei Karten pro Person werden vor dem Start in WePlay kontrolliert.</li><li>Normalrunde ohne Power-ups oder Blackout-Runde.</li><li>Bei Blackout zählt erst die vollständig ausgefüllte Karte als Bingo.</li><li>20 Münzen Einsatz und Ingame-Belohnungen werden nicht verwaltet.</li><li>WePlay bleibt für Spiel, Chat, Kicks und tatsächliche Platzierungen zuständig.</li></ul></div>
 </section>
-<section id="members" class="pane hidden"><div class="card"><h2>Mitgliederverwaltung</h2><p class="muted">Zentrale WeFamily-Mitglieder. Ein Mitglied benötigt kein eigenes Manager-Konto. Änderungen hier überschreiben keine bereits gespeicherten Bingo-Namen.</p><div class="grid"><div><label for="memberName">Anzeigename</label><input id="memberName" maxlength="80" placeholder="Mitgliedsname"></div><div><label for="memberFamily">Familie / Zusatz (optional)</label><input id="memberFamily" maxlength="80" placeholder="Familie"></div></div><div class="actions"><button class="primary" onclick="addCentralMember()">Mitglied anlegen</button></div><div id="memberStatus" class="muted" role="status"></div></div><div class="card"><h3>Mitglieder</h3><div id="memberList"></div></div></section>
+<section id="members" class="pane hidden"><div id="memberAccessCard" class="card hidden"><h2>Mitgliederverwaltung freigeben</h2><p class="muted">Nur du als Eigentümer kannst festlegen, welche Administratoren die zentrale Mitgliederliste sehen und bearbeiten dürfen.</p><div id="memberAccessList"></div><p id="memberAccessStatus" class="muted" role="status"></p></div><div class="card"><h2>Mitgliederverwaltung</h2><p class="muted">Zentrale WeFamily-Mitglieder. Ein Mitglied benötigt kein eigenes Manager-Konto. Änderungen hier überschreiben keine bereits gespeicherten Bingo-Namen.</p><div class="grid"><div><label for="memberName">Anzeigename</label><input id="memberName" maxlength="80" placeholder="Mitgliedsname"></div><div><label for="memberFamily">Familie / Zusatz (optional)</label><input id="memberFamily" maxlength="80" placeholder="Familie"></div></div><div class="actions"><button class="primary" onclick="addCentralMember()">Mitglied anlegen</button></div><div id="memberStatus" class="muted" role="status"></div></div><div class="card"><h3>Mitglieder</h3><div id="memberList"></div></div></section>
 <section id="players" class="pane hidden">
 <div class="card"><h2>Teilnehmer verwalten</h2><div class="row"><div class="field"><label for="playerName">Schnellerfassung · Name oder Name (Familie)</label><input id="playerName" placeholder="Name aus Mitgliederverwaltung auswählen" list="memberOptions" autocomplete="off"><datalist id="memberOptions"></datalist></div><button class="primary" onclick="addPlayer()">Hinzufügen</button></div><p class="muted">Enter fügt den Namen direkt hinzu. Familienangabe in Klammern ist optional.</p><div id="playerList"></div></div>
 </section>
@@ -110,9 +110,9 @@ function loadDB(){
   }
 }
 let db=loadDB();
-let centralMembers=[];
+let centralMembers=[];let canManageMembers=false;let isOwnerSession=false;
 function persist(){localStorage.setItem("wf-adventbingo-v01",JSON.stringify(db));renderAll()}
-function showTab(id){document.querySelectorAll(".pane").forEach(x=>x.classList.toggle("hidden",x.id!==id));document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x.dataset.tab===id));if(id==="internal"){renderInternal();}else if(id==="results"){renderRoomStats();}}
+function showTab(id){if(id==="members"&&!canManageMembers)return;document.querySelectorAll(".pane").forEach(x=>x.classList.toggle("hidden",x.id!==id));document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x.dataset.tab===id));if(id==="internal"){renderInternal();}else if(id==="results"){renderRoomStats();}else if(id==="members"&&isOwnerSession){loadMemberAccess();}}
 document.querySelectorAll(".tab[data-tab]").forEach(b=>b.addEventListener("click",()=>showTab(b.dataset.tab)));document.addEventListener("click",e=>{const wrap=document.querySelector(".player-autocomplete");if(wrap&&!wrap.contains(e.target))$("playerSuggestions")?.classList.add("hidden")});$("playerName").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();addPlayer()}});$("resultRound").addEventListener("change",renderRoomStats);$("sessionName").addEventListener("change",renderRoomStats);
 function addPlayer(){let raw=$("playerName").value.trim();if(!raw)return;let m=raw.match(/^(.*?)\s*\(([^()]+)\)\s*$/);let name=(m?m[1]:raw).trim(),family=m?m[2].trim():"";const member=centralMembers.find(x=>x.is_active&&x.display_name.trim().toLocaleLowerCase("de")===name.toLocaleLowerCase("de")&&(x.family||"").trim().toLocaleLowerCase("de")===family.toLocaleLowerCase("de"));if(!member)return alert("Bitte ein aktives Mitglied aus der zentralen Mitgliederverwaltung auswählen.");if(db.players.some(p=>p.memberId===member.id||p.name.toLocaleLowerCase()===name.toLocaleLowerCase()&&(p.family||"").toLocaleLowerCase()===(family||"").toLocaleLowerCase()))return alert("Dieses Mitglied ist bereits als Teilnehmer angelegt.");db.players.push({id:crypto.randomUUID(),memberId:member.id,name:member.display_name,family:member.family||""});$("playerName").value="";persist();$("playerName").focus()}
 function delPlayer(id){if(confirm("Teilnehmer wirklich entfernen? Vorhandene Ergebnisse bleiben in der Sicherung erhalten, werden aber nicht mehr zugeordnet.")){db.players=db.players.filter(p=>p.id!==id);persist()}}
@@ -146,6 +146,31 @@ async function toggleCentralMember(id){
  const m=centralMembers.find(x=>x.id===id);if(!m)return;
  const {error}=await supabaseClient.from("members").update({is_active:!m.is_active,updated_at:new Date().toISOString()}).eq("id",id);
  if(error){alert("Statusänderung fehlgeschlagen: "+error.message);return;}await loadCentralMembers();
+}
+async function loadMemberAccess(){
+ const card=$("memberAccessCard");if(!card||!isOwnerSession)return;
+ $("memberAccessStatus").textContent="Administrator-Zugriffe werden geladen …";
+ const [{data:admins,error:adminError},{data:grants,error:grantError}]=await Promise.all([
+  supabaseClient.from("app_users").select("user_id,display_name,email").eq("app_role","administrator").eq("account_status","active").order("display_name"),
+  supabaseClient.from("member_management_access").select("admin_user_id")
+ ]);
+ if(adminError||grantError){$("memberAccessStatus").textContent="Berechtigungen konnten nicht geladen werden: "+(adminError||grantError).message;return;}
+ const granted=new Set((grants||[]).map(x=>x.admin_user_id));
+ $("memberAccessList").innerHTML=(admins||[]).map(a=>{
+  const label=a.display_name||a.email||"Administrator",enabled=granted.has(a.user_id);
+  return '<div class="item row between"><div><strong>'+esc(label)+'</strong><div class="muted">'+esc(a.email||"")+'</div></div><button class="small '+(enabled?"danger":"primary")+'" onclick="setMemberAccess(\''+a.user_id+'\','+(!enabled)+')">'+(enabled?"Zugriff entziehen":"Zugriff freigeben")+'</button></div>';
+ }).join("")||'<p class="muted">Keine aktiven Administratoren vorhanden.</p>';
+ $("memberAccessStatus").textContent=(admins||[]).length+" aktive Administratoren · "+granted.size+" mit Mitgliederzugriff.";
+}
+async function setMemberAccess(userId,enabled){
+ if(!isOwnerSession)return alert("Nur der Eigentümer kann diese Berechtigung ändern.");
+ const {data:me,error:meError}=await supabaseClient.auth.getUser();
+ if(meError||!me.user)return alert("Sitzung abgelaufen. Bitte erneut anmelden.");
+ const result=enabled
+  ?await supabaseClient.from("member_management_access").insert({admin_user_id:userId,granted_by:me.user.id})
+  :await supabaseClient.from("member_management_access").delete().eq("admin_user_id",userId);
+ if(result.error){alert("Berechtigung konnte nicht geändert werden: "+result.error.message);return;}
+ await loadMemberAccess();
 }
 function renderMembers(){
  const el=$("memberList");if(!el)return;
@@ -360,13 +385,19 @@ async function verifyAndShowSession(user){
  if(error){await supabaseClient.auth.signOut();showSignedOut();showAuthMessage("Kontostatus konnte nicht geprüft werden: "+error.message);return;}
  if(!profile||profile.account_status!=="active"||!["owner","administrator"].includes(profile.app_role)){
   await supabaseClient.auth.signOut();showSignedOut();
-  showAuthMessage(!profile?"Für dieses Konto wurde kein Manager-Profil angelegt.":"Deine E-Mail-Adresse ist bestätigt. Dein WeFamily-Zugang wartet jetzt noch auf die Freigabe durch den Eigentümer.");
+  showAuthMessage(!profile?"Für dieses Konto wurde kein Manager-Profil angelegt.":"Dein WeFamily-Zugang wartet noch auf die Freigabe durch den Eigentümer.");
   return;
  }
+ isOwnerSession=profile.app_role==="owner";
+ const {data:memberPermission,error:permissionError}=await supabaseClient.rpc("app_can_manage_members");
+ canManageMembers=!permissionError&&memberPermission===true;
+ document.querySelector('.tab[data-tab="members"]').classList.toggle("hidden",!canManageMembers);
+ $("members").classList.add("hidden");
  $("authGate").classList.add("hidden");
  ["appHeader","appMain","appFooter"].forEach(id=>$(id).classList.remove("hidden"));
- await loadCentralMembers();
- $("signedInLabel").textContent="Angemeldet als "+(profile.display_name||user.email||"WeFamily-Konto")+" · "+(profile.app_role==="owner"?"Eigentümer":"Administrator")+" · Daten aktuell lokal auf diesem Gerät";
+ if(canManageMembers)await loadCentralMembers();
+ $("memberAccessCard").classList.toggle("hidden",!isOwnerSession);
+ $("signedInLabel").textContent="Angemeldet als "+(profile.display_name||user.email||"WeFamily-Konto")+" · "+(isOwnerSession?"Eigentümer":"Administrator")+" · Daten aktuell lokal auf diesem Gerät";
  const adminCard=$("registrationAdminCard");if(adminCard){const isOwner=profile.app_role==="owner";adminCard.classList.toggle("hidden",!isOwner);if(isOwner)loadPendingRegistrations();}
 }
 $("showRegisterButton").addEventListener("click",()=>showAuthView("register"));
