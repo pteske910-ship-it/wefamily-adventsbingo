@@ -3,8 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#171329">
-<link rel="preload" as="image" href="WeFamilyHintergrundMobile.png?v=4">
-<link rel="preload" as="image" href="wefamily-sleigh.webp"><title>WeFamily Adventsbingo</title>
+<title>WeFamily Spielmanager</title>
 <style>
 :root{color-scheme:dark;--bg:#100e1b;--panel:#1c1930;--panel2:#26213e;--line:#393252;--txt:#f5f1ff;--muted:#b8b0cb;--pink:#f36bb5;--gold:#ffc66d;--green:#78d7ad}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#302044 0,#100e1b 55%);color:var(--txt);font:15px system-ui,sans-serif}header{padding:22px 16px 14px;position:sticky;top:0;background:#171329ed;backdrop-filter:blur(12px);z-index:2;border-bottom:1px solid var(--line)}h1{font-size:22px;margin:0}header p{margin:4px 0 0;color:var(--muted);font-size:13px}.wrap{max-width:980px;margin:auto;padding:16px}.tabs{display:flex;gap:8px;overflow:auto;padding-bottom:12px}.tab,button{border:1px solid var(--line);background:var(--panel2);color:var(--txt);border-radius:12px;padding:10px 13px;font-weight:650;cursor:pointer;white-space:nowrap}.tab.active,button.primary{background:linear-gradient(120deg,#8c3f83,#5140a1);border-color:#a76db2}.tab.secret{border-color:#8c5b2e;color:#ffd18a}.card{background:#1c1930ed;border:1px solid var(--line);border-radius:17px;padding:15px;margin:10px 0;box-shadow:0 8px 30px #0002}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}.row{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.between{justify-content:space-between}.muted{color:var(--muted)}label{display:block;color:var(--muted);font-size:13px;margin:8px 0 5px}input,select,textarea{width:100%;background:#100e1b;color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:11px;font:inherit}input[type=checkbox]{width:auto;accent-color:var(--pink)}.field{flex:1;min-width:130px}button.danger{border-color:#85434e;color:#ffabb5}button.small{padding:7px 10px;font-size:13px}.stat{font-size:28px;font-weight:800}.pill{font-size:12px;color:#ffe0a5;background:#49351d;padding:4px 8px;border-radius:99px}.item{padding:10px 0;border-bottom:1px solid var(--line)}.item:last-child{border:0}.hidden{display:none!important}.notice{border-left:3px solid var(--gold);padding:10px 12px;background:#352a24;border-radius:8px;color:#ffe1b5;font-size:13px}.score{font-size:20px;font-weight:800;color:var(--gold)}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}footer{padding:20px;color:var(--muted);font-size:12px;text-align:center}
@@ -55,7 +54,28 @@
 .scoring-help{border-left:3px solid var(--pink);padding:9px 12px;background:#29213a;border-radius:8px;color:#ded5f2;font-size:13px;margin:10px 0}
 @media(max-width:560px){.round-group>summary{align-items:flex-start;flex-direction:column;gap:4px}.round-group>summary small{text-align:left}}
 
-#authGate{position:fixed;inset:0;z-index:40;display:grid;place-items:center;padding:20px;background:radial-gradient(ellipse at top,#302044 0,#100e1b 70%)}#authGate .card{width:min(100%,420px);padding:24px}#authGate h2{margin-top:0}#authMessage{min-height:22px;color:#ffd18a;font-size:13px}#logoutButton{margin-left:10px}
+#authGate{position:fixed;inset:0;z-index:40;display:grid;place-items:center;padding:20px;background:radial-gradient(ellipse at top,#302044 0,#100e1b 70%)}#authGate .card{width:min(100%,420px);padding:24px}#authGate h2{margin-top:0}#authMessage{min-height:22px;color:#ffd18a;font-size:13px}#logoutButton{margin-left:0}
+.manager-home{max-width:1100px}
+.manager-welcome{padding:clamp(20px,4vw,34px);background:linear-gradient(125deg,#292044ed,#1c1930f2 62%,#38213bed);border-color:#5a466f}
+.manager-kicker{font-size:11px;font-weight:800;letter-spacing:.16em;color:#e8b9e0;margin-bottom:10px}
+.manager-welcome h2{font-size:clamp(25px,4vw,38px);line-height:1.12;margin:0 0 10px}
+.manager-welcome p{max-width:680px;line-height:1.6;margin:0;color:#d1c8df}
+.manager-section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:22px 0 8px}
+.manager-section-head h2{margin:0}
+.manager-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:12px}
+.manager-module{margin:0;padding:18px}
+.manager-module-head{display:flex;align-items:center;gap:12px;margin-bottom:13px}
+.manager-module-mark{width:48px;height:48px;display:grid;place-items:center;border-radius:14px;background:#34294c;font-size:25px;flex:none}
+.manager-module h3{margin:0 0 3px;font-size:19px}
+.manager-module p{margin:0;line-height:1.5}
+.manager-event{margin-top:16px;padding:14px;border-radius:13px;border:1px solid #51436b;background:#151223}
+.manager-event-label{font-size:10px;font-weight:800;letter-spacing:.14em;color:#d6a8da}
+.manager-event-title{font-size:17px;font-weight:800;margin:5px 0}
+.manager-event .actions{margin-top:12px}
+.manager-placeholder{border-style:dashed;background:#171426;box-shadow:none}
+.manager-placeholder .manager-module-mark{background:#282438;color:#aaa1b9}
+@media(max-width:600px){.manager-welcome{padding:20px}.manager-grid{grid-template-columns:1fr}.manager-event .actions button{width:100%}}
+#introSplash[hidden]{display:none!important}
 
 /* Turnierwertung: auf schmalen Displays als Karten statt breiter Tabelle */
 .round-quick-overview{margin:10px 0 14px;overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:#191629}
@@ -93,18 +113,46 @@
 
 </style></head>
 <body>
-<div id="introSplash" aria-label="WeFamily fliegt über den Nordpol">
- <img class="introSleigh" src="wefamily-sleigh.webp" alt="WeFamily-Schlitten mit Pinguin und zwei Rentieren">
+<div id="introSplash" aria-label="WeFamily fliegt über den Nordpol" hidden>
+ <img class="introSleigh" data-src="wefamily-sleigh.webp" alt="WeFamily-Schlitten mit Pinguin und zwei Rentieren">
  <div class="introLoader" aria-live="polite">
   <div class="introLoaderTitle"><span class="snowflake">❄</span><span>Lade Adventsbingo ...</span><span class="snowflake">❄</span></div>
   <div class="introLoaderTrack"><div class="introLoaderFill" id="introLoaderFill"></div></div>
  </div>
 </div>
-<section id="authGate"><div class="card"><h2>🔐 WeFamily Adventsbingo</h2>
+<section id="authGate"><div class="card"><h2>🔐 WeFamily Spielmanager</h2>
 <div id="loginView"><p class="muted">Bitte mit deinem WeFamily-Konto anmelden.</p><form id="loginForm"><label for="loginEmail">E-Mail-Adresse</label><input id="loginEmail" type="email" autocomplete="username" required><label for="loginPassword">Passwort</label><input id="loginPassword" type="password" autocomplete="current-password" required><div class="actions"><button class="primary" id="loginButton" type="submit">Anmelden</button><button type="button" id="showRegisterButton">Neues Konto erstellen</button></div></form></div>
 <div id="registerView" class="hidden"><p class="muted">Erstelle dein persönliches WeFamily-Manager-Konto. Der Zugang wird erst nach Freigabe durch Pascal aktiviert.</p><form id="registerForm"><label for="registerName">Anzeigename</label><input id="registerName" type="text" maxlength="80" autocomplete="name" required><label for="registerEmail">E-Mail-Adresse</label><input id="registerEmail" type="email" autocomplete="email" required><label for="registerPassword">Passwort (mindestens 8 Zeichen)</label><input id="registerPassword" type="password" minlength="8" autocomplete="new-password" required><label for="registerPasswordConfirm">Passwort wiederholen</label><input id="registerPasswordConfirm" type="password" minlength="8" autocomplete="new-password" required><div class="actions"><button class="primary" id="registerButton" type="submit">Registrierung absenden</button><button type="button" id="showLoginButton">Zur Anmeldung</button></div></form></div>
 <p id="authMessage" role="status" aria-live="polite"></p></div></section>
-<header class="hidden" id="appHeader"><div class="wrap" style="padding:0"><h1>🎄 WeFamily Adventsbingo</h1><p>Organisations- und Auswertungstest · Version 0.8 · Daten aktuell noch lokal auf diesem Gerät</p><button id="logoutButton" class="small">Abmelden</button></div></header>
+<header class="hidden" id="appHeader"><div class="wrap" style="padding:0">
+ <div class="row between" style="align-items:center">
+  <div><h1 id="headerTitle">WeFamily Spielmanager</h1><p id="signedInLabel">Angemeldet · WeFamily-Konto</p></div>
+  <div class="row"><button id="managerHomeButton" class="small hidden" type="button" onclick="returnToManagerHome()">← Startseite</button><button id="logoutButton" class="small" type="button">Abmelden</button></div>
+ </div>
+</div></header>
+<section id="managerHome" class="wrap hidden manager-home" aria-label="Zentrale Startseite">
+ <div class="manager-welcome card">
+  <div class="manager-kicker">WEFAMILY · SPIELMANAGER</div>
+  <h2>Willkommen im WeFamily Spielmanager</h2>
+  <p>Hier findest du die Spielmodule und ihre Events. Wähle ein Modul und öffne anschließend das Event, an dem ihr teilnehmen oder das ihr verwalten möchtet.</p>
+ </div>
+ <div class="manager-section-head"><h2>Spielmodule</h2><span class="pill">1 Modul verfügbar</span></div>
+ <div class="manager-grid">
+  <article class="card manager-module">
+   <div class="manager-module-head"><div class="manager-module-mark" aria-hidden="true">🎯</div><div><h3>Bingo</h3><p class="muted">Bingo-Events verwalten und auswerten</p></div></div>
+   <div class="manager-event">
+    <div class="manager-event-label">EVENT · 2026</div>
+    <div class="manager-event-title">Adventsbingo</div>
+    <p class="muted">Teilnehmer, Runden, Bingo-Ergebnisse und interne Auswertungen für die Adventssonntage.</p>
+    <div class="actions"><button class="primary" type="button" onclick="openBingoEvent()">Adventsbingo öffnen</button></div>
+   </div>
+  </article>
+  <article class="card manager-module manager-placeholder">
+   <div class="manager-module-head"><div class="manager-module-mark" aria-hidden="true">＋</div><div><h3>Weitere Spielmodule</h3><p class="muted">Weitere Module können später hier ergänzt werden.</p></div></div>
+   <p class="muted">Neue Module können hier ergänzt werden, ohne das Bingo-Modul zu ersetzen.</p>
+  </article>
+ </div>
+</section>
 <main class="wrap hidden" id="appMain">
 <div class="notice">Testversion: Daten werden nur in diesem Browser gespeichert. Noch kein gemeinsamer Heidi-Zugang und keine echte Anmeldung. Vor echtem Einsatz bitte Daten exportieren.</div>
 <nav class="tabs" aria-label="Bereiche">
@@ -144,6 +192,7 @@ const $=id=>document.getElementById(id);
 const SUPABASE_URL="https://xukplcslrfecpqxyhhvn.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY="sb_publishable_2Kex3-Y4TabmOE3QX4NgMw_VAxLJ2nK";
 const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+let bingoIntroRunId=0;
 let cloudReadOnly=false;
 let cloudEditable=false;
 let cloudComparePassed=false;
@@ -157,12 +206,28 @@ function showAuthMessage(message){$("authMessage").textContent=message;}
 function showAuthView(view){$("loginView").classList.toggle("hidden",view!=="login");$("registerView").classList.toggle("hidden",view!=="register");showAuthMessage("");}
 $("showRegisterButton").addEventListener("click",()=>showAuthView("register"));
 $("showLoginButton").addEventListener("click",()=>showAuthView("login"));
-function showSignedInUI(user,role){$("authGate").classList.add("hidden");["appHeader","appMain","appFooter"].forEach(id=>$(id).classList.remove("hidden"));const requestsCard=$("registrationAdminCard");if(requestsCard){const owner=role==="owner";requestsCard.classList.toggle("hidden",!owner);requestsCard.hidden=!owner;requestsCard.style.display=owner?"":"none";} const localCopy=(()=>{try{return JSON.parse(localStorage.getItem("wf-adventbingo-cloud-test-meta")||"null")}catch{return null}})();$("appHeader").querySelector("p").textContent="Angemeldet als "+(user.email||"WeFamily-Konto")+" · "+(localCopy?"Lokale Testkopie · "+(localCopy.title||"Cloud-Bestand")+" (nicht mit Cloud synchronisiert)":"Rolle: "+role);if(localCopy){const notice=$("appMain").querySelector(".notice");if(notice)notice.textContent="Lokale Testkopie wiederhergestellt: "+localCopy.title+". Änderungen bleiben in diesem Browser und werden nicht in Supabase übertragen.";const status=$("cloudLoadStatus");if(status)status.textContent="Gespeicherte lokale Testkopie vorhanden. Der Cloud-Ausgangsstand kann über „Importierten Bestand laden“ erneut geladen werden.";}}
+function showSignedInUI(user,role){
+ $("authGate").classList.add("hidden");
+ ["appHeader","managerHome","appFooter"].forEach(id=>$(id).classList.remove("hidden"));
+ $("appMain").classList.add("hidden");
+ $("managerHomeButton").classList.add("hidden");
+ $("headerTitle").textContent="WeFamily Spielmanager";
+ const requestsCard=$("registrationAdminCard");
+ if(requestsCard){const owner=role==="owner";requestsCard.classList.toggle("hidden",!owner);requestsCard.hidden=!owner;requestsCard.style.display=owner?"":"none";}
+ const localCopy=(()=>{try{return JSON.parse(localStorage.getItem("wf-adventbingo-cloud-test-meta")||"null")}catch{return null}})();
+ $("signedInLabel").textContent="Angemeldet als "+(user.email||"WeFamily-Konto")+" · "+(localCopy?"Lokale Testkopie · "+(localCopy.title||"Cloud-Bestand")+" (nicht mit Cloud synchronisiert)":"Rolle: "+role);
+ if(localCopy){
+  const notice=$("appMain").querySelector(".notice");
+  if(notice)notice.textContent="Lokale Testkopie wiederhergestellt: "+localCopy.title+". Änderungen bleiben in diesem Browser und werden nicht in Supabase übertragen.";
+  const status=$("cloudLoadStatus");
+  if(status)status.textContent="Gespeicherte lokale Testkopie vorhanden. Der Cloud-Ausgangsstand kann über „Importierten Bestand laden“ erneut geladen werden.";
+ }
+ }
 async function verifyAndShowSession(user){
- if(!user){$("authGate").classList.remove("hidden");["appHeader","appMain","appFooter"].forEach(id=>$(id).classList.add("hidden"));return;}
+ if(!user){stopBingoIntro();$("authGate").classList.remove("hidden");["appHeader","managerHome","appMain","appFooter"].forEach(id=>$(id).classList.add("hidden"));return;}
  const {data:profile,error}=await supabaseClient.from("app_users").select("display_name,app_role,account_status").eq("user_id",user.id).maybeSingle();
  if(error){showAuthMessage("Kontostatus konnte nicht geprüft werden: "+error.message);await supabaseClient.auth.signOut();return;}
- if(!profile||profile.account_status!=="active"){const message=!profile?"Für dieses Konto wurde noch kein Manager-Profil angelegt.":"Deine Registrierung ist noch nicht freigegeben.";await supabaseClient.auth.signOut();$("authGate").classList.remove("hidden");["appHeader","appMain","appFooter"].forEach(id=>$(id).classList.add("hidden"));showAuthMessage(message);return;}
+ if(!profile||profile.account_status!=="active"){const message=!profile?"Für dieses Konto wurde noch kein Manager-Profil angelegt.":"Deine Registrierung ist noch nicht freigegeben.";await supabaseClient.auth.signOut();stopBingoIntro();$("authGate").classList.remove("hidden");["appHeader","managerHome","appMain","appFooter"].forEach(id=>$(id).classList.add("hidden"));showAuthMessage(message);return;}
  showSignedInUI(user,profile.app_role);
  if(profile.app_role==="owner")loadPendingRegistrations();
 }
@@ -817,30 +882,84 @@ function setRoomCount(){let raw=$("roomCount").value.trim();if(raw==="")return a
 function renderRoomStats(){if(!$("roomStatsView")||!$("resultRound"))return;let s=$("sessionName").value.trim()||"Spieltag",n=Number($("resultRound").value);if(!n)return;let r=db.roomStats[s+"|"+n];$("roomCount").value=r?String(r.start):"";$("roomStatsView").innerHTML=r?'<div class="card"><div class="muted">Erfasster Voice-Raumstand für '+esc(s)+' · Runde '+n+'</div><div class="stat">'+Number(r.current??r.start??0)+' Personen</div></div>'+(r.changes?.length?'<h3>Änderungen in dieser Runde</h3>'+r.changes.slice().reverse().map(x=>'<div class="item">' +(x.delta>0?"+":"")+x.delta+' · '+esc(x.label)+' → '+x.value+' Personen</div>').join(""):''):'<p class="muted">Für diese Runde wurde noch kein Raumstand gespeichert.</p>'}
 
 renderAll();
-(function runIntro(){
+
+function stopBingoIntro(){
+ bingoIntroRunId++;
+ const splash=$("introSplash");
+ if(splash){
+  splash.hidden=true;
+  splash.classList.remove("out","ready");
+ }
+}
+function openBingoEvent(){
+ stopBingoIntro();
+ $("managerHome").classList.add("hidden");
+ $("appMain").classList.remove("hidden");
+ $("managerHomeButton").classList.remove("hidden");
+ $("headerTitle").textContent="WeFamily Spielmanager · Bingo";
+ showTab("home");
+ runBingoIntro();
+}
+function returnToManagerHome(){
+ stopBingoIntro();
+ $("appMain").classList.add("hidden");
+ $("managerHome").classList.remove("hidden");
+ $("managerHomeButton").classList.add("hidden");
+ $("headerTitle").textContent="WeFamily Spielmanager";
+}
+function runBingoIntro(){
  const splash=$("introSplash"),sleigh=splash?.querySelector(".introSleigh"),fill=$("introLoaderFill");
  if(!splash||!sleigh)return;
- const mobile=window.matchMedia("(max-width:900px)").matches;
- const bg=new Image();bg.src=mobile?"WeFamilyHintergrundMobile.png?v=8":"northpole-bg.webp";
- const begin=()=>{
-  const w=window.innerWidth,h=window.innerHeight,duration=7800,startAt=performance.now()+120;
-  const points=mobile?[[.37*w,.84*h,1],[.76*w,.72*h,.88],[.30*w,.52*h,.68],[.72*w,.30*h,.46],[.82*w,.12*h,.30],[1.18*w,-.20*h,.08]]:[[.40*w,.72*h,1.02],[.76*w,.56*h,.86],[.34*w,.36*h,.65],[.72*w,.14*h,.42],[1.16*w,-.18*h,.08]];
-  const cat=(p0,p1,p2,p3,t)=>{const t2=t*t,t3=t2*t;return .5*((2*p1)+(-p0+p2)*t+(2*p0-5*p1+4*p2-p3)*t2+(-p0+3*p1-3*p2+p3)*t3)};
-  sleigh.style.left=points[0][0]+"px";sleigh.style.top=points[0][1]+"px";
-  sleigh.style.transform="translate(-50%,-50%) scale("+points[0][2]+")";sleigh.style.opacity="1";
-  splash.classList.add("ready");
-  function frame(now){
-   const p=Math.min(1,Math.max(0,(now-startAt)/duration));
-   const scaled=p*(points.length-1),seg=Math.min(points.length-2,Math.floor(scaled)),t=scaled-seg;
-   const p0=points[Math.max(0,seg-1)],p1=points[seg],p2=points[seg+1],p3=points[Math.min(points.length-1,seg+2)];
-   const x=cat(p0[0],p1[0],p2[0],p3[0],t),y=cat(p0[1],p1[1],p2[1],p3[1],t),scale=cat(p0[2],p1[2],p2[2],p3[2],t);
-   sleigh.style.left=x+"px";sleigh.style.top=y+"px";sleigh.style.transform="translate(-50%,-50%) scale("+Math.max(.06,scale)+")";
-   sleigh.style.opacity=String(p>.96?Math.max(0,1-(p-.96)/.04):1);
-   if(fill)fill.style.width=(p*100).toFixed(1)+"%";
-   if(p<1)requestAnimationFrame(frame);
-   else{if(fill)fill.style.width="100%";setTimeout(()=>{splash.classList.add("out");setTimeout(()=>splash.remove(),600)},180)}
-  }
-  requestAnimationFrame(frame);
+ const runId=++bingoIntroRunId;
+ let finished=false;
+ let fallbackTimer=null;
+ splash.hidden=false;
+ splash.classList.remove("out","ready");
+ if(fill)fill.style.width="0%";
+ sleigh.style.opacity="0";
+ if(!sleigh.getAttribute("src"))sleigh.src=sleigh.dataset.src||"wefamily-sleigh.webp";
+ const finish=()=>{
+  if(finished||runId!==bingoIntroRunId)return;
+  finished=true;
+  if(fallbackTimer)clearTimeout(fallbackTimer);
+  if(fill)fill.style.width="100%";
+  splash.classList.add("out");
+  window.setTimeout(()=>{
+   if(runId!==bingoIntroRunId)return;
+   splash.hidden=true;
+   splash.classList.remove("out","ready");
+  },600);
  };
- Promise.all([sleigh.decode?sleigh.decode().catch(()=>{}):Promise.resolve(),bg.decode?bg.decode().catch(()=>{}):Promise.resolve()]).then(begin);
-})();</script></body></html>
+ // Rein dekorativ: eine fehlende Grafik oder pausierte Animation darf die App nicht blockieren.
+ fallbackTimer=window.setTimeout(finish,9500);
+ const mobile=window.matchMedia("(max-width:900px)").matches;
+ const bg=new Image();
+ bg.src=mobile?"WeFamilyHintergrundMobile.png?v=8":"northpole-bg.webp";
+ const w=window.innerWidth,h=window.innerHeight,duration=7800,startAt=performance.now()+120;
+ const points=mobile?[[.37*w,.84*h,1],[.76*w,.72*h,.88],[.30*w,.52*h,.68],[.72*w,.30*h,.46],[.82*w,.12*h,.30],[1.18*w,-.20*h,.08]]:[[.40*w,.72*h,1.02],[.76*w,.56*h,.86],[.34*w,.36*h,.65],[.72*w,.14*h,.42],[1.16*w,-.18*h,.08]];
+ const cat=(p0,p1,p2,p3,t)=>{
+  const t2=t*t,t3=t2*t;
+  return .5*((2*p1)+(-p0+p2)*t+(2*p0-5*p1+4*p2-p3)*t2+(-p0+3*p1-3*p2+p3)*t3);
+ };
+ sleigh.style.left=points[0][0]+"px";
+ sleigh.style.top=points[0][1]+"px";
+ sleigh.style.transform="translate(-50%,-50%) scale("+points[0][2]+")";
+ sleigh.style.opacity="1";
+ splash.classList.add("ready");
+ function frame(now){
+  if(finished||runId!==bingoIntroRunId||splash.hidden)return;
+  const p=Math.min(1,Math.max(0,(now-startAt)/duration));
+  const scaled=p*(points.length-1),seg=Math.min(points.length-2,Math.floor(scaled)),t=scaled-seg;
+  const p0=points[Math.max(0,seg-1)],p1=points[seg],p2=points[seg+1],p3=points[Math.min(points.length-1,seg+2)];
+  const x=cat(p0[0],p1[0],p2[0],p3[0],t),y=cat(p0[1],p1[1],p2[1],p3[1],t),scale=cat(p0[2],p1[2],p2[2],p3[2],t);
+  sleigh.style.left=x+"px";
+  sleigh.style.top=y+"px";
+  sleigh.style.transform="translate(-50%,-50%) scale("+Math.max(.06,scale)+")";
+  sleigh.style.opacity=String(p>.96?Math.max(0,1-(p-.96)/.04):1);
+  if(fill)fill.style.width=(p*100).toFixed(1)+"%";
+  if(p<1)requestAnimationFrame(frame);
+  else finish();
+ }
+ requestAnimationFrame(frame);
+}
+</script></body></html>
