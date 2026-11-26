@@ -491,12 +491,12 @@ function renderInternal(targetId="tournamentList"){
   });
   return out;
  };
- const rankingHTML=(items,label,previousItems=null,initialMovementLabel="Ausgangsstand",compactOverview=false)=>{
+ const rankingHTML=(items,label,previousItems=null,initialMovementLabel="Ausgangsstand",compactOverview=false,knownBeforeIds=null)=>{
   const ranked=items.filter(x=>x.points>0||x.total>0);
   const nowRanks=rankMap(ranked),beforeRanks=previousItems?rankMap(previousItems):{};
   const prepared=ranked.map(x=>{
    const before=beforeRanks[x.id],now=nowRanks[x.id];
-   const movement=!previousItems?"—":before===undefined?"NEU":before>now?"↑ "+(before-now):before<now?"↓ "+(now-before):"—";
+   const movement=!previousItems?"—":before===undefined?(knownBeforeIds?.has(x.id)?"Wieder dabei":"NEU"):before>now?"↑ "+(before-now):before<now?"↓ "+(now-before):"—";
    return {...x,rank:now,movement};
   });
   const movementText=x=>!previousItems?"":x.movement==="NEU"?"Neu dabei":x.movement==="—"?"Keine Veränderung":x.movement;
@@ -511,8 +511,9 @@ function renderInternal(targetId="tournamentList"){
  if(!sessions.includes(selectedDay))sessions.push(selectedDay);
  const selectedIndex=sessions.indexOf(selectedDay);
  const previousDayRows=selectedIndex>0?tally(sessions[selectedIndex-1],current,true):null;
+ const knownBeforeIds=new Set(db.results.filter(r=>sessions.slice(0,selectedIndex).includes(String(r.session||"Spieltag").trim())&&(Number(r.count)||0)>0).map(r=>r.playerId));
  $("internalRoundList").innerHTML=rankingHTML(roundRows,"Rundenwertung · Runde "+current,previousRoundRows,current===1?"Erster Stand":"",true);
- $("internalList").innerHTML=rankingHTML(dayRows,"Tagesgesamtwertung · Runde "+current,previousDayRows,selectedIndex===0?"Erster Spieltag":"Vergleich zum vorherigen Spieltag");
+ $("internalList").innerHTML=rankingHTML(dayRows,"Tagesgesamtwertung · Runde "+current,previousDayRows,selectedIndex===0?"Erster Spieltag":"Vergleich zum vorherigen Spieltag",false,knownBeforeIds);
  const previousDays=sessions.slice(0,selectedIndex);
  const priorMap={},currentMap={};
  db.players.forEach(p=>{
