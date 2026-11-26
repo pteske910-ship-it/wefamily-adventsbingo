@@ -22,4 +22,4 @@ jobs:
         with:
           node-version: 22
       - name: Simulation und Prüfungen ausführen
-        run: node --test tests/randomized-simulation.test.cjs
+        run: node --test tests/*.test.cjs
