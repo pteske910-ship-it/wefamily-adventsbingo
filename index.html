@@ -176,7 +176,7 @@
 <div class="admin-subnav no-print"><button class="primary" data-adminview="day" onclick="setAdminView('day')">Auswertung</button><button data-adminview="stats" onclick="setAdminView('stats')">📊 Statistiken</button></div><div id="adminRoomView"><div class="notice">VERTRAULICH – interne Tageswertung. Dies ist in Version 0.1 nur eine ausgeblendete Oberfläche, kein sicherer Zugriffsschutz. Nicht auf einem gemeinsam genutzten Gerät mit Teilnehmern öffnen.</div>
 <div class="card" id="dayCard"><h2>🔒 Interne Auswertung</h2><label>Spieltag auswerten</label><input id="internalSession" placeholder="z. B. 1. Advent" value="1. Advent"><div class="actions"><button class="primary" onclick="renderInternal()">Auswertung aktualisieren</button></div><div class="admin-subnav no-print" aria-label="Wertungsansicht"><button class="primary" data-dayview="round" onclick="setDayView('round')">Rundenwertung</button><button data-dayview="day" onclick="setDayView('day')">Tageswertung</button><button data-dayview="tournament" onclick="setDayView('tournament')">Turnierwertung</button></div><div id="roundView"><label>Ausgewählte Runde</label><select id="internalRound" onchange="renderInternal()"></select><p class="muted">Nur die Bingos und Punkte dieser einzelnen Runde.</p><div id="internalRoundList"></div></div><div id="dayView" class="hidden"><h3>Tagesgesamtwertung – alle Runden</h3><p class="muted">Summe aller Runden bis einschließlich der ausgewählten Runde. Die Tageswertung beginnt an jedem Spieltag wieder bei null.</p><div id="internalList"></div></div><div id="tournamentView" class="hidden"><h3>Turnier-Gesamtwertung – bisherige Spieltage</h3><p class="muted">Gesamtpunkte aus allen Spieltagen bis einschließlich des ausgewählten Spieltags. Fehlende Spieltage zählen als Nichtteilnahme und bringen keinen Abzug.</p><div id="tournamentList"></div></div></div>
 
-</div><div id="adminStatsView" class="hidden"><div class="admin-subnav no-print" aria-label="Statistikbereiche"><button class="primary" data-statview="overview" onclick="setStatsView('overview')">Kennzahlen</button><button data-statview="tournament" onclick="setStatsView('tournament')">🏆 Turnier-Rangliste</button></div><div id="statsOverviewView"><div class="card"><h2>📊 Statistiken &amp; Auswertung</h2><p class="muted">Teilnehmerzahl, Raumbelegung und erzielte Bingos werden getrennt ausgewertet.</p><div class="grid no-print"><div><label>Auswertung</label><select id="statsSession" onchange="renderStats()"><option value="__all">Gesamter Adventszeitraum</option></select></div><div class="row" style="align-items:end"><button class="primary" onclick="exportStatsPDF()">PDF dieser Auswahl</button><button onclick="exportStatsPNG()">PNG dieser Auswahl</button></div></div><div id="statsReport"></div></div></div><div id="statsTournamentView" class="hidden"><div class="card"><h2>🏆 Turnier-Gesamtwertung</h2><p class="muted">Alle Spieltage zusammengefasst. Suche, sortiere und öffne Teilnehmerdetails. Es werden 20 Teilnehmer pro Seite angezeigt.</p><div id="statsTournamentList"></div></div></div></div></section>
+</div><div id="adminStatsView" class="hidden"><div class="admin-subnav no-print" aria-label="Statistikbereiche"><button class="primary" data-statview="overview" onclick="setStatsView('overview')">Kennzahlen</button><button data-statview="tournament" onclick="setStatsView('tournament')">🏆 Turnier-Rangliste</button></div><div id="statsOverviewView"><div class="card"><h2>📊 Statistiken &amp; Auswertung</h2><p class="muted">Teilnehmerzahl, Raumbelegung und erzielte Bingos werden getrennt ausgewertet.</p><div class="grid no-print"><div><label>Auswertung</label><select id="statsSession" onchange="renderStats()"><option value="__all">Gesamter Adventszeitraum</option></select></div><div class="row" style="align-items:end"><button class="primary" onclick="exportStatsPDF()">PDF dieser Auswahl</button><button onclick="exportStatsPNG()">PNG-Bericht (ZIP)</button></div><p class="muted no-print">Der Bericht wird auf mehrere PNG-Bilder verteilt, maximal 40 Einträge je Bild. Alle Bilder werden gemeinsam als ZIP-Datei heruntergeladen.</p></div><div id="statsReport"></div></div></div><div id="statsTournamentView" class="hidden"><div class="card"><h2>🏆 Turnier-Gesamtwertung</h2><p class="muted">Alle Spieltage zusammengefasst. Suche, sortiere und öffne Teilnehmerdetails. Es werden 20 Teilnehmer pro Seite angezeigt.</p><div id="statsTournamentList"></div></div></div></div></section>
 <section id="settings" class="pane hidden">
 <div class="card"><h2>Turnier-Einstellungen</h2><p class="muted">Lege die Anzahl der Runden fest und ordne jeder Runde einen Bingo-Modus zu. Die Punktevergabe wird einmal für das gesamte Turnier festgelegt und unterscheidet sich je nach Bingo-Modus.</p><div class="row"><div class="field"><label for="roundCount">Anzahl der Runden</label><input id="roundCount" type="number" min="1" max="250" step="1" value="25"></div><button class="primary" onclick="applyRoundCount()">Rundenanzahl übernehmen</button></div><div class="card"><h3>Punktevergabe</h3><label>Wertungssystem für das gesamte Turnier</label><select id="scoringMode" onchange="setScoringMode(this.value)"><option value="mode">Feste Punkte je Bingo-Spielmodus</option><option value="place">Punkte nach Platzierung</option></select><div id="modePoints" class="grid"><div><label>Normales Bingo · Punkte pro Bingo</label><input id="normalPoints" type="number" min="0" step="1" value="2" onchange="saveModePoints()"></div><div><label>Power-up · Punkte pro Bingo</label><input id="powerPoints" type="number" min="0" step="1" value="1" onchange="saveModePoints()"></div><div><label>Blackout · Punkte pro Bingo</label><input id="blackoutPoints" type="number" min="0" step="1" value="3" onchange="saveModePoints()"></div></div><div id="placePoints" class="hidden"><div class="grid"><div><label>Normales Bingo · Punkte je Platzierung</label><input id="placementPoints" value="10,8,7,6,5,4,3,2,1,1" onchange="savePlacementPoints()"></div><div><label>Power-up · Punkte je Platzierung</label><input id="placementPointsPower" value="10,8,7,6,5,4,3,2,1,1" onchange="savePlacementPoints()"></div><div><label>Blackout · Punkte je Platzierung</label><input id="placementPointsBlackout" value="10,8,7,6,5,4,3,2,1,1" onchange="savePlacementPoints()"></div></div><p class="muted">Kommagetrennte Werte: erster Platz, zweiter Platz usw. Nicht aufgeführte Plätze erhalten 0 Punkte.</p></div></div><div id="roundList"></div></div>
 <div class="card"><h2>🔎 Doppelte Teilnehmer prüfen</h2><p class="muted">Zeigt die beiden bestätigten Namenspaare und zählt je Eintrag die gespeicherten Ergebnisdatensätze sowie Bingos. Es wird nichts verändert.</p><div class="actions"><button class="primary" id="duplicatePreviewButton" type="button">Dubletten-Vorschau erstellen</button></div><div id="duplicatePreviewStatus" class="muted" role="status">Noch nicht geprüft.</div><div id="duplicatePreview"></div></div>
@@ -774,8 +774,20 @@ function renderTournamentList(items,targetId=tournamentTargetId){
  (shown.map(x=>'<tr><td>'+x.rank+'</td><td>'+esc(x.name)+'</td><td>'+esc(x.movement)+'</td><td>'+x.dayPoints+'</td><td>'+x.normal+' P. / '+x.normalBingos+'</td><td>'+x.power+' P. / '+x.powerBingos+'</td><td>'+x.blackout+' P. / '+x.blackoutBingos+'</td><td>'+x.total+'</td><td><strong>'+x.points+'</strong></td></tr>').join("")||'<tr><td colspan="9">Keine passenden Teilnehmer gefunden.</td></tr>')+
  '</tbody></table></div><div class="row between" style="align-items:center;margin-top:12px"><button '+(tournamentPage===0?'disabled':'')+' onclick="tournamentPage--;renderInternal()">Zurück</button><span class="muted">Seite '+(tournamentPage+1)+' von '+pages+'</span><button '+(tournamentPage>=pages-1?'disabled':'')+' onclick="tournamentPage++;renderInternal()">Weiter</button></div>';
 }
+function currentEventTitle(){
+ const managerTitle=document.querySelector("#managerHome .manager-event-title")?.textContent?.trim();
+ if(managerTitle)return managerTitle;
+ try{
+  const meta=JSON.parse(localStorage.getItem("wf-adventbingo-cloud-test-meta")||"null");
+  if(meta?.title)return String(meta.title).trim();
+ }catch(error){console.warn("Veranstaltungstitel konnte nicht gelesen werden:",error)}
+ return document.title||"WeFamily Spielmanager";
+}
+function isAdventBingoEvent(){
+ return /advents?[-\\s]?bingo/i.test(currentEventTitle());
+}
 function statSessions(){
- const fixed=["1. Advent","2. Advent","3. Advent","4. Advent"];
+ const fixed=isAdventBingoEvent()?["1. Advent","2. Advent","3. Advent","4. Advent"]:[];
  const fromResults=db.results.map(r=>String(r.session||"Spieltag").trim()).filter(Boolean);
  const fromRoom=Object.keys(db.roomStats||{}).map(k=>String(k).split("|")[0].trim()).filter(Boolean);
  const extras=[...new Set([...fromResults,...fromRoom])].filter(s=>!fixed.includes(s));
@@ -852,27 +864,134 @@ function renderStats(){
  '<div class="card"><h3>🔎 Vergleich je Spieltag</h3>'+days.map(x=>'<div class="item row between"><span>'+esc(x.session)+'</span><strong>'+(x.roomCount===null?"Raumgröße nicht erfasst":"Ø "+x.roomCount.toFixed(1)+" Personen im Raum")+" · "+x.participants+" Bingo-Spieler · "+x.total+" Bingos"+'</strong></div>').join("")+'</div>'+
  '<div class="card"><h3>🧪 Datenqualitätsprüfung</h3>'+(issues.length?'<ul>'+issues.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul>':'Keine Auffälligkeiten erkannt.')+'</div>';
 }
-function statsTitle(){return $("statsSession").value==="__all"?"Gesamter Adventszeitraum":$("statsSession").value}
+function statsTitle(){return $("statsSession").value==="__all"?(isAdventBingoEvent()?"Gesamter Adventszeitraum":"Gesamter Turnierzeitraum"):$("statsSession").value}
 function reportHTML(){
  const d=statData($("statsSession").value||"__all"),title=statsTitle();
  const rows=d.ranking.map((x,i)=>'<tr><td>'+(i+1)+'</td><td>'+esc(x.p?.name||"Unbekannt")+'</td><td>'+x.total+'</td></tr>').join("");
  const daily=d.daily.map(x=>'<tr><td>'+esc(x.session)+'</td><td>'+x.participants+'</td><td>'+x.total+'</td><td>'+(x.roomCount===null?"–":x.roomCount.toFixed(1))+'</td></tr>').join("");
  const roomAverage=d.roomPeriodAverage===null?"–":d.roomPeriodAverage.toFixed(1)+" Personen",roomHigh=d.roomPeriodHigh===null?"–":d.roomPeriodHigh+" Personen",roomLow=d.roomPeriodLow===null?"–":d.roomPeriodLow+" Personen";
  const rounds=d.roundDaily.map(x=>'<tr><td>'+esc(x.session)+'</td><td>'+x.round+'</td><td>'+x.total+'</td></tr>').join("");
- return '<!doctype html><html lang="de"><meta charset="utf-8"><title>WeFamily Statistik</title><style>body{font:15px Arial;color:#211b35;margin:28px}h1,h2{color:#503080}table{width:100%;border-collapse:collapse;margin:12px 0}td,th{padding:8px;border-bottom:1px solid #ddd;text-align:left}.card{border:1px solid #ccc;border-radius:12px;padding:14px;margin:12px 0;break-inside:avoid}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.metric{font-size:24px;font-weight:bold}.warning{background:#fff4d8;padding:12px}</style><h1>WeFamily Adventsbingo – Statistik</h1><p>'+esc(title)+'</p><div class="grid"><div class="card">Personen im Teilnehmerstamm<div class="metric">'+d.players.length+'</div></div><div class="card">Bingo-Spieler<div class="metric">'+d.bingoPlayerIds.length+'</div></div><div class="card">Bingos gesamt<div class="metric">'+d.total+'</div></div><div class="card">Ø Voice-Raumstand<div class="metric">'+roomAverage+'</div></div><div class="card">Höchster Voice-Raumstand<div class="metric">'+roomHigh+'</div></div><div class="card">Niedrigster Voice-Raumstand<div class="metric">'+roomLow+'</div></div></div><h2>Rangliste</h2><table><tr><th>Platz</th><th>Teilnehmer</th><th>Bingos</th></tr>'+rows+'</table><h2>Spieltagvergleich</h2><table><tr><th>Spieltag</th><th>Bingo-Spieler</th><th>Bingos</th><th>Ø Personen im Voice-Raum</th></tr>'+daily+'</table><h2>Rundenvergleich</h2><table><tr><th>Spieltag</th><th>Runde</th><th>Bingos</th></tr>'+rounds+'</table></html>';
+ return '<!doctype html><html lang="de"><meta charset="utf-8"><title>'+esc(currentEventTitle())+' – Statistik</title><style>body{font:15px Arial;color:#211b35;margin:28px}h1,h2{color:#503080}table{width:100%;border-collapse:collapse;margin:12px 0}td,th{padding:8px;border-bottom:1px solid #ddd;text-align:left}.card{border:1px solid #ccc;border-radius:12px;padding:14px;margin:12px 0;break-inside:avoid}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.metric{font-size:24px;font-weight:bold}.warning{background:#fff4d8;padding:12px}</style><h1>'+esc(currentEventTitle())+' – Statistik</h1><p>'+esc(title)+'</p><div class="grid"><div class="card">Personen im Teilnehmerstamm<div class="metric">'+d.players.length+'</div></div><div class="card">Bingo-Spieler<div class="metric">'+d.bingoPlayerIds.length+'</div></div><div class="card">Bingos gesamt<div class="metric">'+d.total+'</div></div><div class="card">Ø Voice-Raumstand<div class="metric">'+roomAverage+'</div></div><div class="card">Höchster Voice-Raumstand<div class="metric">'+roomHigh+'</div></div><div class="card">Niedrigster Voice-Raumstand<div class="metric">'+roomLow+'</div></div></div><h2>Rangliste</h2><table><tr><th>Platz</th><th>Teilnehmer</th><th>Bingos</th></tr>'+rows+'</table><h2>Spieltagvergleich</h2><table><tr><th>Spieltag</th><th>Bingo-Spieler</th><th>Bingos</th><th>Ø Personen im Voice-Raum</th></tr>'+daily+'</table><h2>Rundenvergleich</h2><table><tr><th>Spieltag</th><th>Runde</th><th>Bingos</th></tr>'+rounds+'</table></html>';
 }
 function exportStatsPDF(){const w=window.open("","_blank");if(!w)return alert("Bitte Pop-ups erlauben, um den PDF-Bericht zu erstellen.");w.document.write(reportHTML());w.document.close();setTimeout(()=>w.print(),400)}
-function exportStatsPNG(){
- const d=statData($("statsSession").value||"__all"),title=statsTitle(),canvas=document.createElement("canvas"),ctx=canvas.getContext("2d");
- const height=Math.max(1500,430+d.ranking.length*48+d.daily.length*58+d.roundDaily.length*34);
- canvas.width=1200;canvas.height=height;ctx.fillStyle="#171329";ctx.fillRect(0,0,1200,height);
- let y=85;ctx.fillStyle="#fff";ctx.font="bold 46px Arial";ctx.fillText("WeFamily Adventsbingo",60,y);y+=55;ctx.font="27px Arial";ctx.fillStyle="#d7c9f5";ctx.fillText("Statistik · "+title,60,y);y+=75;
- [["Teilnehmer im Stamm",d.players.length],["Bingo-Spieler",d.bingoPlayerIds.length],["Bingos gesamt",d.total],["Ø Raumgröße",d.roomPeriodAverage===null?"–":d.roomPeriodAverage.toFixed(1)],["Höchster Raumstand",d.roomPeriodHigh===null?"–":d.roomPeriodHigh],["Niedrigster Raumstand",d.roomPeriodLow===null?"–":d.roomPeriodLow]].forEach((x,i)=>{const xx=60+(i%2)*550,yy=y+Math.floor(i/2)*125;ctx.fillStyle="#292342";ctx.fillRect(xx,yy,500,100);ctx.fillStyle="#d7c9f5";ctx.font="22px Arial";ctx.fillText(x[0],xx+18,yy+32);ctx.fillStyle="#fff";ctx.font="bold 38px Arial";ctx.fillText(String(x[1]),xx+18,yy+78)});y+=410;
- const section=(title)=>{ctx.fillStyle="#fff";ctx.font="bold 30px Arial";ctx.fillText(title,60,y);y+=38};
- section("Rangliste");d.ranking.forEach((x,i)=>{ctx.font="22px Arial";ctx.fillStyle="#fff";ctx.textAlign="left";ctx.fillText((i+1)+". "+(x.p?.name||"Unbekannt"),70,y);ctx.textAlign="right";ctx.fillStyle="#ffc66d";ctx.fillText(x.total+" Bingos",1120,y);y+=39});y+=25;
- section("Spieltagvergleich · Ø Raumgröße Gesamtzeitraum: "+(d.roomPeriodAverage===null?"–":d.roomPeriodAverage.toFixed(1)));d.daily.forEach(x=>{ctx.font="22px Arial";ctx.textAlign="left";ctx.fillStyle="#fff";ctx.fillText(x.session,70,y);ctx.textAlign="right";ctx.fillStyle="#ffc66d";ctx.fillText((x.roomCount===null?"–":"Ø "+x.roomCount.toFixed(1)+" im Raum")+" · "+x.participants+" Bingo-Spieler · "+x.total+" Bingos",1120,y);y+=38});y+=25;
- section("Rundenvergleich");d.roundDaily.forEach(x=>{ctx.font="19px Arial";ctx.textAlign="left";ctx.fillStyle="#fff";ctx.fillText(x.session+" · Runde "+x.round,70,y);ctx.textAlign="right";ctx.fillStyle="#ffc66d";ctx.fillText(x.total+" Bingos",1120,y);y+=32});y+=25;
- ctx.textAlign="left";const a=document.createElement("a");a.download="wefamily-statistik-"+title.toLowerCase().replace(/[^a-z0-9]+/g,"-")+".png";a.href=canvas.toDataURL("image/png");a.click();
+function balancedPNGChunks(items,maxRows=40){
+ if(!items.length)return [];
+ const pageCount=Math.ceil(items.length/maxRows),baseSize=Math.floor(items.length/pageCount),remainder=items.length%pageCount;
+ const pages=[];let offset=0;
+ for(let page=0;page<pageCount;page++){
+  const size=baseSize+(page<remainder?1:0);
+  pages.push(items.slice(offset,offset+size));offset+=size;
+ }
+ return pages;
+}
+function pngCRC32(bytes){
+ let crc=0xffffffff;
+ for(let i=0;i<bytes.length;i++){
+  crc^=bytes[i];
+  for(let bit=0;bit<8;bit++)crc=(crc>>>1)^((crc&1)?0xedb88320:0);
+ }
+ return (crc^0xffffffff)>>>0;
+}
+function pngZipStore(files){
+ const encoder=new TextEncoder(),localParts=[],centralParts=[];
+ let offset=0,centralSize=0;
+ const now=new Date(),dosTime=(now.getHours()<<11)|(now.getMinutes()<<5)|Math.floor(now.getSeconds()/2);
+ const dosDate=((Math.max(1980,now.getFullYear())-1980)<<9)|((now.getMonth()+1)<<5)|now.getDate();
+ files.forEach(file=>{
+  const name=encoder.encode(file.name),data=file.data,crc=pngCRC32(data);
+  const local=new Uint8Array(30+name.length),lv=new DataView(local.buffer);
+  lv.setUint32(0,0x04034b50,true);lv.setUint16(4,20,true);lv.setUint16(6,0x0800,true);lv.setUint16(8,0,true);
+  lv.setUint16(10,dosTime,true);lv.setUint16(12,dosDate,true);lv.setUint32(14,crc,true);
+  lv.setUint32(18,data.length,true);lv.setUint32(22,data.length,true);lv.setUint16(26,name.length,true);lv.setUint16(28,0,true);
+  local.set(name,30);localParts.push(local,data);
+  const central=new Uint8Array(46+name.length),cv=new DataView(central.buffer);
+  cv.setUint32(0,0x02014b50,true);cv.setUint16(4,20,true);cv.setUint16(6,20,true);cv.setUint16(8,0x0800,true);cv.setUint16(10,0,true);
+  cv.setUint16(12,dosTime,true);cv.setUint16(14,dosDate,true);cv.setUint32(16,crc,true);
+  cv.setUint32(20,data.length,true);cv.setUint32(24,data.length,true);cv.setUint16(28,name.length,true);
+  cv.setUint16(30,0,true);cv.setUint16(32,0,true);cv.setUint16(34,0,true);cv.setUint16(36,0,true);
+  cv.setUint32(38,0,true);cv.setUint32(42,offset,true);central.set(name,46);
+  centralParts.push(central);centralSize+=central.length;offset+=local.length+data.length;
+ });
+ const end=new Uint8Array(22),ev=new DataView(end.buffer);
+ ev.setUint32(0,0x06054b50,true);ev.setUint16(4,0,true);ev.setUint16(6,0,true);
+ ev.setUint16(8,files.length,true);ev.setUint16(10,files.length,true);
+ ev.setUint32(12,centralSize,true);ev.setUint32(16,offset,true);ev.setUint16(20,0,true);
+ return new Blob([...localParts,...centralParts,end],{type:"application/zip"});
+}
+async function exportStatsPNG(){
+ const button=document.querySelector('button[onclick="exportStatsPNG()"]');
+ if(button){button.disabled=true;button.textContent="PNG-Bericht wird erstellt …"}
+ try{
+  const d=statData($("statsSession").value||"__all"),title=statsTitle(),eventTitle=currentEventTitle();
+  const maxRowsPerImage=40,files=[],slug=value=>String(value||"bericht").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"bericht";
+  const metrics=[
+   ["Teilnehmer im Stamm",d.players.length],
+   ["Bingo-Spieler",d.bingoPlayerIds.length],
+   ["Bingos gesamt",d.total],
+   ["Ø Raumgröße",d.roomPeriodAverage===null?"–":d.roomPeriodAverage.toFixed(1)],
+   ["Höchster Raumstand",d.roomPeriodHigh===null?"–":d.roomPeriodHigh],
+   ["Niedrigster Raumstand",d.roomPeriodLow===null?"–":d.roomPeriodLow]
+  ];
+  const sections=[
+   {id:"rangliste",title:"Rangliste",headers:["Platz","Teilnehmer","Bingos"],items:d.ranking,
+    draw:(ctx,x,y,rank)=>{ctx.textAlign="left";ctx.fillText(rank+".",65,y);ctx.fillText(x.name,155,y,760);ctx.textAlign="right";ctx.fillStyle="#ffc66d";ctx.fillText(x.total+" Bingos",1120,y)}},
+   {id:"spieltage",title:"Spieltagvergleich",headers:["Spieltag","Auswertung"],items:d.daily,
+    draw:(ctx,x,y)=>{ctx.textAlign="left";ctx.fillText(x.session,65,y,470);ctx.textAlign="right";ctx.fillStyle="#ffc66d";ctx.fillText((x.roomCount===null?"–":"Ø "+x.roomCount.toFixed(1)+" im Raum")+" · "+x.participants+" Bingo-Spieler · "+x.total+" Bingos",1120,y,800)}},
+   {id:"runden",title:"Rundenvergleich",headers:["Spieltag · Runde","Bingos"],items:d.roundDaily,
+    draw:(ctx,x,y)=>{ctx.textAlign="left";ctx.fillText(x.session+" · Runde "+x.round,65,y,760);ctx.textAlign="right";ctx.fillStyle="#ffc66d";ctx.fillText(x.total+" Bingos",1120,y)}}
+  ];
+  let totalPages=0;
+  sections.forEach(section=>{section.pages=balancedPNGChunks(section.items,maxRowsPerImage);totalPages+=section.pages.length});
+  if(!totalPages){
+   sections.push({id:"uebersicht",title:"Übersicht",headers:["Status"],items:[{message:"Für diese Auswahl liegen noch keine Auswertungsdaten vor."}],pages:[[{message:"Für diese Auswahl liegen noch keine Auswertungsdaten vor."}]],draw:(ctx,x,y)=>{ctx.textAlign="left";ctx.fillText(x.message,65,y,1000)}});
+   totalPages=1;
+  }
+  let pageNumber=0;
+  for(const section of sections){
+   if(!section.pages.length)continue;
+   section.pages.forEach((rows,pageIndex)=>{
+    pageNumber++;
+    const width=1200,rowHeight=42,headerHeight=590,canvas=document.createElement("canvas");
+    canvas.width=width;canvas.height=headerHeight+rows.length*rowHeight+55;
+    const ctx=canvas.getContext("2d");if(!ctx)throw new Error("Canvas konnte nicht erstellt werden.");
+    ctx.fillStyle="#171329";ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.textAlign="left";ctx.fillStyle="#fff";ctx.font="bold 42px Arial";ctx.fillText(eventTitle,60,70,1080);
+    ctx.font="24px Arial";ctx.fillStyle="#d7c9f5";ctx.fillText("Statistik · "+title,60,112,1080);
+    const cardW=340,cardH=82,gap=30;
+    metrics.forEach((metric,i)=>{
+     const col=i%3,row=Math.floor(i/3),xx=60+col*(cardW+gap),yy=155+row*(cardH+18);
+     ctx.fillStyle="#292342";ctx.fillRect(xx,yy,cardW,cardH);
+     ctx.fillStyle="#d7c9f5";ctx.font="18px Arial";ctx.fillText(metric[0],xx+16,yy+27,cardW-30);
+     ctx.fillStyle="#fff";ctx.font="bold 30px Arial";ctx.fillText(String(metric[1]),xx+16,yy+64,cardW-30);
+    });
+    ctx.fillStyle="#fff";ctx.font="bold 29px Arial";ctx.fillText(section.title,60,405,900);
+    ctx.font="18px Arial";ctx.fillStyle="#d7c9f5";ctx.textAlign="right";
+    ctx.fillText("Teil "+(pageIndex+1)+" von "+section.pages.length+" · Berichtbild "+pageNumber+" von "+totalPages,1120,405);
+    ctx.textAlign="left";ctx.fillStyle="#292342";ctx.fillRect(50,435,1100,43);
+    ctx.font="bold 17px Arial";ctx.fillStyle="#d7c9f5";ctx.fillText(section.headers[0],65,463);
+    if(section.headers[1]){ctx.textAlign="right";ctx.fillText(section.headers[1],1120,463)}
+    rows.forEach((item,i)=>{
+     const y=510+i*rowHeight;
+     if(i%2===0){ctx.fillStyle="#211b35";ctx.fillRect(50,y-26,1100,rowHeight)}
+     ctx.font="19px Arial";ctx.fillStyle="#fff";ctx.textAlign="left";
+     if(section.id==="rangliste"){
+      const p=item.p||{};
+      section.draw(ctx,{...item,name:(p.name||"Unbekannt")+(p.family?" ("+p.family+")":"")},y,pageIndex*rows.length+i+1);
+     }else section.draw(ctx,item,y);
+    });
+    ctx.textAlign="left";ctx.font="14px Arial";ctx.fillStyle="#9e95b5";
+    ctx.fillText("Maximal "+maxRowsPerImage+" Einträge pro Bild · WeFamily Spielmanager",60,canvas.height-20);
+    const blob=await new Promise((resolve,reject)=>canvas.toBlob(value=>value?resolve(value):reject(new Error("PNG-Bild konnte nicht erstellt werden.")),"image/png"));
+    const data=new Uint8Array(await blob.arrayBuffer());
+    files.push({name:"wefamily-statistik-"+slug(title)+"-"+section.id+"-"+String(pageIndex+1).padStart(3,"0")+".png",data});
+   });
+  }
+  const archive=pngZipStore(files),url=URL.createObjectURL(archive),a=document.createElement("a");
+  a.href=url;a.download="wefamily-statistik-"+slug(title)+".zip";document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
+  alert("Der PNG-Bericht wurde erstellt. "+files.length+" Einzelbilder mit maximal "+maxRowsPerImage+" Einträgen je Bild liegen gemeinsam in einer ZIP-Datei.");
+ }catch(error){console.error("PNG-Export fehlgeschlagen:",error);alert("Der PNG-Export ist fehlgeschlagen: "+(error?.message||error))}
+ finally{if(button){button.disabled=false;button.textContent="PNG-Bericht (ZIP)"}}
 }
 
 function roomKey(){return ($("sessionName").value.trim()||"Spieltag")+"|"+$("resultRound").value}
