@@ -957,6 +957,7 @@ async function exportStatsPNG(){
    if(!section.pages.length)continue;
    section.pages.forEach((rows,pageIndex)=>{
     pageNumber++;
+    const rankOffset=section.pages.slice(0,pageIndex).reduce((sum,page)=>sum+page.length,0);
     const width=1200,rowHeight=42,headerHeight=590,canvas=document.createElement("canvas");
     canvas.width=width;canvas.height=headerHeight+rows.length*rowHeight+55;
     const ctx=canvas.getContext("2d");if(!ctx)throw new Error("Canvas konnte nicht erstellt werden.");
@@ -982,7 +983,7 @@ async function exportStatsPNG(){
      ctx.font="19px Arial";ctx.fillStyle="#fff";ctx.textAlign="left";
      if(section.id==="rangliste"){
       const p=item.p||{};
-      section.draw(ctx,{...item,name:(p.name||"Unbekannt")+(p.family?" ("+p.family+")":"")},y,pageIndex*rows.length+i+1);
+      section.draw(ctx,{...item,name:(p.name||"Unbekannt")+(p.family?" ("+p.family+")":"")},y,rankOffset+i+1);
      }else section.draw(ctx,item,y);
     });
     ctx.textAlign="left";ctx.font="14px Arial";ctx.fillStyle="#9e95b5";
