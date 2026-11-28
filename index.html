@@ -793,12 +793,12 @@ function renderTournamentList(items,targetId=tournamentTargetId){
  '</tbody></table></div><div class="row between" style="align-items:center;margin-top:12px"><button '+(tournamentPage===0?'disabled':'')+' onclick="tournamentPage--;renderInternal()">Zurück</button><span class="muted">Seite '+(tournamentPage+1)+' von '+pages+'</span><button '+(tournamentPage>=pages-1?'disabled':'')+' onclick="tournamentPage++;renderInternal()">Weiter</button></div>';
 }
 function currentEventTitle(){
- const managerTitle=document.querySelector("#managerHome .manager-event-title")?.textContent?.trim();
- if(managerTitle)return managerTitle;
  try{
   const meta=JSON.parse(localStorage.getItem("wf-adventbingo-cloud-test-meta")||"null");
   if(meta?.title)return String(meta.title).trim();
  }catch(error){console.warn("Veranstaltungstitel konnte nicht gelesen werden:",error)}
+ const managerTitle=document.querySelector("#managerHome .manager-event-title")?.textContent?.trim();
+ if(managerTitle)return managerTitle;
  return document.title||"WeFamily Spielmanager";
 }
 function isAdventBingoEvent(){
